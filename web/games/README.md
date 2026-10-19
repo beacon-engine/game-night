@@ -41,7 +41,8 @@ Want a game that isn't here? Add a folder with a `game.json` and a README in the
 
 ```
 web/games/my-game/
-  game.json       name, icon, tagline, players, order on the page
+  game.json       name, tagline, players, category, order on the page
+  icon.svg        a line icon (see ../brand/README.md)
   README.md       the plan (not served)
   index.html      the page; loads main.js
   main.ts         the game; bundled to main.js
@@ -104,6 +105,8 @@ into each game that uses it.
 
 ### Conventions
 
+- Use the brand: link `/brand/brand.css` and follow [`../brand/README.md`](../brand/README.md) for menus and
+  HUD (colours, type, the selection frame, `glyph()` for pad buttons). Football's `index.html` is the example.
 - ○ in the lobby (and Esc on the keyboard) goes back to the games with `backToHub()`.
 - The pad's ❚❚ button arrives as `input.onPause`; pause the game.
 - Run the simulation at a fixed 60 steps a second and draw at up to 60 fps (see the loop at the bottom of

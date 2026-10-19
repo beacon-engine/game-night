@@ -4,73 +4,101 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Game Night</title>
+<link rel="icon" href="/brand/mark.svg">
+<link rel="stylesheet" href="/brand/brand.css">
 <style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; min-height: 100%; background: #070d1c; color: #f1f5f9; font-family: "Arial Black", "Helvetica Neue", Arial, sans-serif; }
-  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px; padding: 40px 24px;
-    background: radial-gradient(ellipse at 50% 30%, #1e3a8a55, transparent 60%), radial-gradient(ellipse at center, #0b122a, #050914 75%); }
-  .hidden { display: none !important; }
+  html, body { height: 100%; }
+  body { display: grid; grid-template-columns: minmax(380px, 38%) 1fr; overflow: hidden; }
 
-  .title { font-size: 92px; font-style: italic; letter-spacing: 6px; line-height: .9; transform: skewX(-10deg); text-align: center;
-    background: linear-gradient(#fef08a, #f59e0b); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 6px 0 #7c2d12); }
-  .title small { display: block; font-size: 22px; letter-spacing: 12px; color: #93c5fd; -webkit-text-fill-color: #93c5fd; margin-top: 10px; }
+  /* --- left: what's selected, and how to join ------------------------------ */
+  .side { display: flex; flex-direction: column; gap: 28px; padding: 40px 48px; border-right: 1px solid var(--line); min-height: 0; }
+  .feature { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px; }
+  .feature .h1 { font-size: clamp(56px, 6.4vw, 104px); overflow-wrap: anywhere; }
+  #fIcon { width: 64px; height: 64px; background: var(--volt); -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
+  #fIcon.soon { background: var(--chalk-2); }
+  #fTitle { color: var(--volt); }
+  #fTitle.soon { color: var(--chalk); }
+  .meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  #fTagline { font-size: 18px; color: var(--chalk-2); max-width: 30ch; margin: 0; }
+  .feature .btn { align-self: flex-start; margin-top: 8px; }
+  .feature .btn:disabled { background: transparent; border-color: var(--line-strong); color: var(--chalk-3); cursor: default; }
 
-  #games { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px; max-width: 1240px; padding: 12px; }
-  .game { width: 200px; height: 240px; background: linear-gradient(160deg, #1e293b, #0f172a); border: 2px solid #ffffff1f; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 10px; padding: 16px; transform: skewX(-6deg); cursor: pointer; position: relative; color: inherit; font: inherit;
-    transition: transform .15s, box-shadow .15s, border-color .15s, opacity .15s; }
-  .game:focus-visible { outline: none; }
-  .game .gicon { font-size: 72px; line-height: 1; filter: drop-shadow(0 8px 10px #000a); }
-  .game .gname { font-size: 28px; font-style: italic; letter-spacing: 2px; text-align: center; }
-  .game .gtag { font-family: system-ui, sans-serif; font-weight: 600; font-size: 13px; opacity: .7; text-align: center; }
-  .game .gplayers { font-family: system-ui, sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #93c5fd; }
-  .game .gsoon { position: absolute; top: 14px; right: -8px; background: #f59e0b; color: #111; font-size: 11px; padding: 3px 10px; letter-spacing: 1px; }
-  .game.soon { opacity: .55; }
-  .game.sel { transform: skewX(-6deg) scale(1.08); border-color: #fde047; box-shadow: 0 0 0 3px #fde04755, 0 18px 40px #000c, 0 0 50px #2563eb55; opacity: 1; }
-  .game.go { animation: go .35s ease-in forwards; }
-  @keyframes go { to { transform: skewX(-6deg) scale(1.25); opacity: 0; } }
+  .join { display: flex; gap: 18px; align-items: center; padding: 16px; }
+  .join .url { font: 600 15px/1.3 var(--font-ui); color: var(--chalk); word-break: break-all; margin: 4px 0 10px; }
+  .join .chips em { font-style: normal; font-size: 13px; color: var(--chalk-3); }
 
-  .panel { background: #0f172acc; border: 2px solid #ffffff22; padding: 16px 20px; display: flex; gap: 18px; align-items: center; max-width: 560px; }
-  #qr { width: 120px; height: 120px; background: #fff; padding: 5px; flex: none; }
-  #qr svg { width: 100%; height: 100%; display: block; }
-  .panel p { margin: 0; font-family: system-ui, sans-serif; font-weight: 600; opacity: .85; font-size: 14px; }
-  #url { font-size: 20px; color: #fde047; margin: 6px 0 10px; word-break: break-all; }
-  #players { display: flex; gap: 8px; flex-wrap: wrap; }
-  #players span { color: #000; padding: 3px 10px; font-size: 14px; }
-  #players em { font-family: system-ui, sans-serif; font-style: normal; font-weight: 600; opacity: .6; font-size: 14px; }
+  /* --- right: the library --------------------------------------------------- */
+  .library { overflow-y: auto; padding: 40px 48px 120px; scroll-padding: 40px; }
+  .section + .section { margin-top: 40px; }
+  .section header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .section header .rule { flex: 1; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
 
-  .help { font-family: system-ui, sans-serif; font-weight: 600; font-size: 14px; opacity: .8; text-align: center; line-height: 1.7; }
-  #version { position: fixed; right: 16px; bottom: 12px; font-family: system-ui, sans-serif; font-size: 12px; opacity: .4; }
-  .help b { font-family: "Arial Black", sans-serif; color: #fde047; font-weight: 400; }
+  .tile {
+    aspect-ratio: 1;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 14px; text-align: left; color: inherit; font: inherit; cursor: pointer;
+    background: var(--ink-1); border: 1px solid var(--line); border-radius: var(--r-2);
+    transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+  }
+  .tile:hover { border-color: var(--line-strong); }
+  .tile.sel { background: var(--ink-2); border-color: var(--line-strong); }
+  .tile .top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .tile .icon { width: 40px; height: 40px; background: var(--chalk-2); -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
+  .tile .emoji { font-size: 32px; line-height: 40px; }
+  .tile.ready .icon { background: var(--volt); }
+  .tile.sel .icon { background: var(--chalk); }
+  .tile.ready.sel .icon { background: var(--volt); }
+  .tile .name { font: 700 24px/0.95 var(--font-display); text-transform: uppercase; }
+  .tile.soon .name { color: var(--chalk-2); }
+  .tile.sel .name { color: var(--chalk); }
 
-  #banner { position: fixed; left: 0; right: 0; top: 40%; text-align: center; pointer-events: none; opacity: 0; transition: opacity .25s; }
-  #banner.show { opacity: 1; }
-  #banner div { display: inline-block; font-size: 34px; font-style: italic; background: #0f172aee; padding: 10px 30px; transform: skewX(-10deg); border-left: 6px solid #fde047; }
+  .hints { position: fixed; left: 38%; right: 0; bottom: 0; display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 48px; background: linear-gradient(transparent, var(--ink-0) 40%); pointer-events: none; }
 
-  @media (max-width: 700px) {
-    .title { font-size: 56px; }
-    .title small { font-size: 15px; letter-spacing: 8px; }
-    .game { width: 150px; height: 190px; }
-    .game .gicon { font-size: 54px; }
-    .game .gname { font-size: 20px; }
-    .panel { flex-direction: column; text-align: center; }
+  #banner { position: fixed; left: 50%; bottom: 72px; transform: translate(-50%, 8px); opacity: 0; pointer-events: none;
+    transition: opacity var(--t) var(--ease), transform var(--t) var(--ease); padding: 12px 18px; }
+  #banner.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 900px) {
+    body { display: block; overflow: auto; }
+    .side { border-right: 0; border-bottom: 1px solid var(--line); padding: 24px 20px; }
+    .library { overflow: visible; padding: 24px 20px 80px; }
+    .tiles { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+    .hints { left: 0; padding: 12px 20px; }
   }
 </style>
 </head>
 <body>
-  <div class="title">GAME NIGHT<small>PICK A GAME</small></div>
-  <div id="games"></div>
-  <div class="panel">
-    <div id="qr"></div>
-    <div>
-      <p>Phones on the same Wi-Fi: scan or open</p>
-      <div id="url">…</div>
-      <div id="players"></div>
-    </div>
+  <aside class="side grid-bg">
+    <div class="wordmark"><span class="mark"><i></i><i></i><i></i><i></i></span><span>Game <span class="outline">Night</span></span></div>
+
+    <section class="feature">
+      <span id="fIcon"></span>
+      <span class="eyebrow">Tonight's game</span>
+      <h1 class="h1" id="fTitle">…</h1>
+      <p id="fTagline"></p>
+      <div class="meta"><span class="tag" id="fPlayers"></span><span class="tag" id="fStatus"></span></div>
+      <button class="btn btn-primary btn-lg" id="play"></button>
+    </section>
+
+    <section class="join panel">
+      <div class="qr" id="qr"></div>
+      <div>
+        <div class="caption">Scan to join · same Wi-Fi</div>
+        <div class="url" id="url">…</div>
+        <div class="chips" id="players"></div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="library" id="library"></main>
+
+  <div class="hints">
+    <div class="legend" id="legend"></div>
+    <span class="caption faint" id="version"></span>
   </div>
-  <div class="help">Phone: stick <b>◀ ▶ ▲ ▼</b> choose · <b>✕</b> play<br>Keyboard: arrows / WASD choose · <b>Enter</b> play · or just click a game</div>
-  <div id="banner"><div></div></div>
-  <div id="version"></div>
+  <div id="banner" class="panel caption"></div>
 
   <script type="module" src="main.js"></script>
 </body>

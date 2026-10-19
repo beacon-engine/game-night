@@ -4,5 +4,6 @@
   "tagline": "Tank battle in a destructible arena",
   "players": "2–8",
   "order": 32,
-  "status": "soon"
+  "status": "soon",
+  "category": "Action"
 }

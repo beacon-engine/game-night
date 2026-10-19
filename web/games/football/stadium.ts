@@ -201,7 +201,7 @@ export function buildStadium(
       g.fillStyle = grd;
       g.fillRect(i * seg, 0, seg, h);
       g.fillStyle = '#fff';
-      g.font = 'italic bold 52px "Arial Black", Impact, sans-serif';
+      g.font = '900 60px "Big Shoulders Display", "Arial Narrow", Impact, sans-serif';
       g.textAlign = 'center';
       g.textBaseline = 'middle';
       g.fillText(txt, i * seg + seg / 2, h / 2 + 3);

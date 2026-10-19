@@ -4,5 +4,6 @@
   "tagline": "Twin-stick arena shooter, teams or free-for-all",
   "players": "2–8",
   "order": 33,
-  "status": "soon"
+  "status": "soon",
+  "category": "Action"
 }

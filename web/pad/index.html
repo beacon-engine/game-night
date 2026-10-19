@@ -6,72 +6,74 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0b1020">
+<meta name="theme-color" content="#07080b">
 <title>Game Night Pad</title>
+<link rel="icon" href="/brand/mark.svg">
+<link rel="stylesheet" href="/brand/brand.css">
 <style>
-  :root { --accent: #64748b; --me: #38bdf8; }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root { --accent: var(--volt); --me: var(--chalk); }
+  * { -webkit-tap-highlight-color: transparent; }
   html, body {
-    margin: 0; height: 100%; overflow: hidden; background: #0b1020; color: #e5e7eb;
-    font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
-    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
-    overscroll-behavior: none;
+    height: 100%; overflow: hidden;
+    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; overscroll-behavior: none;
   }
+
+  /* --- top bar: who you are, what you're playing ------------------------------------- */
   #bar {
-    position: fixed; top: 0; left: 0; right: 0; height: 44px; display: flex; align-items: center; gap: 10px;
+    position: fixed; top: 0; left: 0; right: 0; height: 48px; display: flex; align-items: center; gap: 12px; z-index: 2;
     padding: 0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));
-    background: linear-gradient(90deg, var(--accent), #0b1020 70%); font-weight: 700; z-index: 2;
+    background: var(--ink-1); border-bottom: 1px solid var(--line);
   }
-  #me { background: var(--me); color: #000; border-radius: 6px; padding: 3px 9px; font-size: 15px; }
-  #title { font-size: 15px; text-shadow: 0 1px 2px #000; }
-  #name { margin-left: auto; margin-right: 6px; font-size: 13px; opacity: .8; border: 1px solid #fff4; border-radius: 6px; padding: 4px 8px; }
-  #dot { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; }
-  #dot.on { background: #22c55e; }
-  #hint { position: fixed; top: 52px; left: 0; right: 0; text-align: center; font-size: 13px; opacity: .7; pointer-events: none; }
+  #bar::after { content: ''; position: absolute; left: 0; bottom: -1px; width: 120px; height: 2px; background: var(--accent); }
+  #dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); flex: none; }
+  #dot.on { background: var(--good); }
+  #me { background: var(--me); color: var(--ink-0); border-radius: var(--r-1); padding: 4px 8px; font: 700 13px/1 var(--font-ui); letter-spacing: .04em; }
+  #title { font: 700 20px/1 var(--font-display); text-transform: uppercase; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #name { margin-left: auto; height: 32px; }
+  #pause { height: 32px; width: 44px; padding: 0; letter-spacing: 0; }
+  #hint { position: fixed; top: 60px; left: 0; right: 0; text-align: center; pointer-events: none; }
 
-  #stick-zone { position: fixed; left: 0; top: 44px; bottom: 0; width: 50%; }
+  /* --- stick: floating, appears where the thumb lands -------------------------------- */
+  #stick-zone { position: fixed; left: 0; top: 48px; bottom: 0; width: 50%; }
   #stick-base, #stick-knob { position: absolute; border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); }
-  #stick-base { width: 150px; height: 150px; border: 3px solid #ffffff30; background: #ffffff0d; }
-  #stick-base.sprint { border-color: var(--me); box-shadow: 0 0 18px var(--me); }
-  #stick-knob { width: 70px; height: 70px; background: radial-gradient(circle at 35% 35%, #fff, #9ca3af); box-shadow: 0 4px 12px #000a; }
-  #stick-help { position: absolute; left: 50%; top: 55%; transform: translate(-50%, -50%); opacity: .35; font-size: 14px; text-align: center; pointer-events: none; }
+  #stick-base { width: 150px; height: 150px; border: 1px solid var(--line-strong); background: rgb(243 240 232 / .03); transition: border-color var(--t-fast) var(--ease); }
+  #stick-base::after { content: ''; position: absolute; inset: 24px; border-radius: 50%; border: 1px dashed var(--line); }
+  #stick-base.sprint { border: 2px solid var(--volt); }
+  #stick-knob { width: 64px; height: 64px; background: var(--chalk); }
+  #stick-help { position: absolute; left: 50%; top: 55%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; line-height: 1.8; }
 
-  /* PlayStation diamond: triangle top, circle right, cross bottom, square left */
+  /* --- buttons: the PlayStation diamond (triangle top, circle right, cross bottom, square left) and shoulders */
   #buttons { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: 14px; width: 282px; height: 270px; }
-  .btn {
-    position: absolute; width: 90px; height: 90px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: radial-gradient(circle at 40% 35%, #3a4258, #1b2030); border: 2px solid #ffffff1a;
-    box-shadow: 0 6px 0 #0008; transition: transform .05s;
+  .pb, .sh {
+    position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    background: var(--ink-1); border: 1px solid var(--line-strong);
+    transition: transform 60ms var(--ease), background var(--t-fast) var(--ease), opacity var(--t) var(--ease);
   }
-  .btn .sym { font-size: 40px; line-height: 1; font-family: system-ui, sans-serif; font-weight: 300; }
-  .btn .lbl { font-size: 10px; font-weight: 800; letter-spacing: .5px; color: #cbd5e1; margin-top: 3px; text-transform: uppercase; }
-  .btn.down { transform: translateY(4px) scale(.96); box-shadow: 0 2px 0 #0008; filter: brightness(1.5); }
-  /* buttons the game doesn't use right now */
-  .unused { opacity: .3; }
-  #bT { right: 96px; top: 0; }       #bT .sym { color: #4ade80; }
-  #bO { right: 0; top: 90px; }       #bO .sym { color: #f87171; }
-  #bX { right: 96px; top: 180px; }   #bX .sym { color: #60a5fa; }
-  #bS { right: 192px; top: 90px; }   #bS .sym { color: #f472b6; }
-  .shoulder { position: absolute; top: 4px; width: 86px; height: 44px; border-radius: 12px 12px 6px 6px; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; background: linear-gradient(#3a4258, #1b2030); border: 2px solid #ffffff1a; box-shadow: 0 5px 0 #0008; }
-  .shoulder .sym { font-size: 14px; font-weight: 800; color: #e2e8f0; line-height: 1; }
-  .shoulder .lbl { font-size: 10px; font-weight: 800; color: #94a3b8; margin-top: 2px; text-transform: uppercase; }
-  .shoulder.down { transform: translateY(3px); filter: brightness(1.5); box-shadow: 0 2px 0 #0008; }
+  .pb { width: 88px; height: 88px; border-radius: 50%; }
+  .pb .sym { font: 300 38px/1 var(--font-ui); color: var(--c); }
+  .sh { top: 4px; width: 88px; height: 44px; border-radius: var(--r-2); }
+  .sh .sym { font: 700 13px/1 var(--font-ui); letter-spacing: .06em; }
+  .lbl { font: 600 9px/1.1 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--chalk-2); max-width: 80px; text-align: center; }
+  .pb.down, .sh.down { transform: scale(.95); border-color: var(--c, var(--chalk)); background: color-mix(in srgb, var(--c, var(--chalk)) 22%, var(--ink-1)); }
+  .unused { opacity: .25; } /* buttons the game doesn't use right now */
+  #bT { right: 96px; top: 0; --c: var(--triangle); }
+  #bO { right: 0; top: 90px; --c: var(--circle); }
+  #bX { right: 96px; top: 180px; --c: var(--cross); }
+  #bS { right: 192px; top: 90px; --c: var(--square); }
   #bL1 { left: 0; } #bR1 { right: 0; }
-  #pause { border: 1px solid #fff4; border-radius: 6px; padding: 4px 12px; font-size: 14px; background: #ffffff14; }
 
-  #power { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: 292px; width: 282px; height: 10px; border-radius: 5px; background: #ffffff20; overflow: hidden; display: none; }
-  #power > div { height: 100%; width: 0; background: linear-gradient(90deg, #22c55e, #facc15, #ef4444); }
+  #power { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: 292px; width: 282px; height: 6px; border-radius: var(--r-1); background: var(--ink-2); border: 1px solid var(--line); overflow: hidden; display: none; }
+  #power > div { height: 100%; width: 0; background: var(--volt); }
 
-  #overlay {
-    position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-    background: #0b1020ee; z-index: 5; text-align: center; padding: 20px; font-size: 18px;
+  /* --- overlays -------------------------------------------------------------------------- */
+  #overlay, #rotate {
+    position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    background: var(--ink-0); z-index: 5; text-align: center; padding: 24px;
   }
-  #overlay small { opacity: .7; font-size: 14px; }
-  #rotate { display: none; }
-  @media (orientation: portrait) {
-    #rotate { display: flex; position: fixed; inset: 0; z-index: 6; background: #0b1020; align-items: center; justify-content: center; text-align: center; font-size: 20px; padding: 30px; }
-  }
+  #ov-text { font: 800 34px/1 var(--font-display); text-transform: uppercase; }
+  #ov-text small { display: block; margin-top: 10px; font: 500 15px/1.4 var(--font-ui); text-transform: none; color: var(--chalk-2); }
+  #rotate { display: none; z-index: 6; font: 800 30px/1.1 var(--font-display); text-transform: uppercase; }
+  @media (orientation: portrait) { #rotate { display: flex; } }
 </style>
 </head>
 <body>
@@ -79,32 +81,33 @@
     <div id="dot"></div>
     <div id="me">P?</div>
     <div id="title">Connecting…</div>
-    <div id="name">Set name</div>
-    <div id="pause">❚❚</div>
+    <button class="btn" id="name">Set name</button>
+    <button class="btn" id="pause" aria-label="Pause">❚❚</button>
   </div>
-  <div id="hint"></div>
+  <div id="hint" class="caption"></div>
 
   <div id="stick-zone">
-    <div id="stick-help">Touch &amp; drag here to move<br>pull past the ring to sprint</div>
+    <div id="stick-help" class="caption faint">Touch &amp; drag to move<br>past the ring to sprint</div>
     <div id="stick-base" hidden></div>
     <div id="stick-knob" hidden></div>
   </div>
 
   <div id="power"><div></div></div>
   <div id="buttons">
-    <div class="shoulder" id="bL1" data-button="l1"><span class="sym">L1</span><span class="lbl"></span></div>
-    <div class="shoulder" id="bR1" data-button="r1"><span class="sym">R1</span><span class="lbl"></span></div>
-    <div class="btn" id="bT" data-button="triangle"><span class="sym">△</span><span class="lbl"></span></div>
-    <div class="btn" id="bO" data-button="circle"><span class="sym">○</span><span class="lbl"></span></div>
-    <div class="btn" id="bX" data-button="cross"><span class="sym">✕</span><span class="lbl"></span></div>
-    <div class="btn" id="bS" data-button="square"><span class="sym">□</span><span class="lbl"></span></div>
+    <div class="sh" id="bL1" data-button="l1"><span class="sym">L1</span><span class="lbl"></span></div>
+    <div class="sh" id="bR1" data-button="r1"><span class="sym">R1</span><span class="lbl"></span></div>
+    <div class="pb" id="bT" data-button="triangle"><span class="sym">△</span><span class="lbl"></span></div>
+    <div class="pb" id="bO" data-button="circle"><span class="sym">○</span><span class="lbl"></span></div>
+    <div class="pb" id="bX" data-button="cross"><span class="sym">✕</span><span class="lbl"></span></div>
+    <div class="pb" id="bS" data-button="square"><span class="sym">□</span><span class="lbl"></span></div>
   </div>
 
-  <div id="overlay">
-    <div id="ov-text">Connecting to the game…</div>
-    <small>Tap to go full screen</small>
+  <div id="overlay" class="grid-bg">
+    <span class="mark"><i></i><i></i><i></i><i></i></span>
+    <div id="ov-text">Connecting…</div>
+    <span class="caption faint">Tap to go full screen</span>
   </div>
-  <div id="rotate">⟳ Turn your phone sideways</div>
+  <div id="rotate" class="grid-bg"><span class="mark"><i></i><i></i><i></i><i></i></span>Turn your phone sideways</div>
 
 <script type="module" src="main.js"></script>
 </body>

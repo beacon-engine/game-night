@@ -17,6 +17,7 @@ func TestDiscover(t *testing.T) {
 	files := fstest.MapFS{
 		"games/football/game.json":  {Data: []byte(`{"name":"Football","icon":"⚽","order":1}`)},
 		"games/football/index.html": {Data: []byte(`<html>`)},
+		"games/football/icon.svg":   {Data: []byte(`<svg/>`)},
 		"games/pool/game.json":      {Data: []byte(`{"name":"Pool","order":2}`)}, // no index.html yet
 		"games/broken/game.json":    {Data: []byte(`{not json`)},                 // skipped
 		"games/notes/readme.txt":    {Data: []byte(`not a game`)},                // no game.json
@@ -35,7 +36,7 @@ func TestDiscover(t *testing.T) {
 	if strings.Join(statuses, ",") != "ready,soon,ready" {
 		t.Fatalf("statuses = %v", statuses)
 	}
-	if got[2].Icon != "🎮" || got[0].URL != "/games/football/" {
+	if got[2].Icon != "🎮" || got[0].URL != "/games/football/" || got[0].IconURL != "/games/football/icon.svg" || got[1].IconURL != "" {
 		t.Fatalf("defaults: %+v", got)
 	}
 }

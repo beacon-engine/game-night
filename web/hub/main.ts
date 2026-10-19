@@ -1,7 +1,10 @@
-// Game select: every folder in games/ with a game.json shows up here (see README, "Adding a game").
-import { $, BIT, escapeHtml, hostInfo, Input, listGames, type GameInfo } from '@platform';
+// Game select: every folder in games/ with a game.json shows up here (see web/games/README.md).
+import { $, BIT, chip, escapeHtml, glyph, hostInfo, Input, key, listGames, type GameInfo } from '@platform';
 
-const games: GameInfo[] = await listGames();
+const all: GameInfo[] = await listGames();
+// grouped by category, in the order they first appear (games come sorted by their "order")
+const categories = [...new Set(all.map((g) => g.category))];
+const games = categories.flatMap((c) => all.filter((g) => g.category === c));
 let sel = Math.max(0, games.findIndex((g) => g.id === remembered()));
 let leaving = false;
 
@@ -9,69 +12,108 @@ let leaving = false;
 const input = new Input({ keyboard: false });
 input.onJoin = input.onLeave = input.onRename = renderPlayers;
 
-function render() {
-  $('games').innerHTML = games.map((g, i) => `
-    <button class="game ${g.status} ${i === sel ? 'sel' : ''}" data-i="${i}">
-      <div class="gicon">${escapeHtml(g.icon)}</div><div class="gname">${escapeHtml(g.name)}</div>
-      <div class="gtag">${escapeHtml(g.tagline)}</div>
-      ${g.players ? `<div class="gplayers">${escapeHtml(g.players)} players</div>` : ''}
-      ${g.status === 'soon' ? '<div class="gsoon">COMING SOON</div>' : ''}
-    </button>`).join('');
-  for (const el of $('games').children as HTMLCollectionOf<HTMLElement>) {
+// --- the library ------------------------------------------------------------------------
+function renderLibrary() {
+  $('library').innerHTML = categories.map((cat) => `
+    <section class="section">
+      <header><span class="eyebrow">${escapeHtml(cat)}</span><hr class="rule"><span class="caption faint">${games.filter((g) => g.category === cat).length}</span></header>
+      <div class="tiles">${games.map((g, i) => (g.category === cat ? tile(g, i) : '')).join('')}</div>
+    </section>`).join('');
+  for (const el of document.querySelectorAll<HTMLElement>('.tile')) {
     const i = Number(el.dataset.i);
-    el.addEventListener('click', () => { sel = i; play(); });
-    el.addEventListener('mouseenter', () => { if (sel !== i) { sel = i; render(); } });
+    el.addEventListener('click', () => { select(i); play(); });
+    el.addEventListener('mouseenter', () => select(i));
   }
 }
 
-// keep the selected card on screen when the stick moves past the fold
-const reveal = () => $('games').children[sel]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+function tile(g: GameInfo, i: number) {
+  const icon = g.iconUrl
+    ? `<span class="icon" style="--icon:url('${g.iconUrl}')"></span>`
+    : `<span class="emoji">${escapeHtml(g.icon)}</span>`;
+  return `<button class="tile frame ${g.status}" data-i="${i}">
+      <span class="top">${icon}<span class="caption faint num">${String(i + 1).padStart(2, '0')}</span></span>
+      <span><span class="name">${escapeHtml(g.name)}</span>${g.status === 'soon' ? '<div class="caption faint">Soon</div>' : ''}</span>
+    </button>`;
+}
+
+// --- the feature (what's selected) ----------------------------------------------------------
+function select(i: number, scroll = false) {
+  if (i === sel && document.querySelector('.tile.sel')) return;
+  sel = i;
+  for (const el of document.querySelectorAll('.tile')) el.classList.toggle('sel', Number((el as HTMLElement).dataset.i) === i);
+  const g = games[i];
+  if (!g) return;
+  const ready = g.status === 'ready';
+  $('fIcon').style.setProperty('--icon', g.iconUrl ? `url('${g.iconUrl}')` : 'none');
+  $('fIcon').classList.toggle('soon', !ready);
+  $('fTitle').textContent = g.name;
+  $('fTitle').classList.toggle('soon', !ready);
+  $('fTagline').textContent = g.tagline;
+  $('fPlayers').textContent = `${g.players} players`;
+  $('fStatus').textContent = ready ? 'Ready to play' : 'Coming soon';
+  $('fStatus').classList.toggle('tag-volt', ready);
+  const btn = $<HTMLButtonElement>('play');
+  btn.disabled = !ready;
+  btn.innerHTML = ready ? `${glyph('cross')} Play` : 'Coming soon';
+  if (scroll) document.querySelector('.tile.sel')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
 
 function renderPlayers() {
   const pads = input.list;
-  $('players').innerHTML = pads.length
-    ? pads.map((c) => `<span style="background:${c.color}">${c.tag} ${escapeHtml(c.label)}</span>`).join('')
-    : '<em>No pads connected yet</em>';
+  $('players').innerHTML = pads.length ? pads.map(chip).join('') : '<em>No one has joined yet</em>';
 }
 
 let bannerTimer = 0;
 function banner(text: string) {
-  $('banner').firstElementChild!.textContent = text;
+  $('banner').textContent = text;
   $('banner').classList.add('show');
   clearTimeout(bannerTimer);
-  bannerTimer = setTimeout(() => $('banner').classList.remove('show'), 1200);
+  bannerTimer = setTimeout(() => $('banner').classList.remove('show'), 1400);
 }
 
 function play() {
   const g = games[sel];
   if (!g || leaving) return;
-  render();
-  if (g.status !== 'ready') return banner(`${g.name.toUpperCase()}: coming soon`);
+  if (g.status !== 'ready') return banner(`${g.name} is coming soon`);
   leaving = true;
   remember(g.id);
-  $('games').children[sel].classList.add('go');
-  setTimeout(() => { location.href = g.url; }, 300);
+  document.body.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease-in', fill: 'forwards' });
+  setTimeout(() => { location.href = g.url; }, 220);
 }
 
-// Move the selection like a d-pad over the wrapped grid of cards
+// Move like a d-pad, by where the tiles are on screen: sideways within a row, up and down
+// to the nearest tile in the next row (across sections too)
 function move(dx: number, dy: number) {
-  if (!games.length) return;
-  let i = sel + dx;
-  if (dy) {
-    const cards = [...$('games').children] as HTMLElement[];
-    const perRow = cards.filter((c) => c.offsetTop === cards[sel].offsetTop).length || 1;
-    i = sel + dy * perRow;
-    if (i < 0 || i >= games.length) return;
+  const tiles = [...document.querySelectorAll<HTMLElement>('.tile')];
+  const box = (el: HTMLElement) => el.getBoundingClientRect();
+  const cur = box(tiles[sel]);
+  if (dx) {
+    const next = sel + dx;
+    if (next >= 0 && next < tiles.length) select(next, true);
+    return;
   }
-  sel = (i + games.length) % games.length;
-  render();
-  reveal();
+  const cx = cur.left + cur.width / 2;
+  let best = -1, bestScore = Infinity;
+  tiles.forEach((el, i) => {
+    const b = box(el);
+    const ahead = dy > 0 ? b.top - cur.bottom : cur.top - b.bottom;
+    if (ahead < -1) return; // not in that direction
+    const score = ahead * 4 + Math.abs(b.left + b.width / 2 - cx);
+    if (score < bestScore) { bestScore = score; best = i; }
+  });
+  if (best >= 0) select(best, true);
 }
 
+// --- phones -------------------------------------------------------------------------------
 function syncPads() {
-  const hint = games[sel] ? `${games[sel].name}: stick picks a game` : '';
+  const g = games[sel];
+  const ready = g?.status === 'ready';
   for (const c of input.list) {
-    input.show(c, { label: c.tag, color: c.color, title: 'Game Night', accent: '#1d4ed8', hint, labels: { cross: 'Play' } });
+    input.show(c, {
+      label: c.tag, color: c.color, title: 'Game Night', accent: '#d7ff3b',
+      hint: g ? `${g.name}${ready ? '' : ' (coming soon)'}` : '',
+      labels: ready ? { cross: 'Play' } : {},
+    });
   }
 }
 
@@ -93,6 +135,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); play(); }
   else if (KEYS[e.code]) { e.preventDefault(); move(...KEYS[e.code]); }
 });
+$('play').addEventListener('click', play);
 
 // the last game played starts selected (per browser; fine if storage is unavailable)
 function remembered() {
@@ -102,11 +145,17 @@ function remember(id: string) {
   try { localStorage.setItem('lastGame', id); } catch { /* private mode */ }
 }
 
+$('legend').innerHTML = [
+  `<span>${glyph('stick')} Choose</span>`,
+  `<span>${glyph('cross')} Play</span>`,
+  `<span>${key('←')}${key('→')}${key('↑')}${key('↓')} ${key('Enter')} Keyboard</span>`,
+].join('');
 hostInfo().then((info) => {
   $('url').textContent = info.padUrl;
   $('qr').innerHTML = info.qr;
   $('version').textContent = `game-night ${info.version}`;
 });
-render();
+renderLibrary();
+select(sel, true);
 renderPlayers();
 requestAnimationFrame(tick);
