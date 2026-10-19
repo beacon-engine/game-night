@@ -17,17 +17,17 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 ### Added
 - Games can have an `icon.svg` and a `category` in `game.json`.
 - Plans for 12 more games: Superbikes (motorbike grand prix), Grand Prix (open-wheel), Stock Cars (ovals),
-  Kart Rush, and an Arcade category: Space Raiders, Brick Breaker, Snake Battle, Light Cycles, Maze Chase,
-  Asteroid Storm, Pinball, Road Hopper. Racing is now its own category (with Danfo Rush).
+  Go-Karts, and an Arcade category: Space Shooter, Bricks, Snake Battle, Neon Trails, Cat and Mouse,
+  Space Rocks, Pinball, Road Hopper. Racing is now its own category.
 - A shared plan for competitions in every game (`web/games/COMPETITIONS.md`): leagues, cups, groups,
   race weekends with qualifying, championships with points tables, playoffs, title fights and careers,
   ladders, arcade high scores, and a Game Night Cup across games. Each game's README says which it uses.
 
 ### Added (games)
-- **Light Cycles**, the second playable game: 1–8 riders on phones or keyboards, computer riders to fill in,
+- **Neon Trails**, the second playable game: 1–8 riders on phones or keyboards, computer riders to fill in,
   first to 3, 5 or 7 rounds, walls that close in so rounds don't drag, a demo round behind the lobby.
 - **Saved progress** for every game (`gameSaves()`): kept as files on the machine running Game Night
-  (`<your folder>/saves/`), so it's there next time. Light Cycles keeps each player's record, by phone.
+  (`<your folder>/saves/`), so it's there next time. Neon Trails keeps each player's record, by phone.
 - **How to play**: every playable game has a manual (`manual.json`), opened with △ on the game select page
   and in the lobby. The controls in it come from the game's `controls.json`.
 - The game select page lists the games you can play right now first, under "Ready to play".
@@ -56,7 +56,7 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 - A slow old connection being replaced could pause everyone's input for a few seconds.
 
 ### Removed
-- The generic "Racing" plan, replaced by the three motorsport games and Kart Rush.
+- The generic "Racing" plan, replaced by the three motorsport games and Go-Karts.
 - The original art packs for football (Quaternius characters and animations) are now in the repo, in
   `web/games/football/source/`. Each game keeps its source art in its own `source/` folder; it's never shipped.
 
@@ -70,7 +70,7 @@ First release.
 - Game select page, driven by phone, keyboard or mouse. Every folder in `games/` with a `game.json` is listed.
 - The phone pad: stick, ✕ ○ □ △, L1, R1 and swipes, the same in every game. Buttons a game isn't using are
   dimmed. Players keep their number and colour across games and reconnects.
-- Football: PS2-style 3D football, 1–8 players, with fouls, cards, set pieces, substitutions, stamina,
+- Football: 11-a-side 3D football, 1–8 players, with fouls, cards, set pieces, substitutions, stamina,
   day and night, four cameras, and remappable controls.
 - An optional user folder to replace built-in files (clubs, settings, controls) or add games without rebuilding.
 - Plans for 23 more games, each with a README: basketball, baseball, cricket, long tennis, table tennis,

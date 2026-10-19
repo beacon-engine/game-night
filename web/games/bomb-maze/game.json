@@ -1,0 +1,10 @@
+{
+  "name": "Bomb Maze",
+  "icon": "💣",
+  "tagline": "Drop bombs, blow walls, last one standing",
+  "players": "2–8",
+  "category": "Action",
+  "needs": "light",
+  "order": 64,
+  "status": "soon"
+}

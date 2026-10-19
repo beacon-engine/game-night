@@ -2,7 +2,7 @@
 
 Platform fighter: knock them off the roof · 2–4 players · Action · **coming soon**
 
-Smash-style: the more damage you take the further you fly. Knock everyone off the rooftops.
+A platform fighter: the more damage you take the further you fly. Knock everyone off the rooftops.
 
 ## Controls (a first plan)
 
@@ -27,6 +27,10 @@ Stock matches; tournaments double-elimination; ranked rating.
 
 The formats (and how standings, brackets and seasons work in every game) are in
 [COMPETITIONS.md](../COMPETITIONS.md).
+
+## Originality
+
+Platform fighters are a genre; nothing from Super Smash Bros. (characters, damage display, stages, items). See [Originality](../README.md#originality).
 
 ## First playable
 

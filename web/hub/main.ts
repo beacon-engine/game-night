@@ -40,7 +40,7 @@ function tile(g: GameInfo, i: number) {
   const icon = g.iconUrl
     ? `<span class="icon" style="--icon:url('${g.iconUrl}')"></span>`
     : `<span class="emoji">${escapeHtml(g.icon)}</span>`;
-  const note = tooHeavy(g) ? `Not on ${here}` : g.status === 'soon' ? 'Soon' : '';
+  const note = tooHeavy(g) ? `Not on ${here}` : g.status === 'soon' ? 'Soon' : g.inProgress ? 'In progress' : '';
   return `<button class="tile frame ${g.status} ${tooHeavy(g) ? 'unsupported' : ''}" data-i="${i}">
       <span class="top">${icon}<span class="caption faint num">${String(i + 1).padStart(2, '0')}</span></span>
       <span><span class="name">${escapeHtml(g.name)}</span>${note ? `<div class="caption faint">${note}</div>` : ''}</span>
@@ -63,7 +63,9 @@ function select(i: number, scroll = false) {
   $('fPlayers').textContent = `${g.players} players`;
   $('fStatus').textContent = ready ? 'Ready to play' : tooHeavy(g) ? `Not on ${here}` : 'Coming soon';
   $('fStatus').classList.toggle('tag-volt', ready);
-  $('fWhy').textContent = tooHeavy(g) ? `${cap(here)} isn't powerful enough for ${g.name}. Play it on a laptop, or pick another game.` : '';
+  $('fProgress').classList.toggle('hidden', !(ready && g.inProgress));
+  $('fWhy').textContent = tooHeavy(g) ? `${cap(here)} isn't powerful enough for ${g.name}. Play it on a laptop, or pick another game.`
+    : ready && g.inProgress ? `${g.name} is playable, but still being worked on. Expect rough edges.` : '';
   const btn = $<HTMLButtonElement>('play');
   btn.disabled = !ready;
   btn.innerHTML = ready ? `${glyph('cross')} Play` : tooHeavy(g) ? 'Not available' : 'Coming soon';

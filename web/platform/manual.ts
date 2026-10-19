@@ -29,7 +29,7 @@ type ControlsFile = Record<string, Record<string, string>> & { labels?: Record<s
 const getJson = <T>(url: string) =>
   fetch(url, { cache: 'no-store' }).then((r) => (r.ok ? (r.json() as Promise<T>) : null)).catch(() => null);
 
-// gameUrl: the game's folder ('/games/light-cycles/'), or '' for the page's own folder
+// gameUrl: the game's folder ('/games/neon-trails/'), or '' for the page's own folder
 export async function loadManual(gameUrl = '') {
   const [manual, controls] = await Promise.all([getJson<Manual>(`${gameUrl}manual.json`), getJson<ControlsFile>(`${gameUrl}controls.json`)]);
   return manual && { manual, controls };

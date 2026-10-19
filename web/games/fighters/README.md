@@ -30,6 +30,10 @@ Arcade: beat the AI cast in order to the final boss. Tournament: double-eliminat
 The formats (and how standings, brackets and seasons work in every game) are in
 [COMPETITIONS.md](../COMPETITIONS.md).
 
+## Originality
+
+Fighting games are a genre; no characters, moves, stages or names from Street Fighter, Tekken or others. See [Originality](../README.md#originality).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:

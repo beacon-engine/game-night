@@ -12,6 +12,7 @@ export interface GameInfo {
   needs: import('./device.ts').Tier; // how much device it takes (game.json "needs")
   status: 'ready' | 'soon';
   manual: boolean; // has a manual.json: offer "How to play"
+  inProgress: boolean; // playable, but still being worked on (game.json "inProgress")
   url: string;
 }
 

@@ -1,0 +1,10 @@
+{
+  "name": "Cat and Mouse",
+  "icon": "🧀",
+  "tagline": "Grab the cheese; one of you is the cat",
+  "players": "2–5",
+  "category": "Arcade",
+  "needs": "light",
+  "order": 84,
+  "status": "soon"
+}

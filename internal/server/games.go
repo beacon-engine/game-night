@@ -21,20 +21,23 @@ type Game struct {
 	Needs    string `json:"needs"`    // how much device it takes: "light", "standard" or "heavy" (see web/platform/device.ts)
 	Status   string `json:"status"`   // "ready", or "soon" when it has no index.html yet
 	Manual   bool   `json:"manual"`   // it has a manual.json ("How to play")
-	URL      string `json:"url"`
-	Order    int    `json:"-"`
+	// playable, but still being worked on: shown with an "In progress" badge
+	InProgress bool   `json:"inProgress"`
+	URL        string `json:"url"`
+	Order      int    `json:"-"`
 }
 
 // manifest is a game's game.json
 type manifest struct {
-	Name     string `json:"name"`
-	Icon     string `json:"icon"`
-	Tagline  string `json:"tagline"`
-	Players  string `json:"players"`
-	Category string `json:"category"`
-	Needs    string `json:"needs"`
-	Status   string `json:"status"`
-	Order    int    `json:"order"`
+	Name       string `json:"name"`
+	Icon       string `json:"icon"`
+	Tagline    string `json:"tagline"`
+	Players    string `json:"players"`
+	Category   string `json:"category"`
+	Needs      string `json:"needs"`
+	Status     string `json:"status"`
+	InProgress bool   `json:"inProgress"`
+	Order      int    `json:"order"`
 }
 
 // Discover lists the games in files, sorted by their "order" then name. A folder with a broken
@@ -59,7 +62,7 @@ func Discover(files fs.FS) []Game {
 			log.Printf("[games] skipping %s: game.json: %v", id, err)
 			continue
 		}
-		g := Game{ID: id, Name: m.Name, Icon: m.Icon, Tagline: m.Tagline, Players: m.Players, Category: m.Category, Needs: m.Needs,
+		g := Game{ID: id, Name: m.Name, Icon: m.Icon, Tagline: m.Tagline, Players: m.Players, Category: m.Category, Needs: m.Needs, InProgress: m.InProgress,
 			Status: "soon", URL: "/games/" + id + "/", Order: m.Order}
 		if g.Category == "" {
 			g.Category = "Other"
