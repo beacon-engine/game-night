@@ -1,0 +1,4 @@
+node_modules/
+.DS_Store
+# original asset downloads (zips + extracted); the game only uses the copies in public/
+assets/

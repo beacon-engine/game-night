@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b1020">
+<title>Futbol Pad</title>
+<style>
+  :root { --team: #64748b; --me: #38bdf8; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden; background: #0b1020; color: #e5e7eb;
+    font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+    overscroll-behavior: none;
+  }
+  #bar {
+    position: fixed; top: 0; left: 0; right: 0; height: 44px; display: flex; align-items: center; gap: 10px;
+    padding: 0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));
+    background: linear-gradient(90deg, var(--team), #0b1020 70%); font-weight: 700; z-index: 2;
+  }
+  #me { background: var(--me); color: #000; border-radius: 6px; padding: 3px 9px; font-size: 15px; }
+  #club { font-size: 15px; text-shadow: 0 1px 2px #000; }
+  #name { margin-left: auto; margin-right: 6px; font-size: 13px; opacity: .8; border: 1px solid #fff4; border-radius: 6px; padding: 4px 8px; }
+  #dot { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; }
+  #dot.on { background: #22c55e; }
+  #hint { position: fixed; top: 52px; left: 0; right: 0; text-align: center; font-size: 13px; opacity: .7; pointer-events: none; }
+
+  #stick-zone { position: fixed; left: 0; top: 44px; bottom: 0; width: 50%; }
+  #stick-base, #stick-knob { position: absolute; border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); }
+  #stick-base { width: 150px; height: 150px; border: 3px solid #ffffff30; background: #ffffff0d; }
+  #stick-base.sprint { border-color: var(--me); box-shadow: 0 0 18px var(--me); }
+  #stick-knob { width: 70px; height: 70px; background: radial-gradient(circle at 35% 35%, #fff, #9ca3af); box-shadow: 0 4px 12px #000a; }
+  #stick-help { position: absolute; left: 50%; top: 55%; transform: translate(-50%, -50%); opacity: .35; font-size: 14px; text-align: center; pointer-events: none; }
+
+  /* PlayStation diamond: triangle top, circle right, cross bottom, square left */
+  #buttons { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: 14px; width: 282px; height: 270px; }
+  .btn {
+    position: absolute; width: 90px; height: 90px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 40% 35%, #3a4258, #1b2030); border: 2px solid #ffffff1a;
+    box-shadow: 0 6px 0 #0008; transition: transform .05s;
+  }
+  .btn .sym { font-size: 40px; line-height: 1; font-family: system-ui, sans-serif; font-weight: 300; }
+  .btn .lbl { font-size: 10px; font-weight: 800; letter-spacing: .5px; color: #cbd5e1; margin-top: 3px; text-transform: uppercase; }
+  .btn.down { transform: translateY(4px) scale(.96); box-shadow: 0 2px 0 #0008; filter: brightness(1.5); }
+  #bT { right: 96px; top: 0; }       #bT .sym { color: #4ade80; }
+  #bO { right: 0; top: 90px; }       #bO .sym { color: #f87171; }
+  #bX { right: 96px; top: 180px; }   #bX .sym { color: #60a5fa; }
+  #bS { right: 192px; top: 90px; }   #bS .sym { color: #f472b6; }
+  .shoulder { position: absolute; top: 4px; width: 86px; height: 44px; border-radius: 12px 12px 6px 6px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; background: linear-gradient(#3a4258, #1b2030); border: 2px solid #ffffff1a; box-shadow: 0 5px 0 #0008; }
+  .shoulder .sym { font-size: 14px; font-weight: 800; color: #e2e8f0; line-height: 1; }
+  .shoulder .lbl { font-size: 10px; font-weight: 800; color: #94a3b8; margin-top: 2px; text-transform: uppercase; }
+  .shoulder.down { transform: translateY(3px); filter: brightness(1.5); box-shadow: 0 2px 0 #0008; }
+  #bL1 { left: 0; } #bR1 { right: 0; }
+  #pause { border: 1px solid #fff4; border-radius: 6px; padding: 4px 12px; font-size: 14px; background: #ffffff14; }
+
+  #power { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: 292px; width: 282px; height: 10px; border-radius: 5px; background: #ffffff20; overflow: hidden; display: none; }
+  #power > div { height: 100%; width: 0; background: linear-gradient(90deg, #22c55e, #facc15, #ef4444); }
+
+  #overlay {
+    position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    background: #0b1020ee; z-index: 5; text-align: center; padding: 20px; font-size: 18px;
+  }
+  #overlay small { opacity: .7; font-size: 14px; }
+  #rotate { display: none; }
+  @media (orientation: portrait) {
+    #rotate { display: flex; position: fixed; inset: 0; z-index: 6; background: #0b1020; align-items: center; justify-content: center; text-align: center; font-size: 20px; padding: 30px; }
+  }
+</style>
+</head>
+<body>
+  <div id="bar">
+    <div id="dot"></div>
+    <div id="me">P?</div>
+    <div id="club">Connecting…</div>
+    <div id="name">Set name</div>
+    <div id="pause">❚❚</div>
+  </div>
+  <div id="hint"></div>
+
+  <div id="stick-zone">
+    <div id="stick-help">Touch &amp; drag here to move<br>pull past the ring to sprint</div>
+    <div id="stick-base" hidden></div>
+    <div id="stick-knob" hidden></div>
+  </div>
+
+  <div id="power"><div></div></div>
+  <div id="buttons">
+    <div class="shoulder" id="bL1" data-bit="32"><span class="sym">L1</span><span class="lbl">Step-over</span></div>
+    <div class="shoulder" id="bR1" data-bit="64"><span class="sym">R1</span><span class="lbl">Drag-back</span></div>
+    <div class="btn" id="bT" data-bit="8"><span class="sym">△</span><span class="lbl">Through</span></div>
+    <div class="btn" id="bO" data-bit="2"><span class="sym">○</span><span class="lbl">Long pass</span></div>
+    <div class="btn" id="bX" data-bit="1"><span class="sym">✕</span><span class="lbl">Pass</span></div>
+    <div class="btn" id="bS" data-bit="4"><span class="sym">□</span><span class="lbl">Shoot</span></div>
+  </div>
+
+  <div id="overlay">
+    <div id="ov-text">Connecting to the game…</div>
+    <small>Tap to go full screen</small>
+  </div>
+  <div id="rotate">⟳ Turn your phone sideways</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const STICK_R = 60;
+
+  let id = null, name = '';
+  try { id = localStorage.getItem('futbol.id'); name = localStorage.getItem('futbol.name') || ''; } catch {}
+  if (name) $('name').textContent = name;
+
+  const state = { x: 0, y: 0, b: 0 };
+  let buttons = 0, sprintStick = false;
+  let ws = null, displayOn = false, lastSent = '';
+
+  // --- Connection ----------------------------------------------------------
+  function connect() {
+    ws = new WebSocket(`ws://${location.host}/ws`);
+    ws.onopen = () => ws.send(JSON.stringify({ t: 'hello', role: 'pad', id, name }));
+    ws.onmessage = (ev) => {
+      const m = JSON.parse(ev.data);
+      if (m.t === 'welcome') {
+        id = m.id;
+        try { localStorage.setItem('futbol.id', id); } catch {}
+        setDisplay(m.display);
+        $('dot').classList.add('on');
+        lastSent = '';
+        flush();
+      } else if (m.t === 'display') {
+        setDisplay(m.on);
+      } else if (m.t === 'pad') {
+        applyPad(m);
+      } else if (m.t === 'buzz') {
+        navigator.vibrate?.(m.ms || 40);
+      }
+    };
+    ws.onclose = () => {
+      $('dot').classList.remove('on');
+      showOverlay('Lost connection — retrying…');
+      setTimeout(connect, 1000);
+    };
+  }
+
+  function setDisplay(on) {
+    displayOn = on;
+    if (on) hideOverlay(); else showOverlay('Waiting for the game screen…<br><small>Open the game on the laptop</small>');
+  }
+  function showOverlay(html) { $('ov-text').innerHTML = html; $('overlay').style.display = 'flex'; }
+  function hideOverlay() { $('overlay').style.display = 'none'; }
+
+  function applyPad(m) {
+    document.documentElement.style.setProperty('--team', m.clubColor || '#64748b');
+    document.documentElement.style.setProperty('--me', m.color || '#38bdf8');
+    $('me').textContent = m.label || 'P?';
+    $('club').textContent = m.club || '';
+    $('hint').textContent = m.hint || '';
+    if (m.labels) {
+      for (const [id, k] of [['bX', 'cross'], ['bO', 'circle'], ['bS', 'square'], ['bT', 'triangle'], ['bL1', 'l1'], ['bR1', 'r1']]) {
+        $(id).querySelector('.lbl').textContent = m.labels[k] || '';
+      }
+    }
+    $('power').style.display = m.charge >= 0 ? 'block' : 'none';
+    $('power').firstElementChild.style.width = `${Math.max(0, Math.min(1, m.charge)) * 100}%`;
+  }
+
+  function flush() {
+    state.b = buttons | (sprintStick ? 16 : 0);
+    const msg = JSON.stringify({ t: 'in', x: +state.x.toFixed(3), y: +state.y.toFixed(3), b: state.b });
+    if (msg === lastSent || !ws || ws.readyState !== 1) return;
+    lastSent = msg;
+    ws.send(msg);
+  }
+
+  // --- Joystick (floating: appears where the thumb lands) ------------------
+  const zone = $('stick-zone'), base = $('stick-base'), knob = $('stick-knob');
+  let stickId = null, ox = 0, oy = 0;
+
+  zone.addEventListener('pointerdown', (e) => {
+    if (stickId !== null) return;
+    stickId = e.pointerId;
+    zone.setPointerCapture(e.pointerId);
+    const r = zone.getBoundingClientRect();
+    ox = e.clientX - r.left; oy = e.clientY - r.top;
+    for (const el of [base, knob]) { el.hidden = false; el.style.left = ox + 'px'; el.style.top = oy + 'px'; }
+    $('stick-help').hidden = true;
+  });
+  zone.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== stickId) return;
+    const r = zone.getBoundingClientRect();
+    let dx = e.clientX - r.left - ox, dy = e.clientY - r.top - oy;
+    const d = Math.hypot(dx, dy);
+    sprintStick = d > STICK_R * 1.25;
+    if (d > STICK_R) { dx *= STICK_R / d; dy *= STICK_R / d; }
+    knob.style.left = ox + dx + 'px'; knob.style.top = oy + dy + 'px';
+    base.classList.toggle('sprint', sprintStick);
+    state.x = dx / STICK_R; state.y = -dy / STICK_R; // y up = positive
+    flush();
+  });
+  const endStick = (e) => {
+    if (e.pointerId !== stickId) return;
+    stickId = null; sprintStick = false;
+    base.hidden = knob.hidden = true; base.classList.remove('sprint');
+    state.x = state.y = 0;
+    flush();
+  };
+  zone.addEventListener('pointerup', endStick);
+  zone.addEventListener('pointercancel', endStick);
+
+  // --- Buttons --------------------------------------------------------------
+  for (const el of document.querySelectorAll('.btn, .shoulder')) {
+    const bit = Number(el.dataset.bit);
+    let sx = 0, sy = 0;
+    el.addEventListener('pointerdown', (e) => {
+      el.setPointerCapture(e.pointerId);
+      el.classList.add('down');
+      sx = e.clientX; sy = e.clientY;
+      buttons |= bit;
+      navigator.vibrate?.(12);
+      flush();
+    });
+    // a swipe across a face button = its swipe variant (e.g. △ swipe = lofted through ball)
+    if (el.classList.contains('btn')) el.addEventListener('pointermove', (e) => {
+      if (!(buttons & bit) || (buttons & 128)) return;
+      if (Math.hypot(e.clientX - sx, e.clientY - sy) > 28) { buttons |= 128; navigator.vibrate?.(20); flush(); }
+    });
+    const up = () => { el.classList.remove('down'); buttons &= ~bit; if (!(buttons & 15)) buttons &= ~128; flush(); };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+  }
+
+  // --- Misc -----------------------------------------------------------------
+  $('name').addEventListener('click', () => {
+    const n = prompt('Your name', name);
+    if (n === null) return;
+    name = n.trim().slice(0, 12);
+    $('name').textContent = name || 'Set name';
+    try { localStorage.setItem('futbol.name', name); } catch {}
+    ws?.readyState === 1 && ws.send(JSON.stringify({ t: 'name', name }));
+  });
+
+  $('pause').addEventListener('click', () => {
+    navigator.vibrate?.(20);
+    ws?.readyState === 1 && ws.send(JSON.stringify({ t: 'pause' }));
+  });
+
+  $('overlay').addEventListener('click', () => {
+    document.documentElement.requestFullscreen?.().catch(() => {});
+    screen.orientation?.lock?.('landscape').catch(() => {});
+    if (displayOn) hideOverlay();
+  });
+
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  // Resend state periodically so a dropped packet never leaves a key "stuck"
+  setInterval(() => { lastSent = ''; flush(); }, 500);
+
+  connect();
+})();
+</script>
+</body>
+</html>

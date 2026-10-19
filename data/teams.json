@@ -1,0 +1,1605 @@
+[
+ {
+  "name": "Lagos Lions",
+  "short": "LAG",
+  "kit": {
+   "shirt": "#1f9d55",
+   "shorts": "#ffffff",
+   "socks": "#1f9d55",
+   "number": "#ffffff",
+   "trim": "#ffffff",
+   "pattern": "plain"
+  },
+  "gk": {
+   "shirt": "#f59e0b",
+   "shorts": "#111111",
+   "socks": "#f59e0b",
+   "number": "#111111",
+   "trim": "#111111",
+   "pattern": "plain"
+  },
+  "players": [
+   {
+    "name": "Okafor",
+    "number": 1,
+    "pos": "GK",
+    "pace": 56,
+    "passing": 64,
+    "shooting": 32,
+    "tackling": 40,
+    "dribbling": 40,
+    "keeping": 80,
+    "stamina": 57
+   },
+   {
+    "name": "Balogun",
+    "number": 2,
+    "pos": "DEF",
+    "pace": 79,
+    "passing": 69,
+    "shooting": 54,
+    "tackling": 83,
+    "dribbling": 61,
+    "stamina": 81
+   },
+   {
+    "name": "Adeyemi",
+    "number": 5,
+    "pos": "DEF",
+    "pace": 75,
+    "passing": 62,
+    "shooting": 54,
+    "tackling": 84,
+    "dribbling": 61,
+    "stamina": 84
+   },
+   {
+    "name": "Lawal",
+    "number": 4,
+    "pos": "DEF",
+    "pace": 68,
+    "passing": 62,
+    "shooting": 46,
+    "tackling": 81,
+    "dribbling": 61,
+    "stamina": 76
+   },
+   {
+    "name": "Nwosu",
+    "number": 3,
+    "pos": "DEF",
+    "pace": 75,
+    "passing": 70,
+    "shooting": 47,
+    "tackling": 84,
+    "dribbling": 61,
+    "stamina": 71
+   },
+   {
+    "name": "Eze",
+    "number": 7,
+    "pos": "MID",
+    "pace": 78,
+    "passing": 90,
+    "shooting": 74,
+    "tackling": 71,
+    "dribbling": 80,
+    "stamina": 78
+   },
+   {
+    "name": "Ogunleye",
+    "number": 8,
+    "pos": "MID",
+    "pace": 78,
+    "passing": 82,
+    "shooting": 71,
+    "tackling": 68,
+    "dribbling": 83,
+    "stamina": 81
+   },
+   {
+    "name": "Afolabi",
+    "number": 6,
+    "pos": "MID",
+    "pace": 79,
+    "passing": 80,
+    "shooting": 69,
+    "tackling": 71,
+    "dribbling": 79,
+    "stamina": 85
+   },
+   {
+    "name": "Okonkwo",
+    "number": 11,
+    "pos": "MID",
+    "pace": 82,
+    "passing": 85,
+    "shooting": 65,
+    "tackling": 65,
+    "dribbling": 86,
+    "stamina": 72
+   },
+   {
+    "name": "Olatunji",
+    "number": 9,
+    "pos": "FWD",
+    "pace": 81,
+    "passing": 69,
+    "shooting": 86,
+    "tackling": 40,
+    "dribbling": 85,
+    "stamina": 71
+   },
+   {
+    "name": "Akande",
+    "number": 10,
+    "pos": "FWD",
+    "pace": 87,
+    "passing": 65,
+    "shooting": 89,
+    "tackling": 44,
+    "dribbling": 87,
+    "stamina": 82
+   },
+   {
+    "name": "Oyelowo",
+    "number": 12,
+    "pos": "GK",
+    "pace": 55,
+    "passing": 62,
+    "shooting": 34,
+    "tackling": 37,
+    "dribbling": 40,
+    "keeping": 81,
+    "stamina": 60
+   },
+   {
+    "name": "Bakare",
+    "number": 14,
+    "pos": "DEF",
+    "pace": 68,
+    "passing": 60,
+    "shooting": 46,
+    "tackling": 78,
+    "dribbling": 55,
+    "stamina": 77
+   },
+   {
+    "name": "Adesina",
+    "number": 15,
+    "pos": "MID",
+    "pace": 77,
+    "passing": 81,
+    "shooting": 71,
+    "tackling": 61,
+    "dribbling": 70,
+    "stamina": 84
+   },
+   {
+    "name": "Ogundipe",
+    "number": 16,
+    "pos": "MID",
+    "pace": 72,
+    "passing": 78,
+    "shooting": 60,
+    "tackling": 61,
+    "dribbling": 74,
+    "stamina": 81
+   },
+   {
+    "name": "Fagbemi",
+    "number": 17,
+    "pos": "FWD",
+    "pace": 93,
+    "passing": 65,
+    "shooting": 84,
+    "tackling": 34,
+    "dribbling": 77,
+    "stamina": 78
+   }
+  ]
+ },
+ {
+  "name": "Abuja Eagles",
+  "short": "ABJ",
+  "kit": {
+   "shirt": "#c1121f",
+   "shorts": "#111827",
+   "socks": "#c1121f",
+   "number": "#ffffff",
+   "trim": "#111827",
+   "pattern": "plain"
+  },
+  "gk": {
+   "shirt": "#22d3ee",
+   "shorts": "#111827",
+   "socks": "#22d3ee",
+   "number": "#111111",
+   "trim": "#111111",
+   "pattern": "plain"
+  },
+  "players": [
+   {
+    "name": "Abubakar",
+    "number": 1,
+    "pos": "GK",
+    "pace": 60,
+    "passing": 62,
+    "shooting": 32,
+    "tackling": 36,
+    "dribbling": 44,
+    "keeping": 78,
+    "stamina": 62
+   },
+   {
+    "name": "Danladi",
+    "number": 2,
+    "pos": "DEF",
+    "pace": 72,
+    "passing": 62,
+    "shooting": 44,
+    "tackling": 80,
+    "dribbling": 63,
+    "stamina": 81
+   },
+   {
+    "name": "Ibrahim",
+    "number": 5,
+    "pos": "DEF",
+    "pace": 65,
+    "passing": 61,
+    "shooting": 50,
+    "tackling": 86,
+    "dribbling": 61,
+    "stamina": 79
+   },
+   {
+    "name": "Okeke",
+    "number": 4,
+    "pos": "DEF",
+    "pace": 66,
+    "passing": 58,
+    "shooting": 50,
+    "tackling": 79,
+    "dribbling": 55,
+    "stamina": 73
+   },
+   {
+    "name": "Chukwu",
+    "number": 3,
+    "pos": "DEF",
+    "pace": 77,
+    "passing": 70,
+    "shooting": 49,
+    "tackling": 82,
+    "dribbling": 60,
+    "stamina": 82
+   },
+   {
+    "name": "Bello",
+    "number": 7,
+    "pos": "MID",
+    "pace": 86,
+    "passing": 85,
+    "shooting": 73,
+    "tackling": 67,
+    "dribbling": 75,
+    "stamina": 74
+   },
+   {
+    "name": "Musa",
+    "number": 8,
+    "pos": "MID",
+    "pace": 85,
+    "passing": 86,
+    "shooting": 73,
+    "tackling": 55,
+    "dribbling": 78,
+    "stamina": 89
+   },
+   {
+    "name": "Uche",
+    "number": 6,
+    "pos": "MID",
+    "pace": 83,
+    "passing": 76,
+    "shooting": 70,
+    "tackling": 69,
+    "dribbling": 76,
+    "stamina": 76
+   },
+   {
+    "name": "Onyeka",
+    "number": 11,
+    "pos": "MID",
+    "pace": 86,
+    "passing": 84,
+    "shooting": 70,
+    "tackling": 66,
+    "dribbling": 83,
+    "stamina": 82
+   },
+   {
+    "name": "Nnamdi",
+    "number": 9,
+    "pos": "FWD",
+    "pace": 86,
+    "passing": 73,
+    "shooting": 84,
+    "tackling": 40,
+    "dribbling": 86,
+    "stamina": 79
+   },
+   {
+    "name": "Igwe",
+    "number": 10,
+    "pos": "FWD",
+    "pace": 86,
+    "passing": 65,
+    "shooting": 88,
+    "tackling": 46,
+    "dribbling": 81,
+    "stamina": 84
+   },
+   {
+    "name": "Danjuma",
+    "number": 12,
+    "pos": "GK",
+    "pace": 52,
+    "passing": 60,
+    "shooting": 31,
+    "tackling": 41,
+    "dribbling": 43,
+    "keeping": 75,
+    "stamina": 58
+   },
+   {
+    "name": "Shuaibu",
+    "number": 14,
+    "pos": "DEF",
+    "pace": 73,
+    "passing": 65,
+    "shooting": 53,
+    "tackling": 76,
+    "dribbling": 58,
+    "stamina": 80
+   },
+   {
+    "name": "Maikano",
+    "number": 15,
+    "pos": "MID",
+    "pace": 77,
+    "passing": 79,
+    "shooting": 67,
+    "tackling": 58,
+    "dribbling": 73,
+    "stamina": 79
+   },
+   {
+    "name": "Yakubu",
+    "number": 16,
+    "pos": "MID",
+    "pace": 79,
+    "passing": 84,
+    "shooting": 71,
+    "tackling": 65,
+    "dribbling": 79,
+    "stamina": 84
+   },
+   {
+    "name": "Galadima",
+    "number": 17,
+    "pos": "FWD",
+    "pace": 84,
+    "passing": 68,
+    "shooting": 87,
+    "tackling": 37,
+    "dribbling": 76,
+    "stamina": 83
+   }
+  ]
+ },
+ {
+  "name": "Kano Stallions",
+  "short": "KAN",
+  "kit": {
+   "shirt": "#facc15",
+   "shorts": "#1e3a8a",
+   "socks": "#facc15",
+   "number": "#1e3a8a",
+   "trim": "#1e3a8a",
+   "pattern": "hoops",
+   "second": "#1e3a8a"
+  },
+  "gk": {
+   "shirt": "#7c3aed",
+   "shorts": "#111111",
+   "socks": "#7c3aed",
+   "number": "#ffffff",
+   "trim": "#ffffff",
+   "pattern": "plain"
+  },
+  "players": [
+   {
+    "name": "Garba",
+    "number": 1,
+    "pos": "GK",
+    "pace": 49,
+    "passing": 58,
+    "shooting": 30,
+    "tackling": 36,
+    "dribbling": 45,
+    "keeping": 74,
+    "stamina": 63
+   },
+   {
+    "name": "Yusuf",
+    "number": 2,
+    "pos": "DEF",
+    "pace": 76,
+    "passing": 60,
+    "shooting": 43,
+    "tackling": 81,
+    "dribbling": 60,
+    "stamina": 84
+   },
+   {
+    "name": "Sani",
+    "number": 5,
+    "pos": "DEF",
+    "pace": 75,
+    "passing": 65,
+    "shooting": 47,
+    "tackling": 80,
+    "dribbling": 58,
+    "stamina": 83
+   },
+   {
+    "name": "Aliyu",
+    "number": 4,
+    "pos": "DEF",
+    "pace": 70,
+    "passing": 65,
+    "shooting": 49,
+    "tackling": 79,
+    "dribbling": 59,
+    "stamina": 72
+   },
+   {
+    "name": "Shehu",
+    "number": 3,
+    "pos": "DEF",
+    "pace": 73,
+    "passing": 71,
+    "shooting": 48,
+    "tackling": 78,
+    "dribbling": 55,
+    "stamina": 92
+   },
+   {
+    "name": "Umar",
+    "number": 7,
+    "pos": "MID",
+    "pace": 77,
+    "passing": 83,
+    "shooting": 67,
+    "tackling": 63,
+    "dribbling": 85,
+    "stamina": 88
+   },
+   {
+    "name": "Haruna",
+    "number": 8,
+    "pos": "MID",
+    "pace": 67,
+    "passing": 76,
+    "shooting": 69,
+    "tackling": 63,
+    "dribbling": 79,
+    "stamina": 79
+   },
+   {
+    "name": "Idris",
+    "number": 6,
+    "pos": "MID",
+    "pace": 75,
+    "passing": 82,
+    "shooting": 69,
+    "tackling": 59,
+    "dribbling": 87,
+    "stamina": 83
+   },
+   {
+    "name": "Tanko",
+    "number": 11,
+    "pos": "MID",
+    "pace": 79,
+    "passing": 78,
+    "shooting": 68,
+    "tackling": 61,
+    "dribbling": 78,
+    "stamina": 79
+   },
+   {
+    "name": "Bala",
+    "number": 9,
+    "pos": "FWD",
+    "pace": 75,
+    "passing": 64,
+    "shooting": 86,
+    "tackling": 35,
+    "dribbling": 80,
+    "stamina": 74
+   },
+   {
+    "name": "Kabiru",
+    "number": 10,
+    "pos": "FWD",
+    "pace": 86,
+    "passing": 69,
+    "shooting": 88,
+    "tackling": 33,
+    "dribbling": 79,
+    "stamina": 78
+   },
+   {
+    "name": "Jibrin",
+    "number": 12,
+    "pos": "GK",
+    "pace": 55,
+    "passing": 61,
+    "shooting": 33,
+    "tackling": 38,
+    "dribbling": 45,
+    "keeping": 73,
+    "stamina": 64
+   },
+   {
+    "name": "Lawan",
+    "number": 14,
+    "pos": "DEF",
+    "pace": 74,
+    "passing": 63,
+    "shooting": 38,
+    "tackling": 75,
+    "dribbling": 57,
+    "stamina": 80
+   },
+   {
+    "name": "Usman",
+    "number": 15,
+    "pos": "MID",
+    "pace": 82,
+    "passing": 75,
+    "shooting": 67,
+    "tackling": 63,
+    "dribbling": 76,
+    "stamina": 70
+   },
+   {
+    "name": "Dauda",
+    "number": 16,
+    "pos": "MID",
+    "pace": 79,
+    "passing": 87,
+    "shooting": 71,
+    "tackling": 56,
+    "dribbling": 75,
+    "stamina": 81
+   },
+   {
+    "name": "Kabir",
+    "number": 17,
+    "pos": "FWD",
+    "pace": 91,
+    "passing": 67,
+    "shooting": 82,
+    "tackling": 44,
+    "dribbling": 78,
+    "stamina": 83
+   }
+  ]
+ },
+ {
+  "name": "Ibadan Thunder",
+  "short": "IBD",
+  "kit": {
+   "shirt": "#2563eb",
+   "shorts": "#ffffff",
+   "socks": "#ffffff",
+   "number": "#ffffff",
+   "trim": "#ffffff",
+   "pattern": "stripes",
+   "second": "#1e3a8a"
+  },
+  "gk": {
+   "shirt": "#16a34a",
+   "shorts": "#111111",
+   "socks": "#16a34a",
+   "number": "#ffffff",
+   "trim": "#ffffff",
+   "pattern": "plain"
+  },
+  "players": [
+   {
+    "name": "Adebayo",
+    "number": 1,
+    "pos": "GK",
+    "pace": 53,
+    "passing": 62,
+    "shooting": 35,
+    "tackling": 32,
+    "dribbling": 45,
+    "keeping": 74,
+    "stamina": 59
+   },
+   {
+    "name": "Oyedele",
+    "number": 2,
+    "pos": "DEF",
+    "pace": 75,
+    "passing": 60,
+    "shooting": 48,
+    "tackling": 84,
+    "dribbling": 57,
+    "stamina": 76
+   },
+   {
+    "name": "Akinola",
+    "number": 5,
+    "pos": "DEF",
+    "pace": 73,
+    "passing": 68,
+    "shooting": 48,
+    "tackling": 80,
+    "dribbling": 63,
+    "stamina": 82
+   },
+   {
+    "name": "Babatunde",
+    "number": 4,
+    "pos": "DEF",
+    "pace": 76,
+    "passing": 64,
+    "shooting": 60,
+    "tackling": 77,
+    "dribbling": 61,
+    "stamina": 86
+   },
+   {
+    "name": "Ojo",
+    "number": 3,
+    "pos": "DEF",
+    "pace": 71,
+    "passing": 66,
+    "shooting": 50,
+    "tackling": 81,
+    "dribbling": 60,
+    "stamina": 82
+   },
+   {
+    "name": "Olaniyan",
+    "number": 7,
+    "pos": "MID",
+    "pace": 72,
+    "passing": 76,
+    "shooting": 72,
+    "tackling": 58,
+    "dribbling": 76,
+    "stamina": 80
+   },
+   {
+    "name": "Salami",
+    "number": 8,
+    "pos": "MID",
+    "pace": 72,
+    "passing": 86,
+    "shooting": 73,
+    "tackling": 70,
+    "dribbling": 76,
+    "stamina": 68
+   },
+   {
+    "name": "Adeleke",
+    "number": 6,
+    "pos": "MID",
+    "pace": 78,
+    "passing": 77,
+    "shooting": 73,
+    "tackling": 70,
+    "dribbling": 76,
+    "stamina": 75
+   },
+   {
+    "name": "Oladipo",
+    "number": 11,
+    "pos": "MID",
+    "pace": 85,
+    "passing": 85,
+    "shooting": 68,
+    "tackling": 53,
+    "dribbling": 84,
+    "stamina": 75
+   },
+   {
+    "name": "Ayodele",
+    "number": 9,
+    "pos": "FWD",
+    "pace": 84,
+    "passing": 65,
+    "shooting": 85,
+    "tackling": 41,
+    "dribbling": 87,
+    "stamina": 76
+   },
+   {
+    "name": "Ladipo",
+    "number": 10,
+    "pos": "FWD",
+    "pace": 81,
+    "passing": 71,
+    "shooting": 89,
+    "tackling": 45,
+    "dribbling": 81,
+    "stamina": 82
+   },
+   {
+    "name": "Alabi",
+    "number": 12,
+    "pos": "GK",
+    "pace": 52,
+    "passing": 60,
+    "shooting": 31,
+    "tackling": 37,
+    "dribbling": 41,
+    "keeping": 76,
+    "stamina": 64
+   },
+   {
+    "name": "Ogunbiyi",
+    "number": 14,
+    "pos": "DEF",
+    "pace": 69,
+    "passing": 63,
+    "shooting": 40,
+    "tackling": 82,
+    "dribbling": 62,
+    "stamina": 77
+   },
+   {
+    "name": "Adegoke",
+    "number": 15,
+    "pos": "MID",
+    "pace": 75,
+    "passing": 74,
+    "shooting": 67,
+    "tackling": 61,
+    "dribbling": 84,
+    "stamina": 82
+   },
+   {
+    "name": "Oyewole",
+    "number": 16,
+    "pos": "MID",
+    "pace": 74,
+    "passing": 70,
+    "shooting": 73,
+    "tackling": 61,
+    "dribbling": 71,
+    "stamina": 81
+   },
+   {
+    "name": "Akintola",
+    "number": 17,
+    "pos": "FWD",
+    "pace": 79,
+    "passing": 76,
+    "shooting": 85,
+    "tackling": 41,
+    "dribbling": 78,
+    "stamina": 67
+   }
+  ]
+ },
+ {
+  "name": "Enugu Comets",
+  "short": "ENU",
+  "kit": {
+   "shirt": "#f97316",
+   "shorts": "#111111",
+   "socks": "#111111",
+   "number": "#111111",
+   "trim": "#111111",
+   "pattern": "plain"
+  },
+  "gk": {
+   "shirt": "#e5e7eb",
+   "shorts": "#111111",
+   "socks": "#e5e7eb",
+   "number": "#111111",
+   "trim": "#111111",
+   "pattern": "plain"
+  },
+  "players": [
+   {
+    "name": "Nwachukwu",
+    "number": 1,
+    "pos": "GK",
+    "pace": 53,
+    "passing": 64,
+    "shooting": 32,
+    "tackling": 40,
+    "dribbling": 47,
+    "keeping": 79,
+    "stamina": 62
+   },
+   {
+    "name": "Okoro",
+    "number": 2,
+    "pos": "DEF",
+    "pace": 64,
+    "passing": 65,
+    "shooting": 40,
+    "tackling": 84,
+    "dribbling": 60,
+    "stamina": 70
+   },
+   {
+    "name": "Agu",
+    "number": 5,
+    "pos": "DEF",
+    "pace": 71,
+    "passing": 66,
+    "shooting": 52,
+    "tackling": 82,
+    "dribbling": 63,
+    "stamina": 82
+   },
+   {
+    "name": "Ezeh",
+    "number": 4,
+    "pos": "DEF",
+    "pace": 73,
+    "passing": 70,
+    "shooting": 55,
+    "tackling": 86,
+    "dribbling": 56,
+    "stamina": 67
+   },
+   {
+    "name": "Kalu",
+    "number": 3,
+    "pos": "DEF",
+    "pace": 77,
+    "passing": 60,
+    "shooting": 44,
+    "tackling": 76,
+    "dribbling": 62,
+    "stamina": 74
+   },
+   {
+    "name": "Odum",
+    "number": 7,
+    "pos": "MID",
+    "pace": 75,
+    "passing": 82,
+    "shooting": 70,
+    "tackling": 64,
+    "dribbling": 78,
+    "stamina": 85
+   },
+   {
+    "name": "Nwankwo",
+    "number": 8,
+    "pos": "MID",
+    "pace": 80,
+    "passing": 89,
+    "shooting": 71,
+    "tackling": 67,
+    "dribbling": 84,
+    "stamina": 88
+   },
+   {
+    "name": "Obi",
+    "number": 6,
+    "pos": "MID",
+    "pace": 79,
+    "passing": 78,
+    "shooting": 68,
+    "tackling": 69,
+    "dribbling": 75,
+    "stamina": 72
+   },
+   {
+    "name": "Ike",
+    "number": 11,
+    "pos": "MID",
+    "pace": 77,
+    "passing": 86,
+    "shooting": 74,
+    "tackling": 64,
+    "dribbling": 83,
+    "stamina": 70
+   },
+   {
+    "name": "Udoh",
+    "number": 9,
+    "pos": "FWD",
+    "pace": 86,
+    "passing": 64,
+    "shooting": 81,
+    "tackling": 39,
+    "dribbling": 86,
+    "stamina": 83
+   },
+   {
+    "name": "Chima",
+    "number": 10,
+    "pos": "FWD",
+    "pace": 84,
+    "passing": 65,
+    "shooting": 83,
+    "tackling": 36,
+    "dribbling": 82,
+    "stamina": 83
+   },
+   {
+    "name": "Onuoha",
+    "number": 12,
+    "pos": "GK",
+    "pace": 51,
+    "passing": 55,
+    "shooting": 30,
+    "tackling": 34,
+    "dribbling": 38,
+    "keeping": 78,
+    "stamina": 63
+   },
+   {
+    "name": "Nnaji",
+    "number": 14,
+    "pos": "DEF",
+    "pace": 78,
+    "passing": 63,
+    "shooting": 45,
+    "tackling": 75,
+    "dribbling": 56,
+    "stamina": 72
+   },
+   {
+    "name": "Eze-Obi",
+    "number": 15,
+    "pos": "MID",
+    "pace": 70,
+    "passing": 81,
+    "shooting": 73,
+    "tackling": 64,
+    "dribbling": 81,
+    "stamina": 82
+   },
+   {
+    "name": "Ani",
+    "number": 16,
+    "pos": "MID",
+    "pace": 74,
+    "passing": 79,
+    "shooting": 65,
+    "tackling": 55,
+    "dribbling": 71,
+    "stamina": 74
+   },
+   {
+    "name": "Ugwu",
+    "number": 17,
+    "pos": "FWD",
+    "pace": 83,
+    "passing": 66,
+    "shooting": 80,
+    "tackling": 44,
+    "dribbling": 79,
+    "stamina": 78
+   }
+  ]
+ },
+ {
+  "name": "Accra Stars",
+  "short": "ACC",
+  "kit": {
+   "shirt": "#ffffff",
+   "shorts": "#ffffff",
+   "socks": "#ffffff",
+   "number": "#111111",
+   "trim": "#111111",
+   "pattern": "plain"
+  },
+  "gk": {
+   "shirt": "#db2777",
+   "shorts": "#111111",
+   "socks": "#db2777",
+   "number": "#ffffff",
+   "trim": "#ffffff",
+   "pattern": "plain"
+  },
+  "players": [
+   {
+    "name": "Asante",
+    "number": 1,
+    "pos": "GK",
+    "pace": 54,
+    "passing": 65,
+    "shooting": 30,
+    "tackling": 43,
+    "dribbling": 42,
+    "keeping": 76,
+    "stamina": 67
+   },
+   {
+    "name": "Mensah",
+    "number": 2,
+    "pos": "DEF",
+    "pace": 79,
+    "passing": 68,
+    "shooting": 41,
+    "tackling": 81,
+    "dribbling": 62,
+    "stamina": 74
+   },
+   {
+    "name": "Owusu",
+    "number": 5,
+    "pos": "DEF",
+    "pace": 74,
+    "passing": 72,
+    "shooting": 54,
+    "tackling": 86,
+    "dribbling": 62,
+    "stamina": 68
+   },
+   {
+    "name": "Appiah",
+    "number": 4,
+    "pos": "DEF",
+    "pace": 81,
+    "passing": 71,
+    "shooting": 53,
+    "tackling": 78,
+    "dribbling": 64,
+    "stamina": 83
+   },
+   {
+    "name": "Osei",
+    "number": 3,
+    "pos": "DEF",
+    "pace": 81,
+    "passing": 68,
+    "shooting": 49,
+    "tackling": 90,
+    "dribbling": 55,
+    "stamina": 75
+   },
+   {
+    "name": "Darko",
+    "number": 7,
+    "pos": "MID",
+    "pace": 84,
+    "passing": 93,
+    "shooting": 69,
+    "tackling": 70,
+    "dribbling": 90,
+    "stamina": 86
+   },
+   {
+    "name": "Addo",
+    "number": 8,
+    "pos": "MID",
+    "pace": 81,
+    "passing": 87,
+    "shooting": 77,
+    "tackling": 62,
+    "dribbling": 83,
+    "stamina": 80
+   },
+   {
+    "name": "Amponsah",
+    "number": 6,
+    "pos": "MID",
+    "pace": 83,
+    "passing": 88,
+    "shooting": 73,
+    "tackling": 65,
+    "dribbling": 79,
+    "stamina": 84
+   },
+   {
+    "name": "Agyeman",
+    "number": 11,
+    "pos": "MID",
+    "pace": 80,
+    "passing": 88,
+    "shooting": 73,
+    "tackling": 62,
+    "dribbling": 80,
+    "stamina": 83
+   },
+   {
+    "name": "Opoku",
+    "number": 9,
+    "pos": "FWD",
+    "pace": 95,
+    "passing": 75,
+    "shooting": 90,
+    "tackling": 35,
+    "dribbling": 87,
+    "stamina": 67
+   },
+   {
+    "name": "Frimpong",
+    "number": 10,
+    "pos": "FWD",
+    "pace": 89,
+    "passing": 77,
+    "shooting": 89,
+    "tackling": 43,
+    "dribbling": 87,
+    "stamina": 82
+   },
+   {
+    "name": "Ampofo",
+    "number": 12,
+    "pos": "GK",
+    "pace": 51,
+    "passing": 55,
+    "shooting": 30,
+    "tackling": 40,
+    "dribbling": 44,
+    "keeping": 77,
+    "stamina": 56
+   },
+   {
+    "name": "Boateng",
+    "number": 14,
+    "pos": "DEF",
+    "pace": 68,
+    "passing": 56,
+    "shooting": 46,
+    "tackling": 79,
+    "dribbling": 54,
+    "stamina": 78
+   },
+   {
+    "name": "Kyei",
+    "number": 15,
+    "pos": "MID",
+    "pace": 77,
+    "passing": 82,
+    "shooting": 63,
+    "tackling": 57,
+    "dribbling": 74,
+    "stamina": 88
+   },
+   {
+    "name": "Antwi",
+    "number": 16,
+    "pos": "MID",
+    "pace": 80,
+    "passing": 78,
+    "shooting": 68,
+    "tackling": 61,
+    "dribbling": 77,
+    "stamina": 80
+   },
+   {
+    "name": "Owusu-Ansah",
+    "number": 17,
+    "pos": "FWD",
+    "pace": 82,
+    "passing": 62,
+    "shooting": 80,
+    "tackling": 44,
+    "dribbling": 80,
+    "stamina": 76
+   }
+  ]
+ },
+ {
+  "name": "Calabar Kings",
+  "short": "CAL",
+  "kit": {
+   "shirt": "#7f1d1d",
+   "shorts": "#fbbf24",
+   "socks": "#7f1d1d",
+   "number": "#fbbf24",
+   "trim": "#fbbf24",
+   "pattern": "stripes",
+   "second": "#fbbf24"
+  },
+  "gk": {
+   "shirt": "#0ea5e9",
+   "shorts": "#111111",
+   "socks": "#0ea5e9",
+   "number": "#111111",
+   "trim": "#111111",
+   "pattern": "plain"
+  },
+  "players": [
+   {
+    "name": "Effiong",
+    "number": 1,
+    "pos": "GK",
+    "pace": 48,
+    "passing": 63,
+    "shooting": 31,
+    "tackling": 36,
+    "dribbling": 45,
+    "keeping": 83,
+    "stamina": 61
+   },
+   {
+    "name": "Bassey",
+    "number": 2,
+    "pos": "DEF",
+    "pace": 66,
+    "passing": 62,
+    "shooting": 48,
+    "tackling": 80,
+    "dribbling": 55,
+    "stamina": 79
+   },
+   {
+    "name": "Etim",
+    "number": 5,
+    "pos": "DEF",
+    "pace": 68,
+    "passing": 72,
+    "shooting": 51,
+    "tackling": 76,
+    "dribbling": 52,
+    "stamina": 80
+   },
+   {
+    "name": "Akpan",
+    "number": 4,
+    "pos": "DEF",
+    "pace": 79,
+    "passing": 68,
+    "shooting": 55,
+    "tackling": 82,
+    "dribbling": 54,
+    "stamina": 75
+   },
+   {
+    "name": "Edet",
+    "number": 3,
+    "pos": "DEF",
+    "pace": 73,
+    "passing": 57,
+    "shooting": 43,
+    "tackling": 80,
+    "dribbling": 59,
+    "stamina": 80
+   },
+   {
+    "name": "Okon",
+    "number": 7,
+    "pos": "MID",
+    "pace": 75,
+    "passing": 80,
+    "shooting": 71,
+    "tackling": 64,
+    "dribbling": 81,
+    "stamina": 80
+   },
+   {
+    "name": "Inyang",
+    "number": 8,
+    "pos": "MID",
+    "pace": 79,
+    "passing": 80,
+    "shooting": 72,
+    "tackling": 62,
+    "dribbling": 76,
+    "stamina": 74
+   },
+   {
+    "name": "Ekpo",
+    "number": 6,
+    "pos": "MID",
+    "pace": 75,
+    "passing": 81,
+    "shooting": 68,
+    "tackling": 63,
+    "dribbling": 79,
+    "stamina": 74
+   },
+   {
+    "name": "Essien",
+    "number": 11,
+    "pos": "MID",
+    "pace": 78,
+    "passing": 80,
+    "shooting": 63,
+    "tackling": 64,
+    "dribbling": 82,
+    "stamina": 73
+   },
+   {
+    "name": "Archibong",
+    "number": 9,
+    "pos": "FWD",
+    "pace": 85,
+    "passing": 66,
+    "shooting": 85,
+    "tackling": 36,
+    "dribbling": 74,
+    "stamina": 73
+   },
+   {
+    "name": "Duke",
+    "number": 10,
+    "pos": "FWD",
+    "pace": 84,
+    "passing": 63,
+    "shooting": 86,
+    "tackling": 36,
+    "dribbling": 72,
+    "stamina": 83
+   },
+   {
+    "name": "Umoh",
+    "number": 12,
+    "pos": "GK",
+    "pace": 46,
+    "passing": 57,
+    "shooting": 30,
+    "tackling": 36,
+    "dribbling": 41,
+    "keeping": 77,
+    "stamina": 61
+   },
+   {
+    "name": "Ekanem",
+    "number": 14,
+    "pos": "DEF",
+    "pace": 70,
+    "passing": 62,
+    "shooting": 45,
+    "tackling": 80,
+    "dribbling": 55,
+    "stamina": 73
+   },
+   {
+    "name": "Asuquo",
+    "number": 15,
+    "pos": "MID",
+    "pace": 72,
+    "passing": 75,
+    "shooting": 60,
+    "tackling": 65,
+    "dribbling": 78,
+    "stamina": 79
+   },
+   {
+    "name": "Offiong",
+    "number": 16,
+    "pos": "MID",
+    "pace": 82,
+    "passing": 76,
+    "shooting": 70,
+    "tackling": 64,
+    "dribbling": 71,
+    "stamina": 73
+   },
+   {
+    "name": "Eyo",
+    "number": 17,
+    "pos": "FWD",
+    "pace": 81,
+    "passing": 68,
+    "shooting": 85,
+    "tackling": 34,
+    "dribbling": 82,
+    "stamina": 74
+   }
+  ]
+ },
+ {
+  "name": "Kumasi Gold",
+  "short": "KUM",
+  "kit": {
+   "shirt": "#111827",
+   "shorts": "#111827",
+   "socks": "#facc15",
+   "number": "#facc15",
+   "trim": "#facc15",
+   "pattern": "plain"
+  },
+  "gk": {
+   "shirt": "#84cc16",
+   "shorts": "#111111",
+   "socks": "#84cc16",
+   "number": "#111111",
+   "trim": "#111111",
+   "pattern": "plain"
+  },
+  "players": [
+   {
+    "name": "Badu",
+    "number": 1,
+    "pos": "GK",
+    "pace": 52,
+    "passing": 66,
+    "shooting": 30,
+    "tackling": 35,
+    "dribbling": 39,
+    "keeping": 80,
+    "stamina": 61
+   },
+   {
+    "name": "Tetteh",
+    "number": 2,
+    "pos": "DEF",
+    "pace": 75,
+    "passing": 67,
+    "shooting": 55,
+    "tackling": 83,
+    "dribbling": 58,
+    "stamina": 75
+   },
+   {
+    "name": "Quaye",
+    "number": 5,
+    "pos": "DEF",
+    "pace": 75,
+    "passing": 72,
+    "shooting": 52,
+    "tackling": 84,
+    "dribbling": 54,
+    "stamina": 77
+   },
+   {
+    "name": "Annan",
+    "number": 4,
+    "pos": "DEF",
+    "pace": 72,
+    "passing": 68,
+    "shooting": 47,
+    "tackling": 84,
+    "dribbling": 60,
+    "stamina": 68
+   },
+   {
+    "name": "Ofori",
+    "number": 3,
+    "pos": "DEF",
+    "pace": 77,
+    "passing": 65,
+    "shooting": 59,
+    "tackling": 85,
+    "dribbling": 57,
+    "stamina": 73
+   },
+   {
+    "name": "Danso",
+    "number": 7,
+    "pos": "MID",
+    "pace": 79,
+    "passing": 91,
+    "shooting": 68,
+    "tackling": 68,
+    "dribbling": 83,
+    "stamina": 72
+   },
+   {
+    "name": "Sarpong",
+    "number": 8,
+    "pos": "MID",
+    "pace": 79,
+    "passing": 78,
+    "shooting": 71,
+    "tackling": 65,
+    "dribbling": 84,
+    "stamina": 81
+   },
+   {
+    "name": "Yeboah",
+    "number": 6,
+    "pos": "MID",
+    "pace": 82,
+    "passing": 82,
+    "shooting": 74,
+    "tackling": 66,
+    "dribbling": 81,
+    "stamina": 90
+   },
+   {
+    "name": "Boakye",
+    "number": 11,
+    "pos": "MID",
+    "pace": 79,
+    "passing": 81,
+    "shooting": 73,
+    "tackling": 58,
+    "dribbling": 78,
+    "stamina": 94
+   },
+   {
+    "name": "Amoah",
+    "number": 9,
+    "pos": "FWD",
+    "pace": 85,
+    "passing": 63,
+    "shooting": 84,
+    "tackling": 34,
+    "dribbling": 80,
+    "stamina": 77
+   },
+   {
+    "name": "Gyan",
+    "number": 10,
+    "pos": "FWD",
+    "pace": 87,
+    "passing": 70,
+    "shooting": 85,
+    "tackling": 40,
+    "dribbling": 77,
+    "stamina": 69
+   },
+   {
+    "name": "Acheampong",
+    "number": 12,
+    "pos": "GK",
+    "pace": 52,
+    "passing": 55,
+    "shooting": 37,
+    "tackling": 39,
+    "dribbling": 38,
+    "keeping": 77,
+    "stamina": 63
+   },
+   {
+    "name": "Gyamfi",
+    "number": 14,
+    "pos": "DEF",
+    "pace": 65,
+    "passing": 62,
+    "shooting": 45,
+    "tackling": 78,
+    "dribbling": 57,
+    "stamina": 76
+   },
+   {
+    "name": "Nyarko",
+    "number": 15,
+    "pos": "MID",
+    "pace": 77,
+    "passing": 76,
+    "shooting": 62,
+    "tackling": 67,
+    "dribbling": 78,
+    "stamina": 82
+   },
+   {
+    "name": "Bonsu",
+    "number": 16,
+    "pos": "MID",
+    "pace": 71,
+    "passing": 78,
+    "shooting": 70,
+    "tackling": 55,
+    "dribbling": 80,
+    "stamina": 79
+   },
+   {
+    "name": "Kusi",
+    "number": 17,
+    "pos": "FWD",
+    "pace": 85,
+    "passing": 65,
+    "shooting": 82,
+    "tackling": 43,
+    "dribbling": 77,
+    "stamina": 82
+   }
+  ]
+ }
+]
