@@ -173,7 +173,8 @@ pads are web pages over Wi-Fi, which needs nothing installed; the protocol in
 - Player bodies, faces and hair: [Universal Base Characters](https://quaternius.itch.io/universal-base-characters) by Quaternius, CC0.
 - Running/walking/idle motion capture: [Universal Animation Library](https://quaternius.com/packs/universalanimationlibrary.html) by Quaternius, CC0.
 
-Game copies live in `web/games/football/models/` (`ubc/` and `ual_ue.fbx`); the original downloads are not in the repo (put them in `assets/`, which git ignores).
+The game loads `web/games/football/models/`; the full original packs are in [`web/games/football/source/`](web/games/football/source)
+(not shipped in the binary). Each game keeps its own source art in its own `source/` folder.
 Football actions (kicks, tackles, slides, dives...) are posed in code on the same skeleton.
 
 ## License

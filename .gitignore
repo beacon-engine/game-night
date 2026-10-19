@@ -4,5 +4,3 @@ node_modules/
 /game-night
 /dist/
 /web/dist/
-# original asset downloads (zips + extracted); the game only uses the copies in web/games/
-/assets/
