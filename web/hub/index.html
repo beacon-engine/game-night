@@ -15,12 +15,12 @@
     background: linear-gradient(#fef08a, #f59e0b); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 6px 0 #7c2d12); }
   .title small { display: block; font-size: 22px; letter-spacing: 12px; color: #93c5fd; -webkit-text-fill-color: #93c5fd; margin-top: 10px; }
 
-  #games { display: flex; flex-wrap: wrap; justify-content: center; gap: 26px; max-width: 1200px; }
-  .game { width: 230px; height: 280px; background: linear-gradient(160deg, #1e293b, #0f172a); border: 2px solid #ffffff1f; display: flex; flex-direction: column;
+  #games { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px; max-width: 1240px; padding: 12px; }
+  .game { width: 200px; height: 240px; background: linear-gradient(160deg, #1e293b, #0f172a); border: 2px solid #ffffff1f; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 10px; padding: 16px; transform: skewX(-6deg); cursor: pointer; position: relative; color: inherit; font: inherit;
     transition: transform .15s, box-shadow .15s, border-color .15s, opacity .15s; }
   .game:focus-visible { outline: none; }
-  .game .gicon { font-size: 84px; line-height: 1; filter: drop-shadow(0 8px 10px #000a); }
+  .game .gicon { font-size: 72px; line-height: 1; filter: drop-shadow(0 8px 10px #000a); }
   .game .gname { font-size: 28px; font-style: italic; letter-spacing: 2px; text-align: center; }
   .game .gtag { font-family: system-ui, sans-serif; font-weight: 600; font-size: 13px; opacity: .7; text-align: center; }
   .game .gplayers { font-family: system-ui, sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #93c5fd; }
@@ -40,6 +40,7 @@
   #players em { font-family: system-ui, sans-serif; font-style: normal; font-weight: 600; opacity: .6; font-size: 14px; }
 
   .help { font-family: system-ui, sans-serif; font-weight: 600; font-size: 14px; opacity: .8; text-align: center; line-height: 1.7; }
+  #version { position: fixed; right: 16px; bottom: 12px; font-family: system-ui, sans-serif; font-size: 12px; opacity: .4; }
   .help b { font-family: "Arial Black", sans-serif; color: #fde047; font-weight: 400; }
 
   #banner { position: fixed; left: 0; right: 0; top: 40%; text-align: center; pointer-events: none; opacity: 0; transition: opacity .25s; }
@@ -69,6 +70,7 @@
   </div>
   <div class="help">Phone: stick <b>◀ ▶ ▲ ▼</b> choose · <b>✕</b> play<br>Keyboard: arrows / WASD choose · <b>Enter</b> play · or just click a game</div>
   <div id="banner"><div></div></div>
+  <div id="version"></div>
 
   <script type="module" src="main.js"></script>
 </body>

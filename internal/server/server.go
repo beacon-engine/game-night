@@ -16,6 +16,8 @@ import (
 
 // Server serves one set of web files (the built web/dist, possibly with user overrides on top).
 type Server struct {
+	Version string // shown on the game select page
+
 	files fs.FS
 	port  int
 	relay *Relay
@@ -67,7 +69,7 @@ func (s *Server) info(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, map[string]string{"padUrl": url, "qr": qr})
+	writeJSON(w, map[string]string{"padUrl": url, "qr": qr, "version": s.Version})
 }
 
 // Static files. Folders serve their index.html; there are no directory listings.

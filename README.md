@@ -3,10 +3,18 @@
 Couch games for the TV after a long day: the laptop is the console, everyone's phone is a pad.
 No accounts, no app to install on the phones, nothing leaves your Wi-Fi.
 
+Football is playable today and [23 more games](web/games) are planned, each with its own README.
+Pick one and help build it.
+
 ## Play
 
-Download `game-night` for your computer from the releases page (once there is one) and run it, or build it (below).
-It opens the game select page in your browser.
+Download the archive for your computer from [Releases](https://github.com/beacon-engine/game-night/releases/latest),
+unpack it and run `game-night`. It opens the game select page in your browser.
+
+- **macOS**: it isn't signed with an Apple certificate yet, so the first run is blocked: allow it in
+  System Settings → Privacy & Security → Open Anyway (or run `xattr -d com.apple.quarantine game-night`).
+- **Windows**: allow it through the firewall when asked, so phones can reach it.
+- **Raspberry Pi** (64-bit OS): the `linux-arm64-raspberry-pi` archive; plug the Pi into the TV.
 
 1. Put the browser on the TV (HDMI, or just play on the laptop) and pick a game. Click once to enable sound.
 2. On each phone (same Wi-Fi), scan the QR code or open the `/pad/` address shown on screen. Turn the phone sideways.
@@ -95,23 +103,11 @@ Copy the originals from [`web/games/football/`](web/games/football) to start fro
 
 ## Adding a game
 
-A game is a folder. There is no list to register it in: every folder in `games/` with a `game.json`
-is on the game select page, and deleting the folder takes it off again.
+A game is a folder in [`web/games/`](web/games); there is no list to register it in. That page has the
+roadmap, how a game folder works and the `@platform` API. A built game (plain `index.html` + scripts)
+can also be dropped into `<your folder>/games/<id>/` (see Customising) and shows up without rebuilding.
 
-```
-web/games/my-game/
-  game.json       { "name": "My Game", "icon": "🎯", "tagline": "One line", "players": "1–4", "order": 10 }
-  index.html      the page (loads main.js)
-  main.ts         the game; bundled to main.js by `make`
-  controls.json   optional: which pad button does what
-  ...             anything else (models, sounds, data) is served next to it
-```
-
-- Without an `index.html` (or with `"status": "soon"`) it shows as *Coming soon*.
-- A built game (plain `index.html` + scripts, no TypeScript needed) can also be dropped into
-  `<your folder>/games/<id>/` (see Customising) and shows up without rebuilding anything.
-
-Games build on `@platform` ([`web/platform/`](web/platform)):
+In short:
 
 ```ts
 import { Input, BIT, loadControls, backToHub } from '@platform';
@@ -154,6 +150,19 @@ web/
 The server relays between one display (the page on the TV) and the phones; the message shapes are
 in [`web/platform/protocol.ts`](web/platform/protocol.ts). It also hands out player slots (P1, P2...),
 so a phone keeps its number and colour across games and reconnects.
+
+## Versions
+
+Releases follow [Semantic Versioning](https://semver.org) and are listed in [CHANGELOG.md](CHANGELOG.md).
+`game-night -version` says which one you have. How to cut a release: [RELEASING.md](RELEASING.md).
+
+## Where it's headed
+
+The idea this started from: a small portable console (a Raspberry Pi) that plugs into any TV over HDMI,
+with phones connecting as pads over Bluetooth through a pad app, speaking one shared protocol. Today the
+pads are web pages over Wi-Fi, which needs nothing installed; the protocol in
+[`web/platform/protocol.ts`](web/platform/protocol.ts) is the one a Bluetooth pad would speak too, and
+`game-night` already runs on a Pi.
 
 ## Troubleshooting
 - Phone can't connect: allow game-night through the firewall prompt; some guest/office Wi-Fi blocks devices talking to each other, so use a phone hotspot instead.

@@ -1,4 +1,4 @@
-module game-night
+module github.com/beacon-engine/game-night
 
 go 1.23
 

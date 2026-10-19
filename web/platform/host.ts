@@ -14,6 +14,7 @@ export interface GameInfo {
 export interface HostInfo {
   padUrl: string; // what phones open to join
   qr: string; // that url as an svg QR code
+  version: string; // of game-night, e.g. 'v1.2.0' ('dev' when built without a tag)
 }
 
 const getJson = <T>(url: string) => fetch(url, { cache: 'no-store' }).then((r) => r.json() as Promise<T>);
