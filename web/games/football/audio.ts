@@ -1,54 +1,43 @@
 // Tiny synthesised sound kit: kicks, whistle, woodwork, and short crowd reactions.
 // There is deliberately no constant crowd bed: synthesised noise just sounds like a fan.
-export class Sfx {
-  constructor() {
-    this.ctx = null;
-    this.muted = false;
-  }
+interface Graph {
+  ctx: AudioContext;
+  master: GainNode;
+  noise: AudioBuffer;
+}
 
-  get ready() {
-    return this.ctx && this.ctx.state === 'running' && !this.muted;
+export class Sfx {
+  muted = false;
+  private graph: Graph | null = null; // created on the first click/key (browsers require one)
+
+  // the audio graph, when sound can play right now
+  private live() {
+    const g = this.graph;
+    return g && g.ctx.state === 'running' && !this.muted ? g : null;
   }
 
   unlock() {
-    if (!this.ctx) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      this.ctx = new AC();
-      this.master = this.ctx.createGain();
-      this.master.gain.value = 0.6;
-      this.master.connect(this.ctx.destination);
-      this.noiseBuf = this.noise(3);
+    if (!this.graph) {
+      const ctx = new AudioContext();
+      const master = ctx.createGain();
+      master.gain.value = 0.6;
+      master.connect(ctx.destination);
+      this.graph = { ctx, master, noise: pinkNoise(ctx, 3) };
     }
-    if (this.ctx.state !== 'running') this.ctx.resume();
+    if (this.graph.ctx.state !== 'running') this.graph.ctx.resume();
   }
 
   toggleMute() {
     this.muted = !this.muted;
-    if (this.master) this.master.gain.value = this.muted ? 0 : 0.6;
+    if (this.graph) this.graph.master.gain.value = this.muted ? 0 : 0.6;
     return this.muted;
   }
 
-  // pink-ish noise: closer to a crowd than white noise
-  noise(seconds) {
-    const len = Math.floor(this.ctx.sampleRate * seconds);
-    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    let b0 = 0, b1 = 0, b2 = 0;
-    for (let i = 0; i < len; i++) {
-      const w = Math.random() * 2 - 1;
-      b0 = 0.997 * b0 + w * 0.029;
-      b1 = 0.985 * b1 + w * 0.032;
-      b2 = 0.95 * b2 + w * 0.048;
-      d[i] = (b0 + b1 + b2) * 0.9;
-    }
-    return buf;
-  }
-
   // A crowd reaction: a few band-limited noise layers with a voice-like wobble
-  crowd(peak, attack, hold, release, centre = 520) {
-    if (!this.ready) return;
-    const c = this.ctx, t = c.currentTime;
+  crowd(peak: number, attack: number, hold: number, release: number, centre = 520) {
+    const a = this.live();
+    if (!a) return;
+    const c = a.ctx, t = c.currentTime;
     const out = c.createGain();
     out.gain.setValueAtTime(0, t);
     out.gain.linearRampToValueAtTime(peak, t + attack);
@@ -57,10 +46,10 @@ export class Sfx {
     const lp = c.createBiquadFilter();
     lp.type = 'lowpass';
     lp.frequency.value = 1400;
-    out.connect(lp).connect(this.master);
+    out.connect(lp).connect(a.master);
     for (const [f, q] of [[centre * 0.6, 1.2], [centre, 1.6], [centre * 1.7, 2.2]]) {
       const src = c.createBufferSource();
-      src.buffer = this.noiseBuf;
+      src.buffer = a.noise;
       src.loop = true;
       src.playbackRate.value = 0.9 + Math.random() * 0.2;
       const bp = c.createBiquadFilter();
@@ -87,8 +76,9 @@ export class Sfx {
   cheer() { this.crowd(0.3, 0.2, 0.5, 1.2, 600); }
 
   kick(power = 10) {
-    if (!this.ready) return;
-    const c = this.ctx, t = c.currentTime;
+    const a = this.live();
+    if (!a) return;
+    const c = a.ctx, t = c.currentTime;
     const o = c.createOscillator();
     const g = c.createGain();
     o.type = 'sine';
@@ -96,14 +86,15 @@ export class Sfx {
     o.frequency.exponentialRampToValueAtTime(48, t + 0.1);
     g.gain.setValueAtTime(Math.min(0.7, 0.12 + power / 40), t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
-    o.connect(g).connect(this.master);
+    o.connect(g).connect(a.master);
     o.start(t);
     o.stop(t + 0.14);
   }
 
   whistle(count = 1, long = false) {
-    if (!this.ready) return;
-    const c = this.ctx;
+    const a = this.live();
+    if (!a) return;
+    const c = a.ctx;
     for (let i = 0; i < count; i++) {
       const t = c.currentTime + i * 0.45;
       const dur = long && i === count - 1 ? 0.9 : 0.3;
@@ -120,7 +111,7 @@ export class Sfx {
       g.gain.linearRampToValueAtTime(0.14, t + 0.02);
       g.gain.setValueAtTime(0.14, t + dur - 0.05);
       g.gain.linearRampToValueAtTime(0, t + dur);
-      o.connect(g).connect(this.master);
+      o.connect(g).connect(a.master);
       o.start(t);
       lfo.start(t);
       o.stop(t + dur);
@@ -129,18 +120,35 @@ export class Sfx {
   }
 
   clang() {
-    if (!this.ready) return;
-    const c = this.ctx, t = c.currentTime;
+    const a = this.live();
+    if (!a) return;
+    const c = a.ctx, t = c.currentTime;
     for (const f of [820, 1270, 1930, 2650]) {
       const o = c.createOscillator();
       const g = c.createGain();
       o.frequency.value = f;
       g.gain.setValueAtTime(0.08, t);
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
-      o.connect(g).connect(this.master);
+      o.connect(g).connect(a.master);
       o.start(t);
       o.stop(t + 0.9);
     }
     this.ooh();
   }
+}
+
+// pink-ish noise: closer to a crowd than white noise
+function pinkNoise(ctx: AudioContext, seconds: number) {
+  const len = Math.floor(ctx.sampleRate * seconds);
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  let b0 = 0, b1 = 0, b2 = 0;
+  for (let i = 0; i < len; i++) {
+    const w = Math.random() * 2 - 1;
+    b0 = 0.997 * b0 + w * 0.029;
+    b1 = 0.985 * b1 + w * 0.032;
+    b2 = 0.95 * b2 + w * 0.048;
+    d[i] = (b0 + b1 + b2) * 0.9;
+  }
+  return buf;
 }

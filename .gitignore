@@ -1,4 +1,8 @@
-node_modules/
 .DS_Store
-# original asset downloads (zips + extracted); the game only uses the copies in public/
-assets/
+node_modules/
+# build output
+/game-night
+/dist/
+/web/dist/
+# original asset downloads (zips + extracted); the game only uses the copies in web/games/
+/assets/

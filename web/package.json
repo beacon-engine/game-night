@@ -1,0 +1,17 @@
+{
+  "name": "game-night-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.ts",
+    "watch": "node build.ts --watch",
+    "check": "tsc && tsc -p tsconfig.node.json"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/three": "0.186.0",
+    "esbuild": "0.28.2",
+    "three": "0.186.1",
+    "typescript": "7.0.2"
+  }
+}
