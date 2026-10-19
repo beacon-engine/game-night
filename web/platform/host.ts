@@ -1,0 +1,27 @@
+// The local server the games run on (see internal/server).
+
+// A game as listed on the game select page: its folder's game.json, plus what the server knows
+export interface GameInfo {
+  id: string;
+  name: string;
+  icon: string;
+  tagline: string;
+  players: string;
+  status: 'ready' | 'soon';
+  url: string;
+}
+
+export interface HostInfo {
+  padUrl: string; // what phones open to join
+  qr: string; // that url as an svg QR code
+}
+
+const getJson = <T>(url: string) => fetch(url, { cache: 'no-store' }).then((r) => r.json() as Promise<T>);
+
+export const hostInfo = () => getJson<HostInfo>('/api/info');
+export const listGames = () => getJson<GameInfo[]>('/api/games');
+
+// Back to the game select page; the phones stay connected
+export function backToHub() {
+  location.href = '/';
+}

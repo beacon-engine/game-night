@@ -1,12 +1,15 @@
 // Night stadium: mown pitch with real markings, goals with nets, two-tier stands,
 // LED ad boards, floodlight towers with glow, and a night sky.
 import * as THREE from 'three';
+import type { Settings, TimeOfDay } from './types.ts';
 
-function canvasTex(w, h, draw, opts = {}) {
+type Draw = (g: CanvasRenderingContext2D, w: number, h: number) => void;
+
+function canvasTex(w: number, h: number, draw: Draw, opts: { repeat?: [number, number] } = {}) {
   const c = document.createElement('canvas');
   c.width = w;
   c.height = h;
-  draw(c.getContext('2d'), w, h);
+  draw(c.getContext('2d')!, w, h);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 16;
@@ -17,9 +20,20 @@ function canvasTex(w, h, draw, opts = {}) {
   return t;
 }
 
-export function buildStadium(scene, renderer, { length: L, width: W }, goal, teamColors) {
+export interface Stadium {
+  setTimeOfDay(mode: TimeOfDay): void;
+  update(dt: number, excitement?: number): void; // excitement 0..1 makes the crowd bounce faster
+}
+
+export function buildStadium(
+  scene: THREE.Scene,
+  renderer: THREE.WebGLRenderer,
+  { length: L, width: W }: Settings['pitch'],
+  goal: Settings['goal'],
+  teamColors: string[],
+): Stadium {
   const M = 8; // grass beyond the lines
-  const std = (o) => new THREE.MeshStandardMaterial({ roughness: 0.85, metalness: 0, ...o });
+  const std = (o: THREE.MeshStandardMaterialParameters) => new THREE.MeshStandardMaterial({ roughness: 0.85, metalness: 0, ...o });
   const k = Math.min(1, L / 105); // marking scale for small pitches
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
@@ -45,10 +59,10 @@ export function buildStadium(scene, renderer, { length: L, width: W }, goal, tea
       }
     }
     g.putImageData(img, 0, 0);
-    const X = (x) => (x + L / 2 + M) * PX;
-    const Y = (z) => (z + W / 2 + M) * PX;
+    const X = (x: number) => (x + L / 2 + M) * PX;
+    const Y = (z: number) => (z + W / 2 + M) * PX;
     // worn patches in the goalmouths and centre circle
-    const wear = (cx, cy, r) => {
+    const wear = (cx: number, cy: number, r: number) => {
       const grd = g.createRadialGradient(cx, cy, 0, cx, cy, r);
       grd.addColorStop(0, 'rgba(120,105,60,0.35)');
       grd.addColorStop(1, 'rgba(120,105,60,0)');
@@ -70,7 +84,7 @@ export function buildStadium(scene, renderer, { length: L, width: W }, goal, tea
     g.beginPath();
     g.arc(X(0), Y(0), 9.15 * k * PX, 0, Math.PI * 2);
     g.stroke();
-    const dot = (x, z) => { g.beginPath(); g.arc(X(x), Y(z), 0.2 * PX, 0, Math.PI * 2); g.fill(); };
+    const dot = (x: number, z: number) => { g.beginPath(); g.arc(X(x), Y(z), 0.2 * PX, 0, Math.PI * 2); g.fill(); };
     dot(0, 0);
     const boxD = 16.5 * k, boxW = 40.3 * k, smallD = 5.5 * k, smallW = 18.3 * k, spot = 11 * k;
     for (const s of [-1, 1]) {
@@ -115,7 +129,7 @@ export function buildStadium(scene, renderer, { length: L, width: W }, goal, tea
   const postMat = std({ color: '#ffffff', roughness: 0.3 });
   const pr = 0.06;
   const depth = 2.0;
-  const netMat = (rx, ry) => {
+  const netMat = (rx: number, ry: number) => {
     const t = netTex.clone();
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
     t.repeat.set(rx, ry);
@@ -125,7 +139,7 @@ export function buildStadium(scene, renderer, { length: L, width: W }, goal, tea
   for (const s of [-1, 1]) {
     const grp = new THREE.Group();
     grp.position.x = s * L / 2;
-    const cyl = (len, x, y, z, rot) => {
+    const cyl = (len: number, x: number, y: number, z: number, rot?: [number, number, number]) => {
       const m = new THREE.Mesh(new THREE.CylinderGeometry(pr, pr, len, 10), postMat);
       m.position.set(x, y, z);
       if (rot) m.rotation.set(...rot);
@@ -196,10 +210,10 @@ export function buildStadium(scene, renderer, { length: L, width: W }, goal, tea
     for (let y = 0; y < h; y += 4) g.fillRect(0, y, w, 1);
   });
   adTex.wrapS = THREE.RepeatWrapping;
-  const boards = [];
+  const boards: THREE.Texture[] = [];
   const boardH = 0.95;
   const frame = std({ color: '#0b0f19' });
-  const addBoard = (len, x, z, ry) => {
+  const addBoard = (len: number, x: number, z: number, ry: number) => {
     const t = adTex.clone();
     t.needsUpdate = true;
     t.repeat.set(len / 60, 1);
@@ -252,18 +266,18 @@ export function buildStadium(scene, renderer, { length: L, width: W }, goal, tea
       }
     })
   );
-  const crowdMats = [];
+  const crowdMats: THREE.MeshStandardMaterial[] = [];
   const concrete = std({ color: '#475569' });
   const darkConcrete = std({ color: '#1e293b' });
   const roofMat = std({ color: '#0f172a', side: THREE.DoubleSide });
   const steel = std({ color: '#94a3b8', roughness: 0.5, metalness: 0.3 });
 
   // A stand: two sloped crowd tiers, front wall, roof with supports. Built facing +z, centred on x.
-  const stand = (len, cx, cz, ry, roof = true) => {
+  const stand = (len: number, cx: number, cz: number, ry: number, roof = true) => {
     const grp = new THREE.Group();
     grp.position.set(cx, 0, cz);
     grp.rotation.y = ry;
-    const tier = (z0, y0, depthT, rise) => {
+    const tier = (z0: number, y0: number, depthT: number, rise: number) => {
       const slope = Math.hypot(depthT, rise);
       const frames = crowdFrames.map((f) => {
         const t = f.clone();
@@ -336,7 +350,7 @@ export function buildStadium(scene, renderer, { length: L, width: W }, goal, tea
     g.fillRect(0, 0, 128, 128);
   });
   const lampMat = new THREE.MeshBasicMaterial({ color: '#fffbea' });
-  const glows = [];
+  const glows: THREE.Object3D[] = [];
   for (const x of [-1, 1]) for (const z of [-1, 1]) {
     const tx = x * (L / 2 + 22), tz = z * (W / 2 + 26);
     const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.9, 46, 8), steel);
@@ -393,7 +407,8 @@ export function buildStadium(scene, renderer, { length: L, width: W }, goal, tea
   });
   const skyMat = new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false });
   scene.add(new THREE.Mesh(new THREE.SphereGeometry(400, 32, 16), skyMat));
-  scene.fog = new THREE.Fog('#0b1430', 160, 380);
+  const fog = new THREE.Fog('#0b1430', 160, 380);
+  scene.fog = fog;
 
   // --- Lights ----------------------------------------------------------------
   const hemi = new THREE.HemisphereLight('#dbe4ff', '#20361f', 1.1);
@@ -421,13 +436,13 @@ export function buildStadium(scene, renderer, { length: L, width: W }, goal, tea
 
   let t = 0, frameT = 0, cur = 0;
   // 'day' (sunny afternoon) or 'night' (under floodlights)
-  function setTimeOfDay(mode) {
+  function setTimeOfDay(mode: TimeOfDay) {
     const day = mode !== 'night';
     skyMat.map = day ? daySkyTex : skyTex;
     skyMat.needsUpdate = true;
-    scene.fog.color.set(day ? '#b9cfe0' : '#0b1430');
-    scene.fog.near = day ? 220 : 160;
-    scene.fog.far = day ? 520 : 380;
+    fog.color.set(day ? '#b9cfe0' : '#0b1430');
+    fog.near = day ? 220 : 160;
+    fog.far = day ? 520 : 380;
     hemi.color.set(day ? '#e3efff' : '#dbe4ff');
     hemi.groundColor.set(day ? '#3c5a2c' : '#20361f');
     hemi.intensity = day ? 1.35 : 1.1;

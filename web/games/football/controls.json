@@ -1,5 +1,5 @@
 {
-  "_help": "Which pad button does which action, per situation. Buttons: cross, circle, square, triangle, l1, r1. Add '+swipe' (e.g. 'triangle+swipe') for a swipe across that button on the phone. Actions are listed under 'labels'. Keyboard keys for the same buttons are under 'keyboard'.",
+  "_help": "Which pad button does which action, per situation. Buttons: cross, circle, square, triangle, l1, r1; 'triangle+swipe' is a swipe across that button on the phone. Actions are the keys of 'labels' (also listed in actions.ts). Unknown names are reported in the browser console and ignored. Keyboard keys are the same for every game (web/platform/keyboard.ts).",
   "attack": {
     "cross": "pass",
     "circle": "longPass",
@@ -36,9 +36,5 @@
     "teammatePress": "Team press",
     "shortThrow": "Short throw",
     "longThrow": "Long throw"
-  },
-  "keyboard": [
-    { "up": "KeyW", "down": "KeyS", "left": "KeyA", "right": "KeyD", "cross": "KeyF", "circle": "KeyH", "square": "KeyG", "triangle": "KeyT", "triangle+swipe": "KeyY", "l1": "KeyQ", "r1": "KeyE", "sprint": "ShiftLeft" },
-    { "up": "ArrowUp", "down": "ArrowDown", "left": "ArrowLeft", "right": "ArrowRight", "cross": "Comma", "circle": "Slash", "square": "Period", "triangle": "Semicolon", "triangle+swipe": "Quote", "l1": "KeyK", "r1": "KeyL", "sprint": "ShiftRight" }
-  ]
+  }
 }

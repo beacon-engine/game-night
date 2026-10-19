@@ -142,7 +142,6 @@
   .chip .sta > div { height: 100%; }
   #sound { position: fixed; top: 16px; right: 20px; font-family: system-ui, sans-serif; font-weight: 600; font-size: 13px; opacity: .7; }
 </style>
-<script type="importmap">{ "imports": { "three": "/vendor/three.module.js", "three/addons/": "/addons/" } }</script>
 </head>
 <body>
   <canvas id="game"></canvas>
@@ -187,7 +186,7 @@
       Phone here: stick <b>◀ ▶</b> changes your club · <b>□</b> swaps side · <b>✕</b> kicks off · <b>○</b> back to games · <b>❚❚</b> on the pad pauses<br>
       With the ball: <b>✕</b> pass · <b>○</b> long pass · <b>□</b> shoot (hold for power, aim with the stick) · <b>△</b> through ball (swipe it for a lofted one) · pull the stick past its ring to sprint<br>
       Without it: hold <b>✕</b> to press · <b>○</b> tackle (slides in from a few metres) · <b>L1</b> switch player · hold <b>R1</b> for a teammate to press<br>
-      <small>Change any of these in data/controls/football.json</small><br>
+      <small>Change any of these in games/football/controls.json</small><br>
       Keyboard: WASD + F (✕) H (○) G (□) T (△) Y (lofted △), Q/E step-over/drag-back, L-Shift sprint &nbsp;|&nbsp; Arrows + , (✕) / (○) . (□) ; (△) ' (lofted △), K/L skills, R-Shift sprint<br>
       Enter = kick off · Esc = back to games · Esc/P = pause · C = camera · N = name tags · M = mute
     </div>
@@ -210,6 +209,6 @@
   </div>
   <div id="sound">Click anywhere to enable sound</div>
 
-  <script type="module" src="/games/football/main.js"></script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>

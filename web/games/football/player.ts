@@ -7,17 +7,76 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import type { GLTF } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+import type { Kit } from './types.ts';
 
-const lerp = (a, b, k) => a + (b - a) * k;
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const norm = (s) => s.replace(/[^a-z0-9]/gi, '').toLowerCase();
+const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
+const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+const norm = (s: string) => s.replace(/[^a-z0-9]/gi, '').toLowerCase();
+const pair = <T>(make: () => T): [T, T] => [make(), make()];
+
+export type SkillKind = 'stepover' | 'dragback';
+export type ControlKind = 'head' | 'chest' | 'thigh';
+export type Card = 'yellow' | 'red';
+export type Foot = 0 | 1; // 0 = the -X side leg, 1 = the +X side
+
+// On the floor: 'trip' (stumbles forward, lies there, gets up) or 'side' (after a slide)
+export interface Fall {
+  kind: 'trip' | 'side';
+  t: number;
+  total: number;
+  side: number;
+}
+
+// What the match tells the model each frame (all optional but speed)
+export interface BodyState {
+  speed: number;
+  vf?: number; // velocity forward / sideways, relative to facing
+  vl?: number;
+  af?: number; // acceleration forward / sideways (for leaning)
+  al?: number;
+  look?: number; // where the ball is, relative to facing (radians)
+  tired?: number; // 0..1
+  fall?: Fall | null;
+  slide?: boolean;
+  slideSide?: number;
+  down?: boolean;
+  tackle?: boolean;
+  dive?: number; // -1/1: diving to that side
+  holding?: boolean; // keeper with the ball in his hands
+  celebrate?: boolean;
+  point?: boolean; // (referee)
+  card?: boolean; // (referee)
+  throwHold?: boolean;
+  gkReady?: boolean;
+  reach?: 'high' | 'mid' | 'low' | null;
+  wallJump?: boolean;
+}
+
+interface LegPose { hip: number; knee: number; ankle: number; z: number }
+interface ArmPose { x: number; z: number; elbow: number }
+interface Pose {
+  hipsY: number; hipsX: number; hipsZ: number; hipsYaw: number;
+  spineX: number; spineYaw: number; neckX: number;
+  legs: [LegPose, LegPose];
+  arms: [ArmPose, ArmPose];
+}
+const POSE_SCALARS = ['hipsY', 'hipsX', 'hipsZ', 'hipsYaw', 'spineX', 'spineYaw', 'neckX'] as const;
+
+// how much each part of the body follows the procedural pose rather than the motion capture
+const PARTS = ['hips', 'spine', 'neck', 'leg0', 'leg1', 'arm0', 'arm1'] as const;
+type Weights = Record<(typeof PARTS)[number], number>;
+const LEG = ['leg0', 'leg1'] as const;
+const ARM = ['arm0', 'arm1'] as const;
+const noWeights = (): Weights => ({ hips: 0, spine: 0, neck: 0, leg0: 0, leg1: 0, arm0: 0, arm1: 0 });
 
 // speeds (m/s) the motion-captured cycles were recorded at, roughly
 // speeds (m/s) each cycle is played at its natural rate; `phase` lines its stride up with the others;
 // `bob` scales the hip bounce (the jog was captured as a big bounding run: 24 cm of bounce per stride,
 // where footballers move with about 6-10 cm)
-const LOCO = [
+interface Loco { clip: string; speed: number; phase: number; bob: number; thigh: number; calf: number }
+const LOCO: Loco[] = [
 // `thigh`/`calf` scale how far the legs swing and the knee bends (the jog lifts its knees like a
 // high-knees drill; a footballer's stride is lower and more economical)
   { clip: 'Walk_Loop', speed: 1.5, phase: 0.083, bob: 1, thigh: 1, calf: 1 },
@@ -26,14 +85,42 @@ const LOCO = [
 ];
 
 // ------------------------------------------------------------------ assets --
-let ASSET = null;
-const MODELS = '/games/football/models/ubc/';
+type SkinTone = 'dark' | 'light';
+type HairMesh = THREE.Mesh | THREE.SkinnedMesh;
+interface Assets {
+  scene: THREE.Group;
+  clips: Record<string, THREE.AnimationClip>;
+  facing: number;
+  c2s: THREE.Quaternion; // character space (X left, Y up, Z forward) -> the rig's space
+  bodyGeo: THREE.BufferGeometry;
+  bodyMat: THREE.MeshStandardMaterial;
+  skinMaps: Record<SkinTone, THREE.Texture>;
+  hair: Record<'buzz' | 'parted' | 'beard' | 'brows', HairMesh | null>;
+}
+let ASSET: Assets; // set by loadPlayerAssets(), before any PlayerModel is made
+const MODELS = 'models/ubc/';
+
+// the body itself (the hair, brows... are separate, much smaller meshes)
+const isBody = (o: THREE.SkinnedMesh) => o.geometry.attributes.position.count > 3000;
+
+const isBone = (o: THREE.Object3D): o is THREE.Bone => o instanceof THREE.Bone;
+const isMesh = (o: THREE.Object3D): o is THREE.Mesh => o instanceof THREE.Mesh;
+const isSkinned = (o: THREE.Object3D): o is THREE.SkinnedMesh => o instanceof THREE.SkinnedMesh;
+
+function collect<T extends THREE.Object3D>(root: THREE.Object3D, is: (o: THREE.Object3D) => o is T) {
+  const out: T[] = [];
+  root.traverse((o) => { if (is(o)) out.push(o); });
+  return out;
+}
+
+// bones by normalised name: 'thighl', 'spine02'...
+const bonesOf = (root: THREE.Object3D) => Object.fromEntries(collect(root, isBone).map((b) => [norm(b.name), b]));
 
 export async function loadPlayerAssets() {
   const gl = new GLTFLoader();
   const [ch, fbx, buzz, parted, beard, brows] = await Promise.all([
     gl.loadAsync(MODELS + 'Superhero_Male_FullBody.gltf'),
-    new FBXLoader().loadAsync('/games/football/models/ual_ue.fbx'),
+    new FBXLoader().loadAsync('models/ual_ue.fbx'),
     gl.loadAsync(MODELS + 'Hair_Buzzed.gltf'),
     gl.loadAsync(MODELS + 'Hair_SimpleParted.gltf'),
     gl.loadAsync(MODELS + 'Hair_Beard.gltf'),
@@ -41,13 +128,12 @@ export async function loadPlayerAssets() {
   ]);
   const scene = ch.scene;
   scene.updateMatrixWorld(true);
-  const bones = {};
-  scene.traverse((o) => { if (o.isBone) bones[norm(o.name)] = o; });
+  const bones = bonesOf(scene);
   const restPelvis = bones.pelvis.position.z;
 
   // The motion capture was made on a slightly smaller mannequin with the same skeleton:
   // use only its joint rotations (plus pelvis height, rescaled) so each body keeps its own proportions.
-  const clips = {};
+  const clips: Record<string, THREE.AnimationClip> = {};
   for (const c of fbx.animations) {
     const name = c.name.replace(/^.*\|/, '');
     const tracks = [];
@@ -95,21 +181,21 @@ export async function loadPlayerAssets() {
     clips[name] = new THREE.AnimationClip(name, c.duration, tracks);
   }
 
-  const wp = (n) => new THREE.Vector3().setFromMatrixPosition(bones[n].matrixWorld);
+  const wp = (n: string) => new THREE.Vector3().setFromMatrixPosition(bones[n].matrixWorld);
   const f = wp('balll').sub(wp('footl')).setY(0).normalize(); // heel -> toe: which way he faces
   const facing = Math.atan2(f.x, f.z);
   const c2s = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), facing);
 
   // skin textures: the pack ships dark and light; tints give more variety
-  let bodyMat = null;
-  scene.traverse((o) => { if (o.isSkinnedMesh && o.geometry.attributes.position.count > 3000) bodyMat = o.material; });
-  const loadTex = (url) => new Promise((res) => new THREE.TextureLoader().load(url, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; res(t); }));
+  const body = collect(scene, isSkinned).find(isBody)!;
+  const bodyMat = body.material as THREE.MeshStandardMaterial;
+  const loadTex = (url: string) => new Promise<THREE.Texture>((res) => new THREE.TextureLoader().load(url, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; res(t); }));
   const light = await loadTex(MODELS + 'T_Superhero_Male_Ligh.png');
-  const skinMaps = { dark: bodyMat.map, light };
+  const skinMaps = { dark: bodyMat.map!, light };
 
-  const hairMesh = (g) => { let m = null; g.scene.traverse((o) => { if (o.isSkinnedMesh || o.isMesh) m = m || o; }); return m; };
+  const hairMesh = (g: GLTF): HairMesh | null => collect(g.scene, isMesh)[0] ?? null;
   ASSET = {
-    scene, clips, facing, c2s, bodyMat, skinMaps,
+    scene, clips, facing, c2s, bodyGeo: body.geometry, bodyMat, skinMaps,
     hair: { buzz: hairMesh(buzz), parted: hairMesh(parted), beard: hairMesh(beard), brows: hairMesh(brows) },
   };
 }
@@ -117,19 +203,21 @@ export async function loadPlayerAssets() {
 // --------------------------------------------------------------- kit paint --
 const SKINS = ['#4a2e1f', '#5b3a26', '#6b4430', '#7c5236', '#3b2417', '#8d5e3c', '#a87250', '#2f1d13'];
 const BOOTS = ['#111111', '#111111', '#f5f5f5', '#e11d48', '#facc15', '#22c55e', '#2563eb'];
-const geoCache = new Map();
-const matCache = new Map();
+const geoCache = new Map<string, THREE.BufferGeometry>();
+const matCache = new Map<string, THREE.MeshStandardMaterial>();
+
+interface BodyColors { boots: string; shirt: string; shorts: string; socks: string; glove: string }
 
 // Mark every vertex with the kit colour of the body part it belongs to (most influential bone + height).
 // Skin areas get mask 0 and keep the skin texture.
-function paintedGeometry(geo, skeleton, colors, gk) {
+function paintedGeometry(geo: THREE.BufferGeometry, skeleton: THREE.Skeleton, colors: BodyColors, gk: boolean) {
   const key = `${geo.uuid}|${JSON.stringify(colors)}|${gk}`;
-  if (geoCache.has(key)) return geoCache.get(key);
+  const cached = geoCache.get(key);
+  if (cached) return cached;
   const g = geo.clone();
   const pos = g.attributes.position, si = g.attributes.skinIndex, sw = g.attributes.skinWeight;
   const kit = new Float32Array(pos.count * 4);
-  const C = {};
-  for (const k in colors) C[k] = new THREE.Color(colors[k]);
+  const C = Object.fromEntries(Object.entries(colors).map(([k, v]) => [k, new THREE.Color(v)])) as Record<keyof BodyColors, THREE.Color>;
   const names = skeleton.bones.map((b) => norm(b.name));
   const finger = /index|middle|ring|pinky|thumb/;
   for (let i = 0; i < pos.count; i++) {
@@ -137,7 +225,7 @@ function paintedGeometry(geo, skeleton, colors, gk) {
     for (let k = 0; k < 4; k++) { const w = sw.getComponent(i, k); if (w > bw) { bw = w; best = si.getComponent(i, k); } }
     const n = names[best] || '';
     const x = Math.abs(pos.getX(i)), y = pos.getY(i);
-    let c = null;
+    let c: THREE.Color | null = null;
     if (n.startsWith('spine') || n.startsWith('clavicle')) c = C.shirt;
     else if (n.startsWith('upperarm')) c = gk || x < 0.43 ? C.shirt : null;
     else if (n.startsWith('lowerarm')) c = gk ? C.shirt : null;
@@ -159,8 +247,9 @@ function paintedGeometry(geo, skeleton, colors, gk) {
 // A shirt and shorts made from the body itself: take the triangles of that region, smooth away the
 // muscle detail and puff them out a couple of centimetres, so they read as loose fabric over the body.
 // They're skinned to the same skeleton, so they move with the player.
-const shellCache = new Map();
-function inShirt(n, x, y, long) {
+type ShellKind = 'shirt' | 'shirtLong' | 'shorts';
+const shellCache = new Map<ShellKind, THREE.BufferGeometry>();
+function inShirt(n: string, x: number, y: number, long: boolean) {
   if (n.startsWith('spine') || n.startsWith('clavicle')) return true;
   if (n.startsWith('upperarm')) return long || x < 0.45;
   if (n.startsWith('lowerarm')) return long;
@@ -168,13 +257,14 @@ function inShirt(n, x, y, long) {
   if (n === 'pelvis') return y > 0.86; // the shirt hangs over the waistband
   return false;
 }
-function inShorts(n, x, y) {
+function inShorts(n: string, _x: number, y: number) {
   if (n === 'pelvis') return y < 0.95;
   if (n.startsWith('thigh')) return y > 0.62;
   return false;
 }
-function buildShell(geo, skeleton, kind) {
-  if (shellCache.has(kind)) return shellCache.get(kind);
+function buildShell(geo: THREE.BufferGeometry, skeleton: THREE.Skeleton, kind: ShellKind) {
+  const cached = shellCache.get(kind);
+  if (cached) return cached;
   const pos = geo.attributes.position, nor = geo.attributes.normal, si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight;
   const names = skeleton.bones.map((b) => norm(b.name));
   const inside = new Uint8Array(pos.count);
@@ -182,11 +272,11 @@ function buildShell(geo, skeleton, kind) {
     let best = 0, bw = -1;
     for (let k = 0; k < 4; k++) { const w = sw.getComponent(i, k); if (w > bw) { bw = w; best = si.getComponent(i, k); } }
     const n = names[best] || '', x = Math.abs(pos.getX(i)), y = pos.getY(i);
-    inside[i] = kind === 'shorts' ? inShorts(n, x, y) : inShirt(n, x, y, kind === 'shirtLong');
+    inside[i] = Number(kind === 'shorts' ? inShorts(n, x, y) : inShirt(n, x, y, kind === 'shirtLong'));
   }
-  const idx = geo.index.array;
+  const idx = geo.index!.array;
   const remap = new Int32Array(pos.count).fill(-1);
-  const kept = [];
+  const kept: number[] = [];
   let nv = 0;
   for (let t = 0; t < idx.length; t += 3) {
     const a = idx[t], b = idx[t + 1], c = idx[t + 2];
@@ -202,8 +292,8 @@ function buildShell(geo, skeleton, kind) {
     for (let k = 0; k < 4; k++) { SI[r * 4 + k] = si.getComponent(i, k); SW[r * 4 + k] = sw.getComponent(i, k); }
   }
   // neighbours and open edges (hems, collar, sleeve ends)
-  const nb = Array.from({ length: nv }, () => new Set());
-  const edges = new Map();
+  const nb = Array.from({ length: nv }, () => new Set<number>());
+  const edges = new Map<number, number>();
   for (let t = 0; t < kept.length; t += 3) {
     const tri = [kept[t], kept[t + 1], kept[t + 2]];
     for (let e = 0; e < 3; e++) {
@@ -255,10 +345,11 @@ function buildShell(geo, skeleton, kind) {
   return g;
 }
 
-const shellMatCache = new Map();
-function shellMaterial(kind, kit) {
+const shellMatCache = new Map<string, THREE.MeshStandardMaterial>();
+function shellMaterial(kind: ShellKind, kit: Kit) {
   const key = `${kind}|${JSON.stringify(kit)}`;
-  if (shellMatCache.has(key)) return shellMatCache.get(key);
+  const cached = shellMatCache.get(key);
+  if (cached) return cached;
   const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, metalness: 0 });
   const pattern = kind === 'shorts' ? 0 : kit.pattern === 'stripes' ? 1 : kit.pattern === 'hoops' ? 2 : 0;
   const U = {
@@ -286,9 +377,10 @@ function shellMaterial(kind, kit) {
 }
 
 // The body's own material (skin texture, normal and roughness maps) with the kit painted over it
-function kitMaterial(tone, tint) {
+function kitMaterial(tone: SkinTone, tint: number) {
   const key = `${tone}|${tint}`;
-  if (matCache.has(key)) return matCache.get(key);
+  const cached = matCache.get(key);
+  if (cached) return cached;
   const m = ASSET.bodyMat.clone();
   m.map = ASSET.skinMaps[tone];
   m.color = new THREE.Color(tint, tint, tint);
@@ -305,24 +397,27 @@ function kitMaterial(tone, tint) {
   return m;
 }
 
-const hairMatCache = new Map();
-function hairMaterial(src, shade) {
-  const key = `${src.uuid}|${shade}`;
-  if (!hairMatCache.has(key)) {
-    const m = src.clone();
+const hairMatCache = new Map<string, THREE.MeshStandardMaterial>();
+function hairMaterial(src: THREE.Material | THREE.Material[], shade: number) {
+  const base = (Array.isArray(src) ? src[0] : src) as THREE.MeshStandardMaterial;
+  const key = `${base.uuid}|${shade}`;
+  let m = hairMatCache.get(key);
+  if (!m) {
+    m = base.clone();
     m.color = new THREE.Color(shade, shade * 0.95, shade * 0.9);
     hairMatCache.set(key, m);
   }
-  return hairMatCache.get(key);
+  return m;
 }
 
-const numberCache = new Map();
-function numberTexture(color, number) {
+const numberCache = new Map<string, THREE.CanvasTexture>();
+function numberTexture(color: string, number: number) {
   const key = `${color}|${number}`;
-  if (numberCache.has(key)) return numberCache.get(key);
+  const cached = numberCache.get(key);
+  if (cached) return cached;
   const c = document.createElement('canvas');
   c.width = c.height = 128;
-  const g = c.getContext('2d');
+  const g = c.getContext('2d')!;
   g.font = 'bold 92px "Arial Black", Impact, sans-serif';
   g.textAlign = 'center';
   g.textBaseline = 'middle';
@@ -337,9 +432,9 @@ function numberTexture(color, number) {
   return t;
 }
 
-function nameTexture(text, color = '#ffffff', bg = null) {
+function nameTexture(text: string, color = '#ffffff', bg?: string) {
   const c = document.createElement('canvas');
-  const g = c.getContext('2d');
+  const g = c.getContext('2d')!;
   const font = 'bold 30px "Arial Black", Impact, sans-serif';
   g.font = font;
   const tw = Math.ceil(g.measureText(text).width);
@@ -368,7 +463,7 @@ function nameTexture(text, color = '#ffffff', bg = null) {
 }
 
 // Screen-space label (same size wherever the player is)
-export function makeLabel(text, opts = {}) {
+export function makeLabel(text: string, opts: { color?: string; bg?: string; height?: number; opacity?: number } = {}) {
   const tex = nameTexture(text, opts.color, opts.bg);
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, sizeAttenuation: false, transparent: true, opacity: opts.opacity ?? 1 }));
   const h = opts.height ?? 0.028;
@@ -385,13 +480,18 @@ const shadowMat = new THREE.MeshBasicMaterial({ color: 0, transparent: true, opa
 // ----------------------------------------------------- pose helpers (math) --
 const _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _v = new THREE.Vector3();
 const AX = new THREE.Vector3(1, 0, 0), AY = new THREE.Vector3(0, 1, 0), AZ = new THREE.Vector3(0, 0, 1);
-const qAxis = (axis, a) => new THREE.Quaternion().setFromAxisAngle(axis, a);
+const qAxis = (axis: THREE.Vector3, a: number) => new THREE.Quaternion().setFromAxisAngle(axis, a);
 
 // A driven bone: rotations are given in character space (X = left, Y = up, Z = forward) relative to the
 // bone's rest orientation, applied in its parent's current frame, just like simple hierarchical joints.
 class Joint {
-  constructor(bone, c2s) {
-    this.bone = bone;
+  readonly restLocal: THREE.Quaternion;
+  readonly restPos: THREE.Vector3;
+  private readonly M: THREE.Quaternion;
+  private readonly Minv: THREE.Quaternion;
+  private readonly target = new THREE.Quaternion();
+
+  constructor(readonly bone: THREE.Bone, c2s: THREE.Quaternion) {
     this.restLocal = bone.quaternion.clone();
     this.restPos = bone.position.clone();
     const restWorld = new THREE.Quaternion();
@@ -399,52 +499,97 @@ class Joint {
     // M maps a character-space rotation into this bone's local delta
     this.M = restWorld.clone().invert().multiply(c2s);
     this.Minv = this.M.clone().invert();
-    this.target = new THREE.Quaternion();
   }
   // local quaternion for a character-space delta D (from rest)
-  pose(D) {
+  pose(D: THREE.Quaternion) {
     return this.target.copy(this.restLocal).multiply(_q.copy(this.M).multiply(D).multiply(this.Minv));
   }
   // small extra rotation on top of whatever the motion capture is doing
-  addLocal(D) {
+  addLocal(D: THREE.Quaternion) {
     this.bone.quaternion.multiply(_q.copy(this.M).multiply(D).multiply(this.Minv));
   }
 }
 
 // --------------------------------------------------------------- the model --
+interface Leg { hip: Joint; knee: Joint; ankle: Joint; side: number }
+interface Arm {
+  shoulder: Joint;
+  elbow: Joint;
+  hand: THREE.Bone;
+  side: number;
+  down: THREE.Quaternion; // lets the T-posed arm hang down
+  elbowAxis: THREE.Vector3; // the elbow's hinge once it does
+}
+type LocoAction = Loco & { action: THREE.AnimationAction; dur: number };
+
+export interface ModelOptions {
+  kit: Kit;
+  number: number | ''; // '' = no number on the back
+  name: string;
+  gk: boolean;
+  seed?: number; // picks skin, hair, boots and build
+  referee?: boolean;
+}
+
 export class PlayerModel {
-  constructor({ kit, number, name, gk, seed = 0, referee = false }) {
+  readonly root = new THREE.Group(); // place this in the scene
+  readonly tag: THREE.Sprite; // name above the head
+  readonly build: number; // body size, ~0.95..1.03
+  private readonly body = new THREE.Group();
+  private readonly j: Record<'hips' | 'spine1' | 'spine2' | 'spine3' | 'neck' | 'head', Joint>;
+  private readonly legs: [Leg, Leg];
+  private readonly feet: [THREE.Bone, THREE.Bone];
+  private readonly arms: [Arm, Arm];
+  private readonly restHipsHeight: number;
+  private readonly mixer: THREE.AnimationMixer;
+  private readonly idle: THREE.AnimationAction;
+  private readonly loco: LocoAction[];
+  private readonly card: THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial> | null = null;
+  private cycle: number;
+  private time: number;
+  private kickT = 0;
+  private touchT = 0;
+  private touchFoot: Foot = 1;
+  private touchReach = 0;
+  private throwT = 0;
+  private skillKind: SkillKind = 'stepover';
+  private skillDur = 0.5;
+  private skillT = 0;
+  private skillSide = 1;
+  private ctrlKind: ControlKind = 'chest';
+  private ctrlT = 0;
+  private lookYaw = 0;
+  private strafePh = 0;
+  private W = noWeights();
+  private P: Pose | null = null; // eased procedural pose
+
+  constructor({ kit, number, name, gk, seed = 0, referee = false }: ModelOptions) {
     const rnd = mulberry(seed * 9301 + 49297);
-    const colors = {
+    const colors: BodyColors = {
       boots: BOOTS[Math.floor(rnd() * BOOTS.length)],
       shirt: kit.shirt, shorts: kit.shorts, socks: kit.socks, glove: '#f1f5f9',
     };
     // mostly darker skin tones (these are West African clubs), with tints for variety
-    const tone = referee ? 'light' : rnd() < 0.85 ? 'dark' : 'light';
+    const tone: SkinTone = referee ? 'light' : rnd() < 0.85 ? 'dark' : 'light';
     // the dark texture is a medium-brown base: shade it for a range of deep to medium skin tones
     const tint = tone === 'dark' ? [0.42, 0.5, 0.58, 0.68, 0.8][Math.floor(rnd() * 5)] : [0.85, 0.95][Math.floor(rnd() * 2)];
     const build = 0.95 + rnd() * 0.08;
 
     const scene = SkeletonUtils.clone(ASSET.scene);
-    const bones = {};
-    let bodyMesh = null;
-    scene.traverse((o) => {
-      if (o.isBone) bones[norm(o.name)] = o;
-      if (o.isSkinnedMesh) {
-        o.castShadow = true;
-        o.frustumCulled = false;
-        if (o.geometry.attributes.position.count > 3000) {
-          bodyMesh = o;
-          ASSET.bodyGeo = ASSET.bodyGeo || o.geometry;
-          o.geometry = paintedGeometry(o.geometry, o.skeleton, colors, gk);
-          o.material = kitMaterial(tone, tint);
-        }
-      }
-    });
+    const bones = bonesOf(scene);
+    const skinned = collect(scene, isSkinned);
+    for (const o of skinned) {
+      o.castShadow = true;
+      o.frustumCulled = false;
+    }
+    const bodyMesh = skinned.find(isBody)!;
+    const bodyParent = bodyMesh.parent!;
+    bodyMesh.geometry = paintedGeometry(ASSET.bodyGeo, bodyMesh.skeleton, colors, gk);
+    bodyMesh.material = kitMaterial(tone, tint);
     // shirt and shorts as garments over the (kit-painted) body
-    for (const kind of [gk ? 'shirtLong' : 'shirt', 'shorts']) {
+    for (const kind of [gk ? 'shirtLong' : 'shirt', 'shorts'] as const) {
       const g = new THREE.SkinnedMesh(buildShell(ASSET.bodyGeo, bodyMesh.skeleton, kind), shellMaterial(kind, kit));
-      bodyMesh.parent.add(g);
+      bodyParent.add(g);
       g.bind(bodyMesh.skeleton, bodyMesh.bindMatrix);
       g.castShadow = true;
       g.frustumCulled = false;
@@ -455,44 +600,46 @@ export class PlayerModel {
     if (!referee && rnd() < 0.3) parts.push(ASSET.hair.beard);
     for (const src of parts) {
       if (!src) continue;
-      let mesh;
-      if (src.isSkinnedMesh) {
-        mesh = new THREE.SkinnedMesh(src.geometry, hairMaterial(src.material, hairShade));
+      let mesh: THREE.Mesh;
+      if (src instanceof THREE.SkinnedMesh) {
+        const skinnedHair = new THREE.SkinnedMesh(src.geometry, hairMaterial(src.material, hairShade));
         const sk = new THREE.Skeleton(src.skeleton.bones.map((b) => bones[norm(b.name)]), src.skeleton.boneInverses);
-        bodyMesh.parent.add(mesh);
-        mesh.bind(sk, src.bindMatrix);
+        bodyParent.add(skinnedHair);
+        skinnedHair.bind(sk, src.bindMatrix);
+        mesh = skinnedHair;
       } else {
         mesh = new THREE.Mesh(src.geometry, hairMaterial(src.material, hairShade));
-        bodyMesh.parent.add(mesh);
+        bodyParent.add(mesh);
       }
       mesh.castShadow = true;
       mesh.frustumCulled = false;
     }
     scene.updateMatrixWorld(true);
     const c2s = ASSET.c2s;
-    const J = (n) => new Joint(bones[n], c2s);
+    const J = (n: string) => new Joint(bones[n], c2s);
     this.j = {
       hips: J('pelvis'), spine1: J('spine01'), spine2: J('spine02'), spine3: J('spine03'),
       neck: J('neck01'), head: J('head'),
     };
     // left/right as they sit in character space: index 0 = the -X side, 1 = the +X side
-    const sideOf = (n) => Math.sign(_v.setFromMatrixPosition(bones[n].matrixWorld).applyQuaternion(_q2.copy(c2s).invert()).x);
-    const legL = { hip: J('thighl'), knee: J('calfl'), ankle: J('footl'), side: sideOf('thighl') };
-    const legR = { hip: J('thighr'), knee: J('calfr'), ankle: J('footr'), side: sideOf('thighr') };
-    const armL = { shoulder: J('upperarml'), elbow: J('lowerarml'), hand: bones.handl, side: sideOf('upperarml') };
-    const armR = { shoulder: J('upperarmr'), elbow: J('lowerarmr'), hand: bones.handr, side: sideOf('upperarmr') };
+    const toChar = (n: string) => _v.setFromMatrixPosition(bones[n].matrixWorld).applyQuaternion(_q2.copy(c2s).invert());
+    const sideOf = (n: string) => Math.sign(toChar(n).x);
+    const leg = (s: string): Leg => ({ hip: J(`thigh${s}`), knee: J(`calf${s}`), ankle: J(`foot${s}`), side: sideOf(`thigh${s}`) });
+    // the arms are modelled out sideways (T-pose): work out the rotation that lets them hang down,
+    // and the elbow axis once they do
+    const arm = (s: string): Arm => {
+      const shoulder = toChar(`upperarm${s}`).clone();
+      const dir = toChar(`lowerarm${s}`).sub(shoulder).normalize();
+      const down = new THREE.Quaternion().setFromUnitVectors(dir, new THREE.Vector3(0, -1, 0));
+      return {
+        shoulder: J(`upperarm${s}`), elbow: J(`lowerarm${s}`), hand: bones[`hand${s}`], side: sideOf(`upperarm${s}`),
+        down, elbowAxis: AX.clone().applyQuaternion(down.clone().invert()),
+      };
+    };
+    const [legL, legR, armL, armR] = [leg('l'), leg('r'), arm('l'), arm('r')];
     this.legs = legL.side < 0 ? [legL, legR] : [legR, legL];
     this.feet = legL.side < 0 ? [bones.balll, bones.ballr] : [bones.ballr, bones.balll];
     this.arms = armL.side < 0 ? [armL, armR] : [armR, armL];
-    // the arms are modelled out sideways (T-pose): work out the rotation that lets them hang down,
-    // and the elbow axis once they do
-    for (const A of this.arms) {
-      const s0 = new THREE.Vector3().setFromMatrixPosition(A.shoulder.bone.matrixWorld);
-      const e0 = new THREE.Vector3().setFromMatrixPosition(A.elbow.bone.matrixWorld);
-      const dir = e0.sub(s0).applyQuaternion(_q2.copy(c2s).invert()).normalize();
-      A.down = new THREE.Quaternion().setFromUnitVectors(dir, new THREE.Vector3(0, -1, 0));
-      A.elbowAxis = AX.clone().applyQuaternion(A.down.clone().invert());
-    }
     this.restHipsHeight = this.j.hips.restPos.z; // the rig's root is Z-up
 
     // motion capture
@@ -509,10 +656,8 @@ export class PlayerModel {
     this.idle.time = rnd() * ASSET.clips.Idle_Loop.duration;
     this.cycle = rnd();
 
-    this.body = new THREE.Group();
     this.body.rotation.y = -ASSET.facing; // face +Z
     this.body.add(scene);
-    this.root = new THREE.Group();
     this.root.scale.setScalar(build);
     this.build = build;
     this.root.add(this.body);
@@ -540,41 +685,34 @@ export class PlayerModel {
       this.card.visible = false;
       this.arms[1].hand.add(this.card);
     }
-
     this.time = rnd() * 10;
-    this.kickT = 0;
-    this.touchT = 0;
-    this.touchFoot = 1;
-    this.throwT = 0;
-    this.W = { hips: 0, spine: 0, neck: 0, leg0: 0, leg1: 0, arm0: 0, arm1: 0 };
-    this.P = null; // eased procedural pose
   }
 
   kick() { this.kickT = 0.34; }
   // reach: 0 = ball at the foot, up to 1 = stretching for it (the leg extends further toward it)
-  touch(foot = 1 - this.touchFoot, reach = 0) { this.touchT = 0.2; this.touchFoot = foot; this.touchReach = reach; }
+  touch(foot: Foot = this.touchFoot ? 0 : 1, reach = 0) { this.touchT = 0.2; this.touchFoot = foot; this.touchReach = reach; }
 
   // where each foot is (index 0 = the -X side leg, 1 = the +X side), in world space
-  footWorld(i, out) {
+  footWorld(i: Foot, out: THREE.Vector3) {
     this.root.updateMatrixWorld(true);
     return this.feet[i].getWorldPosition(out);
   }
   throwBall() { this.throwT = 0.36; }
-  skill(kind, side = 1) {
+  skill(kind: SkillKind, side = 1) {
     this.skillKind = kind;
     this.skillDur = kind === 'stepover' ? 0.5 : 0.45;
     this.skillT = this.skillDur;
     this.skillSide = side;
   }
-  control(kind) { this.ctrlKind = kind; this.ctrlT = 0.45; }
-  showCard(color) {
+  control(kind: ControlKind) { this.ctrlKind = kind; this.ctrlT = 0.45; }
+  showCard(color: Card | null) {
     if (!this.card) return;
     this.card.visible = !!color;
     if (color) this.card.material.color.set(color === 'red' ? '#dc2626' : '#facc15');
   }
 
   // world position between the two hands (where a held ball sits)
-  handsWorld(out) {
+  handsWorld(out: THREE.Vector3) {
     this.root.updateMatrixWorld(true);
     const a = new THREE.Vector3(), b = new THREE.Vector3();
     this.arms[0].hand.getWorldPosition(a);
@@ -582,9 +720,7 @@ export class PlayerModel {
     return out.copy(a).add(b).multiplyScalar(0.5).add(_v.set(0, -0.06, 0));
   }
 
-  // st: { speed, vf, vl, af, al, look, tired, fall, slide, slideSide, down, tackle, dive, holding,
-  //       celebrate, point, card, throwHold, gkReady, reach, wallJump }
-  update(dt, st) {
+  update(dt: number, st: BodyState) {
     this.time += dt;
     const sp = st.speed;
     const vf = st.vf ?? sp, vl = st.vl ?? 0;
@@ -615,14 +751,14 @@ export class PlayerModel {
     const T = this.actionPose(dt, st, strafe);
     const want = this.weights(st, strafe);
     const fast = this.kickT > 0 || st.tackle;
-    for (const k in this.W) this.W[k] = lerp(this.W[k], want[k], Math.min(1, dt * (want[k] > this.W[k] ? (fast ? 30 : 12) : 8)));
+    for (const k of PARTS) this.W[k] = lerp(this.W[k], want[k], Math.min(1, dt * (want[k] > this.W[k] ? (fast ? 30 : 12) : 8)));
     if (!this.P) this.P = structuredClone(T);
     const kE = Math.min(1, dt * (st.fall ? 10 : fast ? 30 : 14));
     const P = this.P;
-    for (const key of ['hipsY', 'hipsX', 'hipsZ', 'hipsYaw', 'spineX', 'spineYaw', 'neckX']) P[key] = lerp(P[key], T[key], kE);
+    for (const key of POSE_SCALARS) P[key] = lerp(P[key], T[key], kE);
     for (let i = 0; i < 2; i++) {
-      for (const key of ['hip', 'knee', 'ankle', 'z']) P.legs[i][key] = lerp(P.legs[i][key], T.legs[i][key], kE);
-      for (const key of ['x', 'z', 'elbow']) P.arms[i][key] = lerp(P.arms[i][key], T.arms[i][key], kE);
+      for (const key of ['hip', 'knee', 'ankle', 'z'] as const) P.legs[i][key] = lerp(P.legs[i][key], T.legs[i][key], kE);
+      for (const key of ['x', 'z', 'elbow'] as const) P.arms[i][key] = lerp(P.arms[i][key], T.arms[i][key], kE);
     }
     this.apply(P);
 
@@ -633,20 +769,20 @@ export class PlayerModel {
     const tired = st.tired || 0;
     j.hips.addLocal(qAxis(AZ, leanS));
     j.spine2.addLocal(qAxis(AX, leanF + 0.12 * tired));
-    this.lookYaw = lerp(this.lookYaw || 0, clamp(st.look || 0, -1.1, 1.1), Math.min(1, dt * 6));
+    this.lookYaw = lerp(this.lookYaw, clamp(st.look || 0, -1.1, 1.1), Math.min(1, dt * 6));
     j.neck.addLocal(qAxis(AY, this.lookYaw * 0.6 * (1 - this.W.neck)));
     j.head.addLocal(qAxis(AY, this.lookYaw * 0.4 * (1 - this.W.neck)));
   }
 
   // how much each part of the body follows the procedural pose rather than the motion capture
-  weights(st, strafe) {
-    const W = { hips: 0, spine: 0, neck: 0, leg0: 0, leg1: 0, arm0: 0, arm1: 0 };
-    const all = (v = 1) => { for (const k in W) W[k] = Math.max(W[k], v); };
+  private weights(st: BodyState, strafe: number) {
+    const W = noWeights();
+    const all = (v = 1) => { for (const k of PARTS) W[k] = Math.max(W[k], v); };
     const legs = (v = 1) => { W.leg0 = Math.max(W.leg0, v); W.leg1 = Math.max(W.leg1, v); };
     const arms = (v = 1) => { W.arm0 = Math.max(W.arm0, v); W.arm1 = Math.max(W.arm1, v); };
     if (st.slide || st.fall || st.down || st.dive || st.wallJump || st.gkReady || st.reach === 'low') all();
     if (this.kickT > 0) { legs(); arms(); W.spine = Math.max(W.spine, 0.7); W.hips = Math.max(W.hips, 0.6); }
-    if (this.touchT > 0) W['leg' + this.touchFoot] = Math.max(W['leg' + this.touchFoot], 0.45 + 0.5 * (this.touchReach || 0));
+    if (this.touchT > 0) W[LEG[this.touchFoot]] = Math.max(W[LEG[this.touchFoot]], 0.45 + 0.5 * this.touchReach);
     if (this.skillT > 0) { legs(); arms(0.6); W.hips = 1; W.spine = Math.max(W.spine, 0.6); }
     if (st.tackle) { legs(); arms(); W.hips = 1; W.spine = 1; }
     if (st.throwHold || this.throwT > 0) { arms(); W.spine = 1; }
@@ -663,9 +799,9 @@ export class PlayerModel {
   }
 
   // Write the procedural pose into the skeleton, blended by body part
-  apply(P) {
+  private apply(P: Pose) {
     const j = this.j, W = this.W;
-    const blend = (joint, D, w) => { if (w > 0.001) joint.bone.quaternion.slerp(joint.pose(D), w); };
+    const blend = (joint: Joint, D: THREE.Quaternion, w: number) => { if (w > 0.001) joint.bone.quaternion.slerp(joint.pose(D), w); };
     // hips: height and orientation
     if (W.hips > 0.001) {
       j.hips.bone.position.z = lerp(j.hips.bone.position.z, (P.hipsY / 0.95) * this.restHipsHeight, W.hips);
@@ -680,7 +816,7 @@ export class PlayerModel {
     if (W.neck > 0.001) blend(j.neck, qAxis(AX, P.neckX), W.neck);
     for (let i = 0; i < 2; i++) {
       const L = this.legs[i], A = this.arms[i], pl = P.legs[i], pa = P.arms[i];
-      const wl = W['leg' + i], wa = W['arm' + i];
+      const wl = W[LEG[i]], wa = W[ARM[i]];
       if (wl > 0.001) {
         blend(L.hip, qAxis(AX, pl.hip).multiply(qAxis(AZ, pl.z * L.side)), wl);
         blend(L.knee, qAxis(AX, pl.knee), wl);
@@ -694,15 +830,15 @@ export class PlayerModel {
   }
 
   // The pose each football action calls for (standing neutral where nothing is happening)
-  actionPose(dt, st, strafe) {
-    const T = {
+  private actionPose(dt: number, st: BodyState, strafe: number) {
+    const T: Pose = {
       hipsY: 0.95, hipsX: 0, hipsZ: 0, hipsYaw: 0, spineX: 0.04, spineYaw: 0, neckX: -0.05,
-      legs: [0, 1].map(() => ({ hip: 0, knee: 0.1, ankle: 0, z: 0 })),
-      arms: [0, 1].map(() => ({ x: 0, z: 0.12, elbow: -0.3 })),
+      legs: pair(() => ({ hip: 0, knee: 0.1, ankle: 0, z: 0 })),
+      arms: pair(() => ({ x: 0, z: 0.12, elbow: -0.3 })),
     };
     if (strafe > 0) {
       // side-stepping (jockeying): legs open and close alternately, low athletic stance
-      this.strafePh = (this.strafePh || 0) + dt * Math.PI * 2 * (0.8 + st.speed * 0.35);
+      this.strafePh += dt * Math.PI * 2 * (0.8 + st.speed * 0.35);
       for (let i = 0; i < 2; i++) {
         const p = this.strafePh + i * Math.PI;
         T.legs[i].z = Math.max(0, Math.sin(p)) * 0.38;
@@ -726,7 +862,7 @@ export class PlayerModel {
       this.touchT -= dt;
       const q = Math.sin(Math.PI * (1 - Math.max(0, this.touchT) / 0.2));
       const L = T.legs[this.touchFoot];
-      const r = this.touchReach || 0;
+      const r = this.touchReach;
       L.hip = -0.15 - (0.4 + 0.5 * r) * q; L.knee = 0.35 - (0.2 + 0.15 * r) * q; L.ankle = 0.25 * q;
     }
     if (this.skillT > 0) {
@@ -822,7 +958,7 @@ export class PlayerModel {
   }
 
   // On the side and hip (slide tackle)
-  sidePose(T, side) {
+  private sidePose(T: Pose, side: number) {
     T.hipsY = 0.3; T.hipsX = -0.3; T.hipsZ = side * 1.05; T.spineX = 0.2; T.neckX = -0.3;
     const lead = T.legs[1], trail = T.legs[0];
     lead.hip = -0.95; lead.knee = 0.05; lead.z = 0; lead.ankle = 0.2;
@@ -834,9 +970,9 @@ export class PlayerModel {
 
   // Stumble forward onto the hands, lie a moment, get up through the knees (or, after a slide,
   // up from the side onto a knee)
-  fallPose(T, f) {
+  private fallPose(T: Pose, f: Fall) {
     const t = f.t, tot = f.total;
-    const ease = (x) => x * x * (3 - 2 * x);
+    const ease = (x: number) => x * x * (3 - 2 * x);
     if (f.kind === 'side') {
       this.sidePose(T, f.side);
       const up = clamp((t - (tot - 0.6)) / 0.6, 0, 1);
@@ -877,7 +1013,7 @@ export class PlayerModel {
   }
 }
 
-function mulberry(a) {
+function mulberry(a: number) {
   return () => {
     a |= 0;
     a = (a + 0x6d2b79f5) | 0;
