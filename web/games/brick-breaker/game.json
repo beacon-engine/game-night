@@ -4,6 +4,7 @@
   "tagline": "Paddle, ball, bricks: co-op or head to head",
   "players": "1–4",
   "category": "Arcade",
+  "needs": "light",
   "order": 81,
   "status": "soon"
 }

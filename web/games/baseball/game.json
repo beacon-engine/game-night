@@ -4,6 +4,7 @@
   "tagline": "Pitch, swing, run the bases",
   "players": "1–2 (teams)",
   "category": "Sports",
+  "needs": "standard",
   "order": 11,
   "status": "soon"
 }

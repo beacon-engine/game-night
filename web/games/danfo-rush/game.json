@@ -4,6 +4,7 @@
   "tagline": "Endless run through Lagos traffic",
   "players": "1–4",
   "category": "Racing",
+  "needs": "standard",
   "order": 40,
   "status": "soon"
 }

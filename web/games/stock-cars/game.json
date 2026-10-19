@@ -4,6 +4,7 @@
   "tagline": "Oval racing: drafting, bump-and-run, last-lap moves",
   "players": "1–4",
   "category": "Racing",
+  "needs": "heavy",
   "order": 43,
   "status": "soon"
 }

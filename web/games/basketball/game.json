@@ -4,6 +4,7 @@
   "tagline": "3-on-3 half court",
   "players": "1–6",
   "category": "Sports",
+  "needs": "standard",
   "order": 10,
   "status": "soon"
 }

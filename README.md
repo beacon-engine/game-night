@@ -16,6 +16,10 @@ unpack it and run `game-night`. It opens the game select page in your browser.
   System Settings → Privacy & Security → Open Anyway (or run `xattr -d com.apple.quarantine game-night`).
 - **Windows**: allow it through the firewall when asked, so phones can reach it.
 - **Raspberry Pi** (64-bit OS): the `linux-arm64-raspberry-pi` archive; plug the Pi into the TV.
+- **Android TV**: install the `android-tv` APK on the TV itself, no computer needed. See [android/README.md](android/README.md).
+
+Game Night checks what each screen can handle and only offers the games it runs well: a TV with 1 GB of
+memory gets the 2D games, a laptop gets everything.
 
 1. Put the browser on the TV (HDMI, or just play on the laptop) and pick a game. Click once to enable sound.
 2. On each phone (same Wi-Fi), scan the QR code or open the `/pad/` address shown on screen. Turn the phone sideways.
@@ -37,6 +41,7 @@ make            # builds web/dist and the ./game-night binary
 make dev        # rebuilds on change and serves from disk: http://localhost:10000
 make check      # type-checks the TypeScript, vets and tests the Go
 make release    # binaries for macOS, Windows and Linux in dist/
+make android    # the Android TV app in dist/ (needs a JDK and the Android SDK)
 ```
 
 ## Football: PS2-style 3D football

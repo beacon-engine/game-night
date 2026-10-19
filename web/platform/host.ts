@@ -9,6 +9,7 @@ export interface GameInfo {
   tagline: string;
   players: string;
   category: string;
+  needs: import('./device.ts').Tier; // how much device it takes (game.json "needs")
   status: 'ready' | 'soon';
   url: string;
 }

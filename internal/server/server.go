@@ -17,6 +17,7 @@ import (
 // Server serves one set of web files (the built web/dist, possibly with user overrides on top).
 type Server struct {
 	Version string // shown on the game select page
+	Host    string // this machine's address for the phones; detected when empty
 
 	files fs.FS
 	port  int
@@ -29,7 +30,11 @@ func New(files fs.FS, port int) *Server {
 
 // PadURL is what phones on the same Wi-Fi open to join.
 func (s *Server) PadURL() string {
-	return fmt.Sprintf("http://%s:%d/pad/", LANAddress(), s.port)
+	host := s.Host
+	if host == "" {
+		host = LANAddress()
+	}
+	return fmt.Sprintf("http://%s:%d/pad/", host, s.port)
 }
 
 func (s *Server) Handler() http.Handler {

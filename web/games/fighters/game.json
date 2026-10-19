@@ -4,6 +4,7 @@
   "tagline": "1-v-1 fighting: combos, blocks, specials",
   "players": "1–2",
   "category": "Action",
+  "needs": "standard",
   "order": 60,
   "status": "soon"
 }

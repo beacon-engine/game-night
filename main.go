@@ -3,7 +3,8 @@
 //	game-night                  start and open the game select page
 //	game-night -port 8080       another port (or PORT=8080)
 //	game-night -no-open         don't open a browser
-//	game-night -dev             serve web/dist from disk (with `make dev`)
+//	game-night -dev             serve web/dist from disk (with `make dev`); -web DIR for another folder
+//	game-night -host 192.0.2.7  the address phones should use (detected if left out)
 //	game-night -version         print the version
 package main
 
@@ -11,6 +12,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -30,7 +32,10 @@ func main() {
 	showVersion := flag.Bool("version", false, "print the version and exit")
 	port := flag.Int("port", envInt("PORT", 10000), "port to listen on")
 	noOpen := flag.Bool("no-open", false, "don't open the game select page in a browser")
-	dev := flag.Bool("dev", false, "serve web/dist from disk instead of the built-in copy")
+	dev := flag.Bool("dev", false, "serve web/dist from disk instead of the built-in copy (same as -web web/dist)")
+	webDir := flag.String("web", "", "serve the web files from this folder instead of the built-in copy")
+	host := flag.String("host", "", "this machine's address on the Wi-Fi, for the phones (detected if left out)")
+	exitWithStdin := flag.Bool("exit-with-stdin", false, "stop when stdin closes (an app running this as a child process keeps it open)")
 	userDir := flag.String("dir", defaultUserDir(), "folder with extra games, or files that replace built-in ones")
 	flag.Parse()
 	if *showVersion {
@@ -38,8 +43,22 @@ func main() {
 		return
 	}
 
-	srv := server.New(files(*dev, *userDir), *port)
+	if *dev {
+		*webDir = "web/dist"
+	}
+	if *exitWithStdin {
+		// the TV app holds our stdin open; if the app goes (even killed), so do we
+		go func() {
+			io.Copy(io.Discard, os.Stdin)
+			os.Exit(0)
+		}()
+	}
+	if *webDir == "" && !web.Embedded {
+		log.Fatal("this build has no web files built in: pass -web DIR")
+	}
+	srv := server.New(files(*webDir, *userDir), *port)
 	srv.Version = version
+	srv.Host = *host
 	ln, err := srv.Listen()
 	if errors.Is(err, server.ErrPortInUse) {
 		log.Fatalf("Port %d is already in use (is Game Night already running?). Try another: -port %d", *port, *port+1)
@@ -61,9 +80,11 @@ func main() {
 
 // The built-in games, with the user's folder on top: a game dropped in <dir>/games/<id>/ shows
 // up next to them, and e.g. <dir>/games/football/teams.json replaces the built-in clubs.
-func files(dev bool, userDir string) fs.FS {
-	var base fs.FS = os.DirFS("web/dist")
-	if !dev {
+func files(webDir, userDir string) fs.FS {
+	var base fs.FS
+	if webDir != "" {
+		base = os.DirFS(webDir)
+	} else {
 		base, _ = fs.Sub(web.Dist, "dist")
 	}
 	if info, err := os.Stat(userDir); err == nil && info.IsDir() {

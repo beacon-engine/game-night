@@ -4,6 +4,7 @@
   "tagline": "8-ball, take turns",
   "players": "1–2",
   "category": "Sports",
+  "needs": "standard",
   "order": 15,
   "status": "soon"
 }

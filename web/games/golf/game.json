@@ -4,6 +4,7 @@
   "tagline": "Mini golf, everyone at once",
   "players": "1–8",
   "category": "Sports",
+  "needs": "standard",
   "order": 18,
   "status": "soon"
 }

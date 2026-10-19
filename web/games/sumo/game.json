@@ -4,6 +4,7 @@
   "tagline": "Push everyone off the platform",
   "players": "2–8",
   "category": "Action",
+  "needs": "standard",
   "order": 65,
   "status": "soon"
 }

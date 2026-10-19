@@ -4,6 +4,7 @@
   "tagline": "Co-op stealth: grab the loot, don't get seen",
   "players": "2–4",
   "category": "Action",
+  "needs": "standard",
   "order": 70,
   "status": "soon"
 }

@@ -4,3 +4,10 @@ node_modules/
 /game-night
 /dist/
 /web/dist/
+# Android build output (scripts/android.sh puts the server and web files in the app)
+/android/.gradle/
+/android/local.properties
+/android/app/build/
+/android/build/
+/android/app/src/main/jniLibs/
+/android/app/src/main/assets/

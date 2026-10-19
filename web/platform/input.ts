@@ -4,6 +4,7 @@
 //   input.list[0].team   // typed
 import { DEFAULT_KEYMAPS, type KeyAction, type Keymap } from './keyboard.ts';
 import { ALL_BITS, BIT, DPAD, type Bit, playerColor } from './pad.ts';
+import { keyCode } from './dom.ts';
 import { CLOSE_REPLACED, socketUrl, type DisplayToServer, type PadScreen, type ServerToDisplay } from './protocol.ts';
 
 export interface PadEvent {
@@ -205,11 +206,12 @@ export class Input<T extends object = object> {
     keymaps.forEach((km, i) => { for (const code of Object.values(km)) layoutOf.set(code, i); });
 
     const update = (e: KeyboardEvent, down: boolean) => {
-      const i = layoutOf.get(e.code);
+      const code = keyCode(e);
+      const i = layoutOf.get(code);
       if (i === undefined) return;
       e.preventDefault();
-      if (down) this.keys.add(e.code);
-      else this.keys.delete(e.code);
+      if (down) this.keys.add(code);
+      else this.keys.delete(code);
       const id = `kb${i + 1}`;
       let c = this.controllers.get(id);
       if (!c?.connected) {

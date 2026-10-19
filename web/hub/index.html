@@ -51,6 +51,10 @@
   .tile.ready.sel .icon { background: var(--volt); }
   .tile .name { font: 700 24px/0.95 var(--font-display); text-transform: uppercase; }
   .tile.soon .name { color: var(--chalk-2); }
+  .tile.unsupported { opacity: .45; }
+  .tile.unsupported .icon { background: var(--chalk-3); }
+  #fWhy { margin: 0; font-size: 15px; color: var(--warn); max-width: 34ch; }
+  #fWhy:empty { display: none; }
   .tile.sel .name { color: var(--chalk); }
 
   .hints { position: fixed; left: 38%; right: 0; bottom: 0; display: flex; justify-content: space-between; align-items: center;
@@ -59,6 +63,34 @@
   #banner { position: fixed; left: 50%; bottom: 72px; transform: translate(-50%, 8px); opacity: 0; pointer-events: none;
     transition: opacity var(--t) var(--ease), transform var(--t) var(--ease); padding: 12px 18px; }
   #banner.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* TVs: a 1080p TV is a 960x540 page (Android TV renders at 2x). Keep it all on one screen. */
+  @media (max-height: 640px) and (min-width: 901px) {
+    body { grid-template-columns: 34% 1fr; }
+    .side { padding: 24px 28px; gap: 16px; }
+    .wordmark { font-size: 22px; gap: 10px; }
+    .wordmark .mark { width: 22px; height: 22px; }
+    .feature { gap: 10px; }
+    .feature .h1 { font-size: clamp(36px, 5.6vw, 60px); }
+    #fIcon { width: 40px; height: 40px; }
+    #fTagline, #fWhy { font-size: 14px; }
+    .feature .btn-lg { height: 44px; font-size: 13px; padding: 0 18px; }
+    .join { padding: 10px; gap: 12px; }
+    .join .qr { width: 84px; height: 84px; padding: 5px; }
+    .join .url { font-size: 13px; margin: 2px 0 6px; }
+    .library { padding: 24px 28px 90px; }
+    .section + .section { margin-top: 24px; }
+    .section header { margin-bottom: 10px; }
+    .tiles { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; }
+    .tile { padding: 10px; }
+    .tile .icon, .tile .emoji { width: 28px; height: 28px; font-size: 24px; line-height: 28px; }
+    .tile .name { font-size: 17px; }
+    .hints { left: 34%; padding: 10px 28px; }
+    .hints .caption { font-size: 10px; }
+    .legend { font-size: 12px; gap: 6px 14px; }
+  }
+  /* in the TV app: the remote and phones, no keyboard */
+  .tv .keys { display: none !important; }
 
   @media (max-width: 900px) {
     body { display: block; overflow: auto; }
@@ -79,6 +111,7 @@
       <h1 class="h1" id="fTitle">…</h1>
       <p id="fTagline"></p>
       <div class="meta"><span class="tag" id="fPlayers"></span><span class="tag" id="fStatus"></span></div>
+      <p id="fWhy"></p>
       <button class="btn btn-primary btn-lg" id="play"></button>
     </section>
 
@@ -96,7 +129,7 @@
 
   <div class="hints">
     <div class="legend" id="legend"></div>
-    <span class="caption faint" id="version"></span>
+    <span class="caption faint" style="text-align:right"><span id="device"></span><br><span id="version"></span></span>
   </div>
   <div id="banner" class="panel caption"></div>
 

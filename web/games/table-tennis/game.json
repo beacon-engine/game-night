@@ -4,6 +4,7 @@
   "tagline": "Fast rallies, spin and smashes",
   "players": "1–4",
   "category": "Sports",
+  "needs": "standard",
   "order": 14,
   "status": "soon"
 }

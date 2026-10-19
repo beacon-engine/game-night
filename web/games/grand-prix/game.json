@@ -4,6 +4,7 @@
   "tagline": "Open-wheel racing: qualifying, pit stops, championship",
   "players": "1–4",
   "category": "Racing",
+  "needs": "heavy",
   "order": 42,
   "status": "soon"
 }
