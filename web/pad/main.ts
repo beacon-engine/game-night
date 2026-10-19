@@ -46,7 +46,7 @@ function connect() {
   };
   ws.onclose = () => {
     $('dot').classList.remove('on');
-    showOverlay('Lost connection, retrying…');
+    showOverlay('Reconnecting…<small>Lost the connection to the game</small>');
     setTimeout(connect, 1000);
   };
 }
@@ -54,7 +54,7 @@ function connect() {
 function setDisplay(on: boolean) {
   displayOn = on;
   if (on) hideOverlay();
-  else showOverlay('Waiting for the game screen…<br><small>Open the game on the laptop</small>');
+  else showOverlay('Waiting for the game<small>Open Game Night on the TV or laptop</small>');
 }
 function showOverlay(html: string) { $('ov-text').innerHTML = html; $('overlay').style.display = 'flex'; }
 function hideOverlay() { $('overlay').style.display = 'none'; }
@@ -63,8 +63,8 @@ const buttonEls = [...document.querySelectorAll<HTMLElement>('[data-button]')];
 
 function show(s: PadScreen) {
   const root = document.documentElement.style;
-  root.setProperty('--accent', s.accent || '#64748b');
-  root.setProperty('--me', s.color || '#38bdf8');
+  root.setProperty('--accent', s.accent || 'var(--volt)');
+  root.setProperty('--me', s.color || 'var(--chalk)');
   $('me').textContent = s.label || 'P?';
   $('title').textContent = s.title || '';
   $('hint').textContent = s.hint || '';

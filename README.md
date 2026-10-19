@@ -170,7 +170,8 @@ pads are web pages over Wi-Fi, which needs nothing installed; the protocol in
 - A typo in a `controls.json` shows up as a warning in the browser console (that button just does nothing).
 
 ## Credits
-- Player bodies, faces and hair: [Universal Base Characters](https://quaternius.itch.io/universal-base-characters) by Quaternius, CC0.
+- Brand: [`web/brand/`](web/brand). Fonts: Big Shoulders Display and Inter (SIL Open Font License).
+  Icons: [Tabler Icons](https://tabler.io/icons) (MIT).- Player bodies, faces and hair: [Universal Base Characters](https://quaternius.itch.io/universal-base-characters) by Quaternius, CC0.
 - Running/walking/idle motion capture: [Universal Animation Library](https://quaternius.com/packs/universalanimationlibrary.html) by Quaternius, CC0.
 
 The game loads `web/games/football/models/`; the full original packs are in [`web/games/football/source/`](web/games/football/source)

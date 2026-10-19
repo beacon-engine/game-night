@@ -11,24 +11,27 @@ import (
 // Game is one entry on the game select page. Every folder in games/ with a game.json is a
 // game; there is no other registration, so adding or removing a folder is all it takes.
 type Game struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Icon    string `json:"icon"`
-	Tagline string `json:"tagline"`
-	Players string `json:"players"`
-	Status  string `json:"status"` // "ready", or "soon" when it has no index.html yet
-	URL     string `json:"url"`
-	Order   int    `json:"-"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Icon     string `json:"icon"`              // an emoji, used when there's no icon.svg
+	IconURL  string `json:"iconUrl,omitempty"` // the game's icon.svg: a line icon, drawn in the brand colours
+	Tagline  string `json:"tagline"`
+	Players  string `json:"players"`
+	Category string `json:"category"` // groups games on the page: "Sports", "Action"...
+	Status   string `json:"status"`   // "ready", or "soon" when it has no index.html yet
+	URL      string `json:"url"`
+	Order    int    `json:"-"`
 }
 
 // manifest is a game's game.json
 type manifest struct {
-	Name    string `json:"name"`
-	Icon    string `json:"icon"`
-	Tagline string `json:"tagline"`
-	Players string `json:"players"`
-	Status  string `json:"status"`
-	Order   int    `json:"order"`
+	Name     string `json:"name"`
+	Icon     string `json:"icon"`
+	Tagline  string `json:"tagline"`
+	Players  string `json:"players"`
+	Category string `json:"category"`
+	Status   string `json:"status"`
+	Order    int    `json:"order"`
 }
 
 // Discover lists the games in files, sorted by their "order" then name. A folder with a broken
@@ -53,8 +56,14 @@ func Discover(files fs.FS) []Game {
 			log.Printf("[games] skipping %s: game.json: %v", id, err)
 			continue
 		}
-		g := Game{ID: id, Name: m.Name, Icon: m.Icon, Tagline: m.Tagline, Players: m.Players,
+		g := Game{ID: id, Name: m.Name, Icon: m.Icon, Tagline: m.Tagline, Players: m.Players, Category: m.Category,
 			Status: "soon", URL: "/games/" + id + "/", Order: m.Order}
+		if g.Category == "" {
+			g.Category = "Other"
+		}
+		if _, err := fs.Stat(files, path.Join("games", id, "icon.svg")); err == nil {
+			g.IconURL = g.URL + "icon.svg"
+		}
 		if g.Name == "" {
 			g.Name = id
 		}

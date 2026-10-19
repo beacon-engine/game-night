@@ -3,6 +3,7 @@
 // Every app is a folder with an optional main.ts entry; everything else in it (html, json,
 // models...) is copied next to the bundle, except READMEs and a game's source/ folder (the
 // original art files the game's assets were made from; kept in git, never shipped):
+//   brand/          -> dist/brand/        the brand: brand.css, fonts, the mark (see brand/README.md)
 //   hub/            -> dist/              the game select page
 //   pad/            -> dist/pad/          the phone controller
 //   games/<id>/     -> dist/games/<id>/   one folder per game
@@ -25,7 +26,7 @@ function apps(): App[] {
   const games = readdirSync('games', { withFileTypes: true })
     .filter((d) => d.isDirectory())
     .map((d) => ({ src: join('games', d.name), out: join(OUT, 'games', d.name) }));
-  return [{ src: 'hub', out: OUT }, { src: 'pad', out: join(OUT, 'pad') }, ...games];
+  return [{ src: 'brand', out: join(OUT, 'brand') }, { src: 'hub', out: OUT }, { src: 'pad', out: join(OUT, 'pad') }, ...games];
 }
 
 const shipped = (f: string) => !/\.(ts|md)$/.test(f) && !f.endsWith('.gitkeep') && !/\/source(\/|$)/.test(f);

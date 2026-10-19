@@ -4,9 +4,11 @@
 export interface GameInfo {
   id: string;
   name: string;
-  icon: string;
+  icon: string; // emoji fallback
+  iconUrl?: string; // the game's icon.svg
   tagline: string;
   players: string;
+  category: string;
   status: 'ready' | 'soon';
   url: string;
 }

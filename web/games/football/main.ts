@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { $, backToHub, BIT, escapeHtml, hostInfo, Input, SYMBOL, type PadScreen } from '@platform';
+import { $, backToHub, BIT, chip, escapeHtml, glyph, hostInfo, Input, type Button, type PadScreen } from '@platform';
 import { loadFootballControls, type Context } from './actions.ts';
 import { Sfx } from './audio.ts';
 import { Match, newHuman, type Human, type MatchEvent, type Player, type Team } from './match.ts';
@@ -15,6 +15,8 @@ const [settings, formations, clubs, controls] = await Promise.all([
   loadFootballControls(), // which button does what: controls.json
 ]);
 const formation = formations[String(settings.playersPerSide)] || formations['5'];
+// the brand fonts are drawn into textures (names, numbers, ad boards), so they must be loaded first
+await Promise.all(['800 34px "Big Shoulders Display"', '600 16px Inter'].map((f) => document.fonts.load(f)));
 await loadPlayerAssets(); // motion-captured player model (must be ready before any match)
 const L = settings.pitch.length;
 const W = settings.pitch.width;
@@ -161,7 +163,7 @@ function onEvent(e: MatchEvent) {
     case 'goal':
       sfx.roar();
       if (demo) break;
-      banner('GOAL!', e.own ? `Own goal · ${e.team.club.name}` : `${e.scorer} · ${e.team.club.name}`, false, 3000);
+      banner('<span class="hl-volt">Goal!</span>', e.own ? `Own goal · ${e.team.club.name}` : `${e.scorer} · ${e.team.club.name}`, false, 3000);
       for (const c of e.team.humans) input.buzz(c, 300);
       refreshScoreboard();
       break;
@@ -217,7 +219,7 @@ function updateChips() {
   const list = frontEnd() ? [] : input.list;
   const el = $('chips');
   if (el.children.length !== list.length) {
-    el.innerHTML = list.map(() => '<div class="chip"><span class="tag"></span><span class="who"></span><span class="stats"></span><span class="sta" title="stamina"><div></div></span><span class="bar"><div></div></span></div>').join('');
+    el.innerHTML = list.map(() => '<div class="hud-row panel panel-glass"><span class="tag"></span><span class="who"></span><span class="stats"></span><span class="bars"><span class="sta" title="stamina"><div></div></span><span class="bar" title="shot power"><div></div></span></span></div>').join('');
   }
   list.forEach((c, i) => {
     const chip = el.children[i];
@@ -279,10 +281,11 @@ for (const b of document.querySelectorAll<HTMLElement>('.club button')) {
   b.addEventListener('click', () => cycleClub(Number(b.dataset.team), Number(b.dataset.d)));
 }
 $('start').addEventListener('click', startMatch);
+$('back').addEventListener('click', backToHub);
 $('tod').addEventListener('click', () => {
   timeOfDay = timeOfDay === 'day' ? 'night' : 'day';
   stadium.setTimeOfDay(timeOfDay);
-  $('tod').textContent = timeOfDay === 'day' ? '☀ DAY' : '🌙 NIGHT';
+  $('tod').textContent = timeOfDay === 'day' ? 'Day' : 'Night';
 });
 
 function refreshLobby() {
@@ -293,9 +296,7 @@ function refreshLobby() {
   $('lkitA').style.background = kitSwatch(a);
   for (const [team, id] of [[0, 'humansH'], [1, 'humansA']] as const) {
     const hs = input.list.filter((c) => c.team === team);
-    $(id).innerHTML = hs.length
-      ? hs.map((c) => `<span style="background:${c.color}">${c.tag} ${escapeHtml(c.label)}</span>`).join('')
-      : '<em>CPU</em>';
+    $(id).innerHTML = hs.length ? hs.map(chip).join('') : '<em>Computer</em>';
   }
 }
 
@@ -405,10 +406,10 @@ function restartMatch() {
 
 function controlsTable() {
   const ctxs: [Context, string][] = [['attack', 'With the ball'], ['defend', 'Without the ball'], ['throwIn', 'Throw-in']];
-  return `<div class="ctl-grid">${ctxs.map(([ctx, title]) => `<div class="ctl-col"><h4>${title}</h4>${
+  return `<div class="ctl-grid">${ctxs.map(([ctx, title]) => `<div class="ctl-col"><h4 class="caption">${title}</h4>${
     controls.bindings(ctx).map(([key, a]) => {
-      const [btn, mod] = key.split('+') as [keyof typeof SYMBOL, string?];
-      return `<div class="ctl-row"><span class="bsym b-${btn}">${SYMBOL[btn]}</span>${mod ? '<span class="swipe">swipe</span>' : ''}<span>${escapeHtml(controls.name(a))}</span></div>`;
+      const [btn, mod] = key.split('+') as [Button, string?];
+      return `<div class="ctl-row">${glyph(btn)}${mod ? '<span class="swipe">swipe</span>' : ''}<span>${escapeHtml(controls.name(a))}</span></div>`;
     }).join('')}</div>`).join('')}</div>
     <div class="ctl-note">Stick: move · push past the ring: sprint. Remap in <code>games/football/controls.json</code></div>`;
 }
@@ -422,13 +423,15 @@ function renderPause() {
   const ph = Math.round((h.stats.poss / total) * 100);
   const mins = Math.floor((m.clock / m.duration) * 90);
   $('pHead').innerHTML = `
-    <div class="ps-team"><span class="kit" style="background:${kitSwatch(h.club)}"></span>${escapeHtml(h.club.name)}</div>
-    <div class="ps-score">${h.score}<i>–</i>${a.score}<small>${mins}'</small></div>
-    <div class="ps-team r">${escapeHtml(a.club.name)}<span class="kit" style="background:${kitSwatch(a.club)}"></span></div>`;
+    <div class="ps-team"><span class="kit" style="background:${h.club.kit.shirt}"></span>${escapeHtml(h.club.name)}</div>
+    <div class="ps-score num">${h.score}<i>–</i>${a.score}<small>${mins}'</small></div>
+    <div class="ps-team">${escapeHtml(a.club.name)}<span class="kit" style="background:${a.club.kit.shirt}"></span></div>`;
+  $('pStats').style.setProperty('--home', h.club.kit.shirt);
+  $('pStats').style.setProperty('--away', a.club.kit.shirt);
   // one stat row: the bars split by share, or by `pct` (home's share) when given
   const stat = (label: string, x: number | string, y: number | string, pct?: number) => {
     const share = pct ?? (+x + +y ? (+x / (+x + +y)) * 100 : 50);
-    return `<div class="pst"><b>${x}</b><div class="pbar"><i style="width:${share}%"></i></div><span>${label}</span><div class="pbar r"><i style="width:${100 - share}%"></i></div><b>${y}</b></div>`;
+    return `<div class="pst"><b>${x}</b><div class="pbar"><i style="width:${share}%"></i></div><span class="caption">${label}</span><div class="pbar r"><i style="width:${100 - share}%"></i></div><b>${y}</b></div>`;
   };
   $('pStats').innerHTML = stat('Possession', `${ph}%`, `${100 - ph}%`, ph) + stat('Shots', h.stats.shots, a.stats.shots) +
     stat('Fouls', h.stats.fouls, a.stats.fouls) + stat('Subs left', h.subsLeft, a.subsLeft);
@@ -439,14 +442,14 @@ function renderPause() {
     el.addEventListener('click', () => { M.cursor = Number(el.dataset.i); M.view = 'main'; app.subs = null; menuSelect(input.list[0] || null); });
   }
   const side = $('pSide');
-  side.className = 'pside';
-  if (M.view === 'controls') side.innerHTML = `<h3>CONTROLS</h3>${controlsTable()}`;
-  else if (M.view === 'confirm') side.innerHTML = `<h3>${M.action === 'quit' ? 'QUIT TO MENU?' : 'RESTART MATCH?'}</h3>
+  side.className = 'pside panel';
+  if (M.view === 'controls') side.innerHTML = `<h3 class="h3">Controls</h3>${controlsTable()}`;
+  else if (M.view === 'confirm') side.innerHTML = `<h3 class="h3">${M.action === 'quit' ? 'Quit to the lobby?' : 'Restart the match?'}</h3>
       <p>The score so far will be lost.</p><div class="confirm"><div class="mi ${M.confirm === 0 ? 'sel' : ''}">No</div><div class="mi ${M.confirm === 1 ? 'sel' : ''}">Yes</div></div>`;
   else if (M.view === 'subs') side.innerHTML = '';
-  else side.className = 'pside hidden';
+  else side.className = 'pside panel hidden';
   renderSubs();
-  $('pHelp').innerHTML = `<b>▲▼</b> choose · <b>✕</b> select · <b>○</b> ${M.view === 'main' ? 'resume' : 'back'}`;
+  $('pHelp').innerHTML = `<span>${glyph('stick')} Choose</span><span>${glyph('cross')} Select</span><span>${glyph('circle')} ${M.view === 'main' ? 'Resume' : 'Back'}</span>`;
 }
 
 // --------------------------------------------------------- substitutions --
@@ -486,9 +489,9 @@ function renderSubs() {
       <b>${p.number}</b> ${escapeHtml(p.name)} <em>${p.role}</em> ${bar(p.energy)}</div>`).join('');
   const bench = S.team.bench.map((d, i) => `<div class="srow ${S.stage === 'on' && i === S.cursor ? 'sel' : ''}">
       <b>${d.number}</b> ${escapeHtml(d.name)} <em>${d.pos}</em> <small>PAC ${d.pace} DRI ${d.dribbling} STA ${d.stamina ?? '-'}</small></div>`).join('') || '<div class="srow"><em>No one left</em></div>';
-  el.innerHTML = `<div class="shead">${escapeHtml(S.team.club.name)} · substitutions left: ${S.team.subsLeft}</div>
-    <div class="scols"><div><h4>ON THE PITCH ${S.stage === 'off' ? '— who comes off?' : ''}</h4>${on}</div>
-    <div><h4>BENCH ${S.stage === 'on' ? '— who comes on?' : ''}</h4>${bench}</div></div>`;
+  el.innerHTML = `<div class="shead"><span class="h3">${escapeHtml(S.team.club.name)}</span><span class="caption">${S.team.subsLeft} changes left</span></div>
+    <div class="scols"><div><h4 class="caption">On the pitch ${S.stage === 'off' ? '· <span class="hl-volt">who comes off?</span>' : ''}</h4>${on}</div>
+    <div><h4 class="caption">Bench ${S.stage === 'on' ? '· <span class="hl-volt">who comes on?</span>' : ''}</h4>${bench}</div></div>`;
 }
 
 function pauseInput() {
@@ -697,5 +700,6 @@ function frame(now: number) {
   renderer.render(scene, camera);
 }
 
+$('help').innerHTML = `<h4 class="caption">Controls</h4>${controlsTable()}`;
 toLobby();
 requestAnimationFrame(frame);

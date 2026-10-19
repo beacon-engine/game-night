@@ -5,7 +5,17 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 
 ## [Unreleased]
 
+### Changed
+- New look everywhere, defined once in `web/brand/` (colours, type, components; rules in its README):
+  a dark night palette with one volt accent and the pad's four button colours, Big Shoulders Display and
+  Inter (bundled, works offline), line icons instead of emoji, and a selection frame.
+- The game select page is now a library: the selected game on the left with how to join, every game
+  on the right grouped by category, moved through with the stick or keyboard.
+- The phone pad, football's lobby, scoreboard, banners, player HUD, pause menu and substitutions follow it.
+  Player colours are the brand's.
+
 ### Added
+- Games can have an `icon.svg` and a `category` in `game.json`.
 - The original art packs for football (Quaternius characters and animations) are now in the repo, in
   `web/games/football/source/`. Each game keeps its source art in its own `source/` folder; it's never shipped.
 

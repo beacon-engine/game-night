@@ -17,5 +17,6 @@ export const SYMBOL: Record<Button, string> = { cross: '✕', circle: '○', squ
 export const buttonOf = (bit: number): Button | undefined => BUTTONS.find((b) => BIT[b] === bit);
 
 // Player colours by slot. Slots come from the server, so P1 is the same colour in every game.
-const COLORS = ['#38bdf8', '#f43f5e', '#facc15', '#a3e635', '#c084fc', '#fb923c', '#f472b6', '#2dd4bf'];
+// From the brand (brand/README.md): the pad colours first, then four more that stay distinct on a TV.
+const COLORS = ['#4c8dff', '#ff4d5a', '#ffc23d', '#2ee59d', '#a97bff', '#ff8a3d', '#ff5ecf', '#3fd7e8'];
 export const playerColor = (slot: number) => COLORS[slot % COLORS.length];

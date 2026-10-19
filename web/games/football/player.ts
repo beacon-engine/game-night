@@ -410,6 +410,9 @@ function hairMaterial(src: THREE.Material | THREE.Material[], shade: number) {
   return m;
 }
 
+// the brand's display face (web/brand), loaded by the page before any texture is drawn
+export const DISPLAY_FONT = '"Big Shoulders Display", "Arial Narrow", Impact, sans-serif';
+
 const numberCache = new Map<string, THREE.CanvasTexture>();
 function numberTexture(color: string, number: number) {
   const key = `${color}|${number}`;
@@ -418,7 +421,7 @@ function numberTexture(color: string, number: number) {
   const c = document.createElement('canvas');
   c.width = c.height = 128;
   const g = c.getContext('2d')!;
-  g.font = 'bold 92px "Arial Black", Impact, sans-serif';
+  g.font = `900 104px ${DISPLAY_FONT}`;
   g.textAlign = 'center';
   g.textBaseline = 'middle';
   g.lineWidth = 8;
@@ -435,7 +438,7 @@ function numberTexture(color: string, number: number) {
 function nameTexture(text: string, color = '#ffffff', bg?: string) {
   const c = document.createElement('canvas');
   const g = c.getContext('2d')!;
-  const font = 'bold 30px "Arial Black", Impact, sans-serif';
+  const font = `800 34px ${DISPLAY_FONT}`;
   g.font = font;
   const tw = Math.ceil(g.measureText(text).width);
   c.width = tw + 28;
