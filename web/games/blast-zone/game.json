@@ -3,7 +3,7 @@
   "icon": "💣",
   "tagline": "Drop bombs, blow walls, last one standing",
   "players": "2–8",
-  "order": 34,
-  "status": "soon",
-  "category": "Action"
+  "category": "Action",
+  "order": 64,
+  "status": "soon"
 }

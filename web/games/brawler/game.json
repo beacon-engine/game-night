@@ -3,7 +3,7 @@
   "icon": "👊",
   "tagline": "Co-op beat-'em-up through the streets",
   "players": "1–4",
-  "order": 31,
-  "status": "soon",
-  "category": "Action"
+  "category": "Action",
+  "order": 61,
+  "status": "soon"
 }

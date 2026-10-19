@@ -1,0 +1,9 @@
+{
+  "name": "Grand Prix",
+  "icon": "🏎️",
+  "tagline": "Open-wheel racing: qualifying, pit stops, championship",
+  "players": "1–4",
+  "category": "Racing",
+  "order": 42,
+  "status": "soon"
+}

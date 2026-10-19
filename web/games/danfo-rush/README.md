@@ -1,6 +1,6 @@
-# 🚌 Danfo Rush
+# Danfo Rush
 
-Endless run through Lagos traffic · 1–4 players · **coming soon**
+Endless run through Lagos traffic · 1–4 players · Racing · **coming soon**
 
 Drive a danfo through rush-hour traffic: switch lanes, pick up passengers, dodge okadas and go-slows. Everyone races on one road.
 
@@ -18,6 +18,15 @@ phone dims the buttons a situation doesn't use.
 | Stick past the ring | Speed up |
 | Stick | Change lane |
 
+## Competition
+
+**Score attack** · **Championship**
+
+Routes as events: points for passengers delivered and position at the end; a season across routes.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -27,6 +36,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Passengers for points
 - [ ] Up to 4 buses on the road
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

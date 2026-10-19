@@ -1,6 +1,6 @@
-# ✈️ Dogfight
+# Dogfight
 
-Planes in the sky, last one flying · 1–8 players · **coming soon**
+Planes in the sky, last one flying · 1–8 players · Action · **coming soon**
 
 Arcade planes over the sea and the city. Loop, barrel roll, get on someone's tail.
 
@@ -20,6 +20,15 @@ phone dims the buttons a situation doesn't use.
 | Stick past the ring | Afterburner |
 | Stick | Pitch and turn |
 
+## Competition
+
+**Exhibition** · **League** · **Campaign**
+
+Team dogfights in a league; campaign is co-op missions.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -29,6 +38,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Guns, hits, respawn
 - [ ] Free-for-all to 10
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

@@ -1,0 +1,9 @@
+{
+  "name": "Pinball",
+  "icon": "🎰",
+  "tagline": "Take turns on one table; beat the high score",
+  "players": "1–4",
+  "category": "Arcade",
+  "order": 86,
+  "status": "soon"
+}

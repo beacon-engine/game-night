@@ -1,0 +1,9 @@
+{
+  "name": "Space Raiders",
+  "icon": "👾",
+  "tagline": "Co-op shoot-em-up: waves, bosses, power-ups",
+  "players": "1–4",
+  "category": "Arcade",
+  "order": 80,
+  "status": "soon"
+}

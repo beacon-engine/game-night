@@ -1,6 +1,6 @@
-# 🎾 Long Tennis
+# Long Tennis
 
-Singles and doubles on grass or clay · 1–4 players · **coming soon**
+Singles and doubles on grass or clay · 1–4 players · Sports · **coming soon**
 
 Proper tennis scoring with quick, arcade-feel rallies: position early, pick the shot, and aim with the stick as you swing.
 
@@ -19,6 +19,15 @@ phone dims the buttons a situation doesn't use.
 | R1 | Hold: run to the net | — |
 | Stick | Move; aim as you swing | Aim the serve |
 
+## Competition
+
+**Exhibition** · **Cup** · **Tour**
+
+Knockout draws of 8 or 16 with seeding; best of 3 sets (5 in the final). The tour is a season of tournaments on different surfaces with ranking points.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -28,6 +37,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Serving with faults and lets
 - [ ] Points, games, a short set
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

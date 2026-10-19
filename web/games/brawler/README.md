@@ -1,6 +1,6 @@
-# 👊 Street Brawler
+# Street Brawler
 
-Co-op beat-'em-up through the streets · 1–4 players · **coming soon**
+Co-op beat-'em-up through the streets · 1–4 players · Action · **coming soon**
 
 Walk right, beat up gangs together. Grab, throw, pick up weapons, and save the special for when you're surrounded.
 
@@ -19,6 +19,15 @@ phone dims the buttons a situation doesn't use.
 | R1 | Pick up / use item |
 | Stick | Walk (depth too) |
 
+## Competition
+
+**Story** · **Score attack**
+
+Co-op story through the levels; score attack ranks crews by points and time.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -28,6 +37,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Combos, grabs, knockdowns
 - [ ] Lives and continues
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

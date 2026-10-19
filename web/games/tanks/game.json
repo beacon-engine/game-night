@@ -3,7 +3,7 @@
   "icon": "🪖",
   "tagline": "Tank battle in a destructible arena",
   "players": "2–8",
-  "order": 32,
-  "status": "soon",
-  "category": "Action"
+  "category": "Action",
+  "order": 62,
+  "status": "soon"
 }

@@ -1,6 +1,6 @@
-# 🏀 Basketball
+# Basketball
 
-3-on-3 half court · 1–6 players · **coming soon**
+3-on-3 half court · 1–6 players · Sports · **coming soon**
 
 Street-court 3-on-3 to 21, half court, make-it-take-it. Quick passing, pick-and-rolls and a shot meter that rewards a clean release at the top of the jump.
 
@@ -20,6 +20,15 @@ phone dims the buttons a situation doesn't use.
 | R1 | Spin move | Hold: double-team |
 | Stick past the ring | Sprint | Sprint |
 
+## Competition
+
+**Exhibition** · **League** · **Cup** · **Groups + knockout**
+
+Seasons of 3-on-3 between street-court crews; the cup is a single-elimination bracket, games to 21 (win by 2). Tie on the league table: head to head, then points difference.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -29,6 +38,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Dribble, pass, shoot with a timing meter, rebound
 - [ ] Scoring to 21 (2s and 3s), check-ball after a score
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

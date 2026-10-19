@@ -3,8 +3,9 @@
 Couch games for the TV after a long day: the laptop is the console, everyone's phone is a pad.
 No accounts, no app to install on the phones, nothing leaves your Wi-Fi.
 
-Football is playable today and [23 more games](web/games) are planned, each with its own README.
-Pick one and help build it.
+Football is playable today and [35 more games](web/games) are planned across sports, racing, action and
+arcade, each with its own README, plus [competitions](web/games/COMPETITIONS.md) (leagues, cups, race
+weekends, championships). Pick one and help build it.
 
 ## Play
 

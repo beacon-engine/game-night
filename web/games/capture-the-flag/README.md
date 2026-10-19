@@ -1,6 +1,6 @@
-# 🚩 Capture the Flag
+# Capture the Flag
 
-Two teams, two flags · 2–8 players · **coming soon**
+Two teams, two flags · 2–8 players · Action · **coming soon**
 
 Grab their flag, bring it home while yours is still there. Tag carriers to send them back.
 
@@ -18,6 +18,15 @@ phone dims the buttons a situation doesn't use.
 | Stick past the ring | Sprint |
 | Stick | Move |
 
+## Competition
+
+**Exhibition** · **League** · **Cup**
+
+First to 3 captures; teams in a league or bracket.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -27,6 +36,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Tagging and returns
 - [ ] First to 3
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

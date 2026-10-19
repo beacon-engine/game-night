@@ -1,0 +1,9 @@
+{
+  "name": "Asteroid Storm",
+  "icon": "☄️",
+  "tagline": "Thrust, turn, shoot the rocks (and each other)",
+  "players": "1–4",
+  "category": "Arcade",
+  "order": 85,
+  "status": "soon"
+}
