@@ -15,6 +15,7 @@ export class View {
   private oy = 0;
   private dpr = 1;
   glow = true; // off when the device is struggling
+  marked = new Set<string>(); // riders to point out (people, at the start of a round): their name and where they're heading
 
   constructor(private canvas: HTMLCanvasElement, private top = 92) {
     this.ctx = canvas.getContext('2d')!;
@@ -105,6 +106,28 @@ export class View {
       }
       g.fillStyle = r.boostT > 0 ? '#d7ff3b' : '#f3f0e8';
       g.fillRect(hx - 1, hy - 1, c + 2, c + 2);
+    }
+
+    // who's who: a ring, the name, and an arrow the way they're heading
+    for (const r of arena.alive) {
+      if (!this.marked.has(r.id)) continue;
+      const cx = this.ox + (r.x + 0.5) * c, cy = this.oy + (r.y + 0.5) * c, pulse = 1 + 0.15 * Math.sin(performance.now() / 120);
+      g.strokeStyle = r.color;
+      g.lineWidth = Math.max(2, c * 0.35);
+      g.strokeRect(cx - c * 2.6 * pulse, cy - c * 2.6 * pulse, c * 5.2 * pulse, c * 5.2 * pulse);
+      const ax = cx + DX[r.dir] * c * 5, ay = cy + DY[r.dir] * c * 5, px = -DY[r.dir], py = DX[r.dir];
+      g.fillStyle = r.color;
+      g.beginPath();
+      g.moveTo(ax + DX[r.dir] * c * 2, ay + DY[r.dir] * c * 2);
+      g.lineTo(ax + px * c * 1.4, ay + py * c * 1.4);
+      g.lineTo(ax - px * c * 1.4, ay - py * c * 1.4);
+      g.fill();
+      g.font = `800 ${Math.round(c * 2.6)}px "Big Shoulders Display", sans-serif`;
+      g.textAlign = 'center';
+      g.fillStyle = '#f3f0e8';
+      const below = DY[r.dir] < 0; // (keep the name out of the arrow's way)
+      g.textBaseline = below ? 'top' : 'bottom';
+      g.fillText(r.name.toUpperCase(), cx, below ? cy + c * 3.4 : cy - c * 3.4);
     }
 
     // sparks

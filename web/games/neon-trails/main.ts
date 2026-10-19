@@ -227,7 +227,8 @@ function padScreen(c: Player): PadScreen {
     case 'paused': return { ...base, labels: { bolt: 'Resume', drop: 'Quit' }, hint: 'Paused' };
     default: {
       const r = arena.riders.find((x) => x.id === c.id);
-      const hint = !r ? 'You ride next round' : r.alive ? `Round ${round}: turn with the arrows` : 'Out! Next round soon';
+      const hint = !r ? 'You ride next round' : !r.alive ? 'Out! Next round soon'
+        : stage === 'countdown' ? 'Find your name on the screen' : `Round ${round}: turn with the arrows`;
       return { ...base, labels: controls.labels('ride'), hint };
     }
   }
@@ -313,6 +314,7 @@ function tick() {
     view.paintWalls(arena);
     renderHud();
   }
+  arena.pace = stage === 'riding' ? Math.min(1, 0.45 + stageT * 0.3) : 1; // (an easy start: full speed after about 2 s)
   const { moved, crashed } = arena.step();
   for (const r of moved) view.paint(r);
   for (const r of crashed) {
@@ -336,6 +338,8 @@ function frame(now: number) {
   const humansOut = stage === 'riding' && arena.riders.some((r) => !r.ai) && !arena.alive.some((r) => !r.ai);
   acc += dt * (humansOut ? 3 : 1);
   while (acc >= TICK) { tick(); acc -= TICK; }
+  const intro = stage === 'countdown' || (stage === 'riding' && stageT < 2.5);
+  view.marked = new Set(intro ? input.list.map((c) => c.id) : []);
   view.frame(arena, dt, acc / TICK);
   guard.frame(now);
   padT += dt;
