@@ -46,7 +46,8 @@ export type ServerToDisplay =
   | { t: 'pause'; id: string }
   | { t: 'name'; id: string; name: string };
 
-// Close code for a display that another screen took over: it should stay closed, not reconnect
+// Close code for a display that another screen took over, or a pad opened again in another tab:
+// it should stay closed, not reconnect (and take over back)
 export const CLOSE_REPLACED = 4000;
 
 export const socketUrl = () => `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
