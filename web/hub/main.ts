@@ -110,7 +110,7 @@ function syncPads() {
   const ready = g?.status === 'ready';
   for (const c of input.list) {
     input.show(c, {
-      label: c.tag, color: c.color, title: 'Game Night', accent: '#d7ff3b',
+      layout: 'dpad', label: c.tag, color: c.color, title: 'Game Night', accent: '#d7ff3b',
       hint: g ? `${g.name}${ready ? '' : ' (coming soon)'}` : '',
       labels: ready ? { cross: 'Play' } : {},
     });
@@ -146,7 +146,7 @@ function remember(id: string) {
 }
 
 $('legend').innerHTML = [
-  `<span>${glyph('stick')} Choose</span>`,
+  `<span>${glyph('dpad')} Choose</span>`,
   `<span>${glyph('cross')} Play</span>`,
   `<span>${key('←')}${key('→')}${key('↑')}${key('↓')} ${key('Enter')} Keyboard</span>`,
 ].join('');

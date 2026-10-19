@@ -98,7 +98,8 @@ func (r *Relay) helloDisplay(c *client) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.display != nil && r.display != c {
-		r.display.conn.Close(websocket.StatusNormalClosure, "another display connected")
+		// the newest screen wins; the old one is told why, so it doesn't reconnect and take over again
+		go r.display.conn.Close(StatusReplaced, "another screen opened Game Night") // (waits for the goodbye: not under the lock)
 	}
 	r.display = c
 	for id, p := range r.pads {
@@ -117,7 +118,7 @@ func (r *Relay) helloPad(c *client, id, name string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if old := r.pads[id]; old != nil && old.client != c {
-		old.conn.Close(websocket.StatusNormalClosure, "reconnected")
+		go old.conn.Close(websocket.StatusNormalClosure, "reconnected")
 	}
 	p := &pad{client: c, name: name, slot: r.slotFor(id)}
 	r.pads[id] = p
@@ -242,6 +243,9 @@ func (c *client) heartbeat(ctx context.Context) {
 }
 
 const heartbeat = 4 * time.Second
+
+// Close code sent to a display when another one takes over (see protocol.ts)
+const StatusReplaced websocket.StatusCode = 4000
 
 func newID() string {
 	b := make([]byte, 6)

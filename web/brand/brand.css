@@ -196,6 +196,7 @@ body {
 .glyph-circle { color: var(--circle); }
 .glyph-square { color: var(--square); }
 .glyph-triangle { color: var(--triangle); }
+.glyph-dpad { font-size: 16px; color: var(--chalk); }
 .glyph-l1, .glyph-r1, .glyph-stick { width: auto; padding: 0 8px; border-radius: var(--r-2); font-size: 11px; letter-spacing: 0.06em; color: var(--chalk); }
 .glyph-key { width: auto; min-width: 26px; padding: 0 7px; border-radius: var(--r-1); font-size: 11px; color: var(--chalk); }
 

@@ -13,9 +13,9 @@ export function escapeHtml(s: unknown) {
 
 // Markup for the brand components in /brand/brand.css, so every page draws them the same way.
 
-// A pad button drawn small, in its colour: glyph('cross') is a blue ✕
-export const glyph = (btn: Button | 'stick') =>
-  `<span class="glyph glyph-${btn}">${btn === 'stick' ? 'STICK' : SYMBOL[btn]}</span>`;
+// A pad button drawn small, in its colour: glyph('cross') is a blue ✕. 'dpad' and 'stick' for steering.
+const GLYPH_TEXT = { ...SYMBOL, dpad: '✥', stick: 'STICK' };
+export const glyph = (btn: Button | 'dpad' | 'stick') => `<span class="glyph glyph-${btn}">${GLYPH_TEXT[btn]}</span>`;
 
 // A keyboard key, for help text: key('Enter')
 export const key = (name: string) => `<span class="glyph glyph-key">${escapeHtml(name)}</span>`;

@@ -449,7 +449,7 @@ function renderPause() {
   else if (M.view === 'subs') side.innerHTML = '';
   else side.className = 'pside panel hidden';
   renderSubs();
-  $('pHelp').innerHTML = `<span>${glyph('stick')} Choose</span><span>${glyph('cross')} Select</span><span>${glyph('circle')} ${M.view === 'main' ? 'Resume' : 'Back'}</span>`;
+  $('pHelp').innerHTML = `<span>${glyph('dpad')} Choose</span><span>${glyph('cross')} Select</span><span>${glyph('circle')} ${M.view === 'main' ? 'Resume' : 'Back'}</span>`;
 }
 
 // --------------------------------------------------------- substitutions --
@@ -519,16 +519,17 @@ function pauseInput() {
 // What each phone shows: menus, or what the buttons do right now in the match
 function padScreen(c: Human): PadScreen {
   const club = clubs[c.team === 0 ? app.home : app.away];
-  const screen = { label: c.tag, color: c.color, title: club.name, accent: club.kit.shirt };
+  // menus use the d-pad; the match uses the stick
+  const screen = { layout: 'dpad' as const, label: c.tag, color: c.color, title: club.name, accent: club.kit.shirt };
   if (app.mode === 'lobby') {
-    return { ...screen, labels: { cross: 'Kick off', circle: 'Games', square: 'Swap side' }, hint: 'Stick ◀ ▶ changes your club' };
+    return { ...screen, labels: { cross: 'Kick off', circle: 'Games', square: 'Swap side' }, hint: '◀ ▶ changes your club' };
   }
   if (app.mode === 'paused') {
     const mine = !app.subs || app.subs.c === c;
     return {
       ...screen,
       labels: mine ? { cross: 'Select', circle: app.menu?.view === 'main' ? 'Resume' : 'Back' } : {},
-      hint: app.subs ? (mine ? 'Substitutions: stick ▲▼ to choose' : 'Substitutions…') : 'Paused: stick ▲▼ to choose',
+      hint: app.subs ? (mine ? 'Substitutions: ▲▼ to choose' : 'Substitutions…') : 'Paused: ▲▼ to choose',
     };
   }
   if (app.mode === 'fulltime') {
@@ -538,6 +539,7 @@ function padScreen(c: Human): PadScreen {
   const p = c.player;
   return {
     ...screen,
+    layout: 'stick',
     labels: controls.labels(p ? app.match.humanContext(p) : 'defend'),
     hint: p ? `${p.name} #${p.number}` : '',
     charge: c.charge >= 0 ? Math.round(Math.min(1, c.charge / 0.9) * 10) / 10 : undefined,

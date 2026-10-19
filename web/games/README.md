@@ -83,11 +83,12 @@ Games build on `@platform` ([`../platform/`](../platform)). The parts you'll use
 | | |
 |---|---|
 | `new Input({ state })` | Every connected phone (and keyboard player) as a `Controller` with your own typed `state` on it. `input.list` is who's playing. |
-| `c.x`, `c.y` | The stick, -1..1 (up is +1). `c.held(BIT.sprint)`: pushed past its ring. |
+| `c.x`, `c.y` | The stick (or steering, in the racing layout), -1..1 (up is +1). `c.held(BIT.sprint)`: pushed past its ring. |
+| `c.dpad` | The d-pad as `{ x, y }`, each -1, 0 or 1 (y down is +1). Each press also arrives in `drain()` as `BIT.up/down/left/right`. |
 | `c.drain()` | Button presses and releases since last time: `{ bit, down }`. |
 | `c.flickX()`, `c.flickY()` | -1/+1 once per flick, for menus. |
 | `c.tag`, `c.color`, `c.label` | 'P1', their colour, their name. The same in every game. |
-| `input.show(c, screen)` | What their phone shows: title, hint, and a label per button (unlabelled buttons are dimmed). Only sent when it changes, so call it every frame. |
+| `input.show(c, screen)` | What their phone shows: the `layout`, title, hint, and a label per button (unlabelled buttons are dimmed). Only sent when it changes, so call it every frame. |
 | `input.buzz(c, ms)` | Vibrate their phone. |
 | `loadControls(contexts, actions)` | Reads your `controls.json`; typos are reported in the console and skipped. Then `controls.action(ctx, bit)`, `controls.labels(ctx)`. |
 | `backToHub()` | Back to the game select page (the phones stay connected). |
@@ -118,6 +119,18 @@ requestAnimationFrame(tick);
 
 Buttons are `cross`, `circle`, `square`, `triangle`, `l1`, `r1`; `"triangle+swipe"` is a swipe across △.
 
+### Pad layouts
+
+Each screen picks how the phone lets you steer, with `layout` in `input.show`:
+
+| Layout | The phone shows | Use it for |
+|---|---|---|
+| `'dpad'` | four arrow buttons and the face buttons | **every menu** (lobbies, pause, picking a club), and grid games (snake, blast zone, maze chase) |
+| `'stick'` | a floating analog stick (past its ring = sprint) and the face buttons | moving freely: football, brawlers, twin-stick shooters |
+| `'racing'` | slide sideways to steer (analog `c.x`, springs back), a throttle (✕) and brake (○) pedal, and □ △ L1 R1 | anything you drive or ride |
+
+Menus read `c.flickX()` / `c.flickY()`: one step per d-pad tap (taps can't be missed) or per flick of the stick.
+
 [Football](football) is the full example: `actions.ts` lists its actions, `main.ts` is the menus and HUD,
 `match.ts` the simulation. three.js is available (`import * as THREE from 'three'`) and bundled
 into each game that uses it.
@@ -127,6 +140,7 @@ into each game that uses it.
 - Use the brand: link `/brand/brand.css` and follow [`../brand/README.md`](../brand/README.md) for menus and
   HUD (colours, type, the selection frame, `glyph()` for pad buttons). Football's `index.html` is the example.
 - ○ in the lobby (and Esc on the keyboard) goes back to the games with `backToHub()`.
+- Menus use the `'dpad'` layout; switch to `'stick'` or `'racing'` only while actually playing.
 - The pad's ❚❚ button arrives as `input.onPause`; pause the game.
 - Run the simulation at a fixed 60 steps a second and draw at up to 60 fps (see the loop at the bottom of
   football's `main.ts`); TVs and laptops vary a lot.

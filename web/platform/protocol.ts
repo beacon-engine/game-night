@@ -1,6 +1,6 @@
 // Messages on the /ws socket between pads (phones), the server and the display (the page on
 // the TV). The Go server relays them (internal/server/relay.go): keep the two in sync.
-import type { Button } from './pad.ts';
+import type { Button, PadLayout } from './pad.ts';
 
 // Stick in [-1, 1] (y up = +1) and the held buttons as a bit mask (see BIT in pad.ts)
 export interface PadInput {
@@ -11,6 +11,7 @@ export interface PadInput {
 
 // What a phone shows. The game sends one per player whenever it changes.
 export interface PadScreen {
+  layout?: PadLayout; // how the phone lets you steer on this screen (default 'stick'); see pad.ts
   label: string; // 'P1'
   color: string; // the player's colour
   title: string; // top bar, e.g. the club you're playing for
@@ -44,5 +45,8 @@ export type ServerToDisplay =
   | ({ t: 'in'; id: string } & PadInput)
   | { t: 'pause'; id: string }
   | { t: 'name'; id: string; name: string };
+
+// Close code for a display that another screen took over: it should stay closed, not reconnect
+export const CLOSE_REPLACED = 4000;
 
 export const socketUrl = () => `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
