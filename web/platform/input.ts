@@ -67,7 +67,7 @@ export class Controller {
   // -1/+1 once per d-pad tap or flick of the stick left/right (for menus)
   flickX() {
     const i = this.steps.findIndex(([dx]) => dx);
-    if (i >= 0) return this.steps.splice(i, 1)[0][0];
+    if (i >= 0) return (this.latchX = this.steps.splice(i, 1)[0][0]); // (a key is a tap and a push of the stick: count it once)
     if (Math.abs(this.x) < 0.4) this.latchX = 0;
     else if (!this.latchX && Math.abs(this.x) > 0.7) return (this.latchX = Math.sign(this.x));
     return 0;
@@ -76,7 +76,7 @@ export class Controller {
   // -1/+1 once per d-pad tap or flick up/down (menus): +1 = down the list
   flickY() {
     const i = this.steps.findIndex(([, dy]) => dy);
-    if (i >= 0) return this.steps.splice(i, 1)[0][1];
+    if (i >= 0) return (this.latchY = this.steps.splice(i, 1)[0][1]);
     if (Math.abs(this.y) < 0.4) this.latchY = 0;
     else if (!this.latchY && Math.abs(this.y) > 0.7) return (this.latchY = -Math.sign(this.y));
     return 0;

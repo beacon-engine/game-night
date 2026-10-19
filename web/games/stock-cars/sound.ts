@@ -1,6 +1,6 @@
 // Engines: one synthesised V8 drone per person driving, its pitch following their speed, plus a
-// thump for contact. Browsers only allow sound after a click or key on the page (the TV app allows it
-// straight away), so unlock() is called on the first one.
+// thump for contact and a crunch of metal for the wall. Browsers only allow sound after a click or
+// key on the page (the TV app allows it straight away), so unlock() is called on the first one.
 interface Voice { osc: OscillatorNode; sub: OscillatorNode; gain: GainNode }
 
 export class Engines {
@@ -69,6 +69,24 @@ export class Engines {
     const v = { osc, sub, gain };
     this.voices.set(id, v);
     return v;
+  }
+
+  // A burst of filtered noise: metal on concrete
+  crunch(strength = 1) {
+    const ctx = this.ctx;
+    if (!ctx || ctx.state !== 'running' || !this.master) return;
+    const t = ctx.currentTime, len = 0.35;
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * len), ctx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 2;
+    const src = ctx.createBufferSource(), band = ctx.createBiquadFilter(), gain = ctx.createGain();
+    src.buffer = buf;
+    band.type = 'bandpass';
+    band.frequency.value = 1800;
+    band.Q.value = 0.8;
+    gain.gain.value = 0.5 * Math.min(1, strength);
+    src.connect(band).connect(gain).connect(ctx.destination);
+    src.start(t);
+    this.thump(strength);
   }
 
   private stop(id: string, v: Voice) {
