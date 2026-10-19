@@ -28,7 +28,7 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   phones join it as usual. The remote works on the game select page; Back is Esc in games.
 - **Device checks**: each game says what it needs in `game.json` (`light`, `standard`, `heavy`), the screen
   measures itself (memory and cores from the TV app or browser, graphics features, a short graphics test), and
-  games it can't run well are shown as "Not on this screen" with the reason. A game opened anyway stops before
+  games it can't run well are shown as "Not on this TV" (or device), in plain words. A game opened anyway stops before
   loading anything big.
 - **Running safely**: games lower their detail, then stop, if they can't keep up; running out of graphics
   memory ends the game cleanly. 3D games run at 30 fps on TVs. Leaving the app stops everything.

@@ -694,7 +694,7 @@ const guard = new PerformanceGuard({
       renderer.shadowMap.enabled = false;
       scene.traverse((o) => { if (o instanceof THREE.Mesh) o.castShadow = false; });
     }
-    banner('Lowering detail', 'to keep it smooth on this screen', true, 1800);
+    banner('Keeping it smooth', 'Turned the detail down a little', true, 1800);
   },
 });
 guard.watchCanvas(renderer.domElement);

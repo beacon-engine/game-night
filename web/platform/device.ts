@@ -16,9 +16,13 @@ export type Tier = 'light' | 'standard' | 'heavy';
 const ORDER: Tier[] = ['light', 'standard', 'heavy'];
 export const canRun = (have: Tier, need: Tier) => ORDER.indexOf(have) >= ORDER.indexOf(need);
 
+// How to call this device when talking to players: "this TV" in the TV app, "this device" elsewhere.
+// Players get plain words (what works, what to do instead); the measurements go to the console.
+export const thisDevice = (d: Pick<DeviceProfile, 'tv'>) => (d.tv ? 'this TV' : 'this device');
+
 export interface DeviceProfile {
   tier: Tier;
-  limit: string; // what holds it back, in plain words ('1 GB of memory'); '' when nothing does
+  limit: string; // what holds it back ('1 GB of memory'): for developers (logged), not for players
   memoryGB: number | null;
   cores: number | null;
   gpu: string;
@@ -178,8 +182,8 @@ export async function requireDevice(): Promise<DeviceProfile> {
   const needs = game.needs && ORDER.includes(game.needs) ? game.needs : 'standard';
   const gameName = game.name ?? 'This game';
   if (canRun(d.tier, needs)) return d;
-  notice(`${gameName} needs a stronger device`,
-    `This screen ${d.limit ? `has ${d.limit}` : "can't keep up"}, so ${gameName} isn't available on it. The lighter games are.`,
+  notice(`${gameName} can't run on ${thisDevice(d)}`,
+    `It needs a more powerful ${d.tv ? 'TV' : 'device'}, like a laptop. Pick another game: the phones stay connected.`,
     'Back to the games', 0);
   return new Promise<never>(() => {});
 }
@@ -215,7 +219,7 @@ export class PerformanceGuard {
     this.times = [];
     this.started = now - 3000; // give the new quality a moment to settle
     this.level++;
-    if (this.level > (this.o.maxLevel ?? 2)) return this.stop('This screen is struggling', 'Game Night stopped the game to keep things running smoothly.');
+    if (this.level > (this.o.maxLevel ?? 2)) return this.stop();
     this.o.onStruggle?.(this.level);
   }
 
@@ -223,13 +227,14 @@ export class PerformanceGuard {
   watchCanvas(canvas: HTMLCanvasElement) {
     canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault();
-      this.stop('This screen ran out of memory', 'Game Night stopped the game. Lighter games will run better here.');
+      this.stop();
     });
   }
 
-  private stop(title: string, text: string) {
+  private stop() {
     this.stopped = true;
-    notice(title, text, 'Back to the games', 8);
+    deviceProfile().then((d) => notice(`That was too much for ${thisDevice(d)}`,
+      'We stopped the game so everything stays smooth. The lighter games will run better here.', 'Back to the games', 8));
   }
 }
 

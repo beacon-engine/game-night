@@ -1,10 +1,11 @@
 // Game select: every folder in games/ with a game.json shows up here (see web/games/README.md).
-import { $, BIT, canRun, chip, deviceProfile, escapeHtml, glyph, hostInfo, Input, key, keyCode, listGames, type GameInfo } from '@platform';
+import { $, BIT, canRun, chip, deviceProfile, escapeHtml, glyph, hostInfo, Input, key, keyCode, listGames, thisDevice, type GameInfo } from '@platform';
 
 const [all, device] = await Promise.all([listGames(), deviceProfile()]);
 // too much for this screen: shown, but not playable here
 const tooHeavy = (g: GameInfo) => !canRun(device.tier, g.needs);
 const playable = (g: GameInfo) => g.status === 'ready' && !tooHeavy(g);
+const here = thisDevice(device); // 'this TV' / 'this device'
 // grouped by category, in the order they first appear (games come sorted by their "order")
 const categories = [...new Set(all.map((g) => g.category))];
 const games = categories.flatMap((c) => all.filter((g) => g.category === c));
@@ -33,7 +34,7 @@ function tile(g: GameInfo, i: number) {
   const icon = g.iconUrl
     ? `<span class="icon" style="--icon:url('${g.iconUrl}')"></span>`
     : `<span class="emoji">${escapeHtml(g.icon)}</span>`;
-  const note = tooHeavy(g) ? 'Not on this screen' : g.status === 'soon' ? 'Soon' : '';
+  const note = tooHeavy(g) ? `Not on ${here}` : g.status === 'soon' ? 'Soon' : '';
   return `<button class="tile frame ${g.status} ${tooHeavy(g) ? 'unsupported' : ''}" data-i="${i}">
       <span class="top">${icon}<span class="caption faint num">${String(i + 1).padStart(2, '0')}</span></span>
       <span><span class="name">${escapeHtml(g.name)}</span>${note ? `<div class="caption faint">${note}</div>` : ''}</span>
@@ -54,12 +55,12 @@ function select(i: number, scroll = false) {
   $('fTitle').classList.toggle('soon', !ready);
   $('fTagline').textContent = g.tagline;
   $('fPlayers').textContent = `${g.players} players`;
-  $('fStatus').textContent = ready ? 'Ready to play' : tooHeavy(g) ? 'Not on this screen' : 'Coming soon';
+  $('fStatus').textContent = ready ? 'Ready to play' : tooHeavy(g) ? `Not on ${here}` : 'Coming soon';
   $('fStatus').classList.toggle('tag-volt', ready);
-  $('fWhy').textContent = tooHeavy(g) ? `Needs a stronger device: this screen has ${device.limit}.` : '';
+  $('fWhy').textContent = tooHeavy(g) ? `${cap(here)} isn't powerful enough for ${g.name}. Play it on a laptop, or pick another game.` : '';
   const btn = $<HTMLButtonElement>('play');
   btn.disabled = !ready;
-  btn.innerHTML = ready ? `${glyph('cross')} Play` : tooHeavy(g) ? 'Needs a stronger device' : 'Coming soon';
+  btn.innerHTML = ready ? `${glyph('cross')} Play` : tooHeavy(g) ? 'Not available' : 'Coming soon';
   if (scroll) document.querySelector('.tile.sel')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
@@ -79,7 +80,7 @@ function banner(text: string) {
 function play() {
   const g = games[sel];
   if (!g || leaving) return;
-  if (tooHeavy(g)) return banner(`${g.name} needs a stronger device`);
+  if (tooHeavy(g)) return banner(`${g.name} isn't available on ${here}`);
   if (g.status !== 'ready') return banner(`${g.name} is coming soon`);
   leaving = true;
   remember(g.id);
@@ -117,7 +118,7 @@ function syncPads() {
   for (const c of input.list) {
     input.show(c, {
       layout: 'dpad', label: c.tag, color: c.color, title: 'Game Night', accent: '#d7ff3b',
-      hint: g ? `${g.name}${ready ? '' : tooHeavy(g) ? ' (not on this screen)' : ' (coming soon)'}` : '',
+      hint: g ? `${g.name}${ready ? '' : tooHeavy(g) ? ` (not on ${here})` : ' (coming soon)'}` : '',
       labels: ready ? { cross: 'Play' } : {},
     });
   }
@@ -161,13 +162,9 @@ hostInfo().then((info) => {
   $('url').textContent = info.padUrl;
   $('qr').innerHTML = info.qr;
   $('version').textContent = `game-night ${info.version}`;
-  $('device').textContent = describe();
 });
-// e.g. 'This screen: light games · 1 GB · Mali-G31'
-function describe() {
-  const kind = { light: '2D games', standard: '2D and simple 3D games', heavy: 'all games' }[device.tier];
-  const mem = device.memoryGB ? `${Math.round(device.memoryGB * 10) / 10} GB` : '';
-  return ['This screen runs ' + kind, device.limit && `limited by ${device.limit}`, device.limit ? '' : mem].filter(Boolean).join(' · ');
+function cap(s: string) {
+  return s[0].toUpperCase() + s.slice(1);
 }
 
 document.body.classList.toggle('tv', device.tv);

@@ -74,5 +74,7 @@ chalk otherwise), so the svg's own colours don't matter. No emoji in the UI.
 
 ## Voice
 
-Short, warm, plain: "Scan to join", "Pick your sides", "Coming soon". Write labels in sentence case;
+Short, warm, plain: "Scan to join", "Pick your sides", "Coming soon". Players never see technical
+detail (memory sizes, frame rates, URL settings): say what works and what to do instead, e.g. "This TV
+isn't powerful enough for Football. Play it on a laptop, or pick another game." Details go to the console. Write labels in sentence case;
 the CSS turns titles, buttons and captions into capitals.
