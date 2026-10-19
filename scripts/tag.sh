@@ -23,5 +23,5 @@ if [ -n "$last" ]; then
   [ "$newest" = "$v" ] && [ "${last#v}" != "$v" ] || fail "$tag is not newer than $last"
 fi
 
-git tag -a "$tag" -m "game-night $tag"
+git tag -a "$tag" -m "beacon-arcade $tag"
 echo "Tagged $tag. Publish it with:  git push origin main $tag"

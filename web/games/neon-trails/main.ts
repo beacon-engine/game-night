@@ -173,9 +173,9 @@ function menuInput(c: Player) {
   }
   for (const ev of c.drain()) {
     if (!ev.down) continue;
-    if (ev.bit === BIT.cross) confirm();
-    else if (ev.bit === BIT.circle) back();
-    else if (ev.bit === BIT.triangle && stage === 'lobby') howTo();
+    if (ev.bit === BIT.bolt) confirm();
+    else if (ev.bit === BIT.drop) back();
+    else if (ev.bit === BIT.star && stage === 'lobby') howTo();
   }
 }
 
@@ -222,9 +222,9 @@ function padScreen(c: Player): PadScreen {
   const base = { layout: 'dpad' as const, label: c.tag, color: c.color, title: 'Neon Trails', accent: c.color };
   if (manualOpen()) return manualScreen(base);
   switch (stage) {
-    case 'lobby': return { ...base, labels: { cross: 'Start', circle: 'Games', triangle: 'How to play' }, hint: '▲▼ choose · ◀▶ change' };
-    case 'results': return { ...base, labels: { cross: 'Rematch', circle: 'Lobby' }, hint: 'Match over' };
-    case 'paused': return { ...base, labels: { cross: 'Resume', circle: 'Quit' }, hint: 'Paused' };
+    case 'lobby': return { ...base, labels: { bolt: 'Start', drop: 'Games', star: 'How to play' }, hint: '▲▼ choose · ◀▶ change' };
+    case 'results': return { ...base, labels: { bolt: 'Rematch', drop: 'Lobby' }, hint: 'Match over' };
+    case 'paused': return { ...base, labels: { bolt: 'Resume', drop: 'Quit' }, hint: 'Paused' };
     default: {
       const r = arena.riders.find((x) => x.id === c.id);
       const hint = !r ? 'You ride next round' : r.alive ? `Round ${round}: turn with the arrows` : 'Out! Next round soon';
@@ -344,7 +344,7 @@ function frame(now: number) {
 
 addEventListener('resize', () => view.layout(arena));
 hostInfo().then((info) => { $('url').textContent = info.padUrl; $('qr').innerHTML = info.qr; });
-$('legend').innerHTML = `<span>${glyph('dpad')} Turn</span><span>${glyph('cross')} Boost</span><span>${glyph('circle')} Brake (hold)</span>`;
+$('legend').innerHTML = `<span>${glyph('dpad')} Turn</span><span>${glyph('bolt')} Boost</span><span>${glyph('drop')} Brake (hold)</span>`;
 $('back').addEventListener('click', backToHub);
 $('start').addEventListener('click', startMatch);
 $('howto').addEventListener('click', howTo);

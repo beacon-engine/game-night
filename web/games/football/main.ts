@@ -316,10 +316,10 @@ function lobbyInput() {
     if (f) cycleClub(c.team, f);
     for (const ev of c.drain()) {
       if (!ev.down) continue;
-      if (ev.bit === BIT.cross) startMatch();
-      else if (ev.bit === BIT.square) { c.team = c.team ? 0 : 1; refreshLobby(); }
-      else if (ev.bit === BIT.circle) return backToHub();
-      else if (ev.bit === BIT.triangle) howTo();
+      if (ev.bit === BIT.bolt) startMatch();
+      else if (ev.bit === BIT.leaf) { c.team = c.team ? 0 : 1; refreshLobby(); }
+      else if (ev.bit === BIT.drop) return backToHub();
+      else if (ev.bit === BIT.star) howTo();
     }
   }
 }
@@ -338,7 +338,7 @@ addEventListener('keydown', (e) => {
 });
 
 // ------------------------------------------------------------- pause ------
-// A menu driven by the stick: ▲▼ to move, ✕ to choose, ○ to go back. Anyone can drive it.
+// A menu driven by the stick: ▲▼ to move, Bolt to choose, Drop to go back. Anyone can drive it.
 const MENU = [
   { id: 'resume', label: 'Resume' },
   { id: 'subs', label: 'Substitutions' },
@@ -463,7 +463,7 @@ function renderPause() {
   else if (M.view === 'subs') side.innerHTML = '';
   else side.className = 'pside panel hidden';
   renderSubs();
-  $('pHelp').innerHTML = `<span>${glyph('dpad')} Choose</span><span>${glyph('cross')} Select</span><span>${glyph('circle')} ${M.view === 'main' ? 'Resume' : 'Back'}</span>`;
+  $('pHelp').innerHTML = `<span>${glyph('dpad')} Choose</span><span>${glyph('bolt')} Select</span><span>${glyph('drop')} ${M.view === 'main' ? 'Resume' : 'Back'}</span>`;
 }
 
 // --------------------------------------------------------- substitutions --
@@ -473,10 +473,10 @@ function openSubs(c: Human) {
 }
 
 function subsInput(S: Subs, bit: number) {
-  if (bit === BIT.circle) {
+  if (bit === BIT.drop) {
     if (S.stage === 'on' && S.off) { S.stage = 'off'; S.cursor = S.team.players.indexOf(S.off); }
     else { app.subs = null; if (app.menu) app.menu.view = 'main'; }
-  } else if (bit === BIT.cross) {
+  } else if (bit === BIT.bolt) {
     if (S.stage === 'off') {
       S.off = S.team.players[S.cursor];
       if (S.team.subsLeft > 0 && S.team.bench.length) { S.stage = 'on'; S.cursor = 0; }
@@ -523,8 +523,8 @@ function pauseInput() {
     for (const ev of c.drain()) {
       if (!ev.down || app.mode !== 'paused') continue;
       if (app.subs) { if (app.subs.c === c) subsInput(app.subs, ev.bit); continue; }
-      if (ev.bit === BIT.cross) menuSelect(c);
-      else if (ev.bit === BIT.circle) menuBack();
+      if (ev.bit === BIT.bolt) menuSelect(c);
+      else if (ev.bit === BIT.drop) menuBack();
     }
   }
 }
@@ -537,19 +537,19 @@ function padScreen(c: Human): PadScreen {
   const screen = { layout: 'dpad' as const, label: c.tag, color: c.color, title: club.name, accent: club.kit.shirt };
   if (app.mode === 'lobby') {
     if (manualOpen()) return manualScreen(screen);
-    return { ...screen, labels: { cross: 'Kick off', circle: 'Games', square: 'Swap side', triangle: 'How to play' }, hint: '◀ ▶ changes your club' };
+    return { ...screen, labels: { bolt: 'Kick off', drop: 'Games', leaf: 'Swap side', star: 'How to play' }, hint: '◀ ▶ changes your club' };
   }
   if (app.mode === 'paused') {
     const mine = !app.subs || app.subs.c === c;
     return {
       ...screen,
-      labels: mine ? { cross: 'Select', circle: app.menu?.view === 'main' ? 'Resume' : 'Back' } : {},
+      labels: mine ? { bolt: 'Select', drop: app.menu?.view === 'main' ? 'Resume' : 'Back' } : {},
       hint: app.subs ? (mine ? 'Substitutions: ▲▼ to choose' : 'Substitutions…') : 'Paused: ▲▼ to choose',
     };
   }
   if (app.mode === 'fulltime') {
     const [h, a] = app.match.teams;
-    return { ...screen, labels: { cross: 'Menu' }, hint: `Full time: ${h.club.short} ${h.score} - ${a.score} ${a.club.short}` };
+    return { ...screen, labels: { bolt: 'Menu' }, hint: `Full time: ${h.club.short} ${h.score} - ${a.score} ${a.club.short}` };
   }
   const p = c.player;
   return {
@@ -683,7 +683,7 @@ function step(dt: number) {
   if (app.mode === 'fulltime') {
     app.fulltimeT += dt;
     for (const c of input.list) for (const ev of c.drain()) {
-      if (ev.down && app.fulltimeT > 2 && ev.bit === BIT.cross) return toLobby();
+      if (ev.down && app.fulltimeT > 2 && ev.bit === BIT.bolt) return toLobby();
     }
   }
   app.match.update(dt);

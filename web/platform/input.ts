@@ -95,7 +95,7 @@ export class Input<T extends object = object> {
   onLeave: (c: Pad<T>) => void = () => {};
   onRename: (c: Pad<T>) => void = () => {};
   onPause: (c: Pad<T>) => void = () => {};
-  // Another screen opened Game Night and took the phones. By default this page says so.
+  // Another screen opened Beacon Arcade and took the phones. By default this page says so.
   onReplaced: () => void = showReplaced;
 
   private controllers = new Map<string, Pad<T>>();
@@ -248,7 +248,7 @@ function showReplaced() {
   el.className = 'panel';
   el.style.cssText = 'position:fixed;inset:auto 24px 24px auto;z-index:99;max-width:360px;padding:18px 20px;display:flex;flex-direction:column;gap:12px';
   el.innerHTML = `<div class="h3">Open on another screen</div>
-    <div class="muted" style="font-size:14px">Game Night was opened somewhere else, so the phones went there.</div>
+    <div class="muted" style="font-size:14px">Beacon Arcade was opened somewhere else, so the phones went there.</div>
     <button class="btn btn-primary" style="align-self:flex-start">Use this screen</button>`;
   el.querySelector('button')!.addEventListener('click', () => location.reload());
   document.body.append(el);

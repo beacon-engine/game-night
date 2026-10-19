@@ -8,7 +8,8 @@
 //     "steering": "Turn with the arrows (optional: how you move, which isn't a button)",
 //     "tips": ["Optional."] }
 //
-// showManual(url, name) opens it over the page; the game select page and game lobbies offer it on △.
+// In the text, {bolt} {drop} {leaf} {star} {l1} {r1} draw that pad button ("press {bolt} to start").
+// showManual(url, name) opens it over the page; the game select page and game lobbies offer it on Star.
 import { escapeHtml, glyph, keyCode } from './dom.ts';
 import type { Controller } from './input.ts';
 import { BIT, BUTTONS, type Button } from './pad.ts';
@@ -35,6 +36,9 @@ export async function loadManual(gameUrl = '') {
   return manual && { manual, controls };
 }
 
+// Manual text as HTML: escaped, with {bolt} etc. drawn as the button
+const text = (s: string) => escapeHtml(s).replace(/\{(\w+)\}/g, (m, b) => (BUTTONS.includes(b) ? glyph(b) : m));
+
 // "attack" -> "Attack", "throwIn" -> "Throw in"
 const title = (ctx: string) => ctx.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()).replace(/ (\w)/g, (_, c) => ` ${c.toLowerCase()}`);
 
@@ -51,12 +55,12 @@ function controlsHtml(c: ControlsFile | null, steering?: string) {
 
 export function manualHtml(name: string, { manual: m, controls }: { manual: Manual; controls: ControlsFile | null }) {
   const list = (items: string[], ordered = false) =>
-    `<${ordered ? 'ol' : 'ul'}>${items.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>`;
+    `<${ordered ? 'ol' : 'ul'}>${items.map((s) => `<li>${text(s)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>`;
   return `<span class="eyebrow">How to play</span>
     <h1 class="h1">${escapeHtml(name)}</h1>
-    <p class="m-intro">${escapeHtml(m.intro)}${m.inspiredBy ? ` <span class="faint">${escapeHtml(m.inspiredBy)}</span>` : ''}</p>
+    <p class="m-intro">${text(m.intro)}${m.inspiredBy ? ` <span class="faint">${text(m.inspiredBy)}</span>` : ''}</p>
     <div class="m-cols">
-      <section><h3 class="h3">The goal</h3><p>${escapeHtml(m.goal)}</p>
+      <section><h3 class="h3">The goal</h3><p>${text(m.goal)}</p>
         <h3 class="h3">Playing</h3>${list(m.howToPlay, true)}
         ${m.tips?.length ? `<h3 class="h3">Tips</h3>${list(m.tips)}` : ''}</section>
       <section><h3 class="h3">Controls</h3>${controlsHtml(controls, m.steering)}
@@ -83,7 +87,7 @@ const STYLE = `
 let open: { close: () => void } | null = null;
 export const manualOpen = () => !!open;
 
-// Open the manual over the page. Closes on ○ (the game calls closeManual), Esc, or the button.
+// Open the manual over the page. Closes on Drop (the game calls closeManual), Esc, or the button.
 export async function showManual(gameUrl: string, name: string) {
   if (open) return;
   const data = await loadManual(gameUrl);
@@ -96,7 +100,7 @@ export async function showManual(gameUrl: string, name: string) {
   }
   const el = document.createElement('div');
   el.className = 'manual grid-bg';
-  el.innerHTML = `${manualHtml(name, data)}<button class="btn close">${glyph('circle')} Close</button>`;
+  el.innerHTML = `${manualHtml(name, data)}<button class="btn close">${glyph('drop')} Close</button>`;
   const onKey = (e: KeyboardEvent) => {
     const k = keyCode(e);
     if (k === 'Escape' || k === 'Backspace') { e.preventDefault(); e.stopImmediatePropagation(); closeManual(); }
@@ -117,16 +121,16 @@ export function scrollManual(d: number) {
   document.querySelector('.manual')?.scrollBy({ top: d * 160, behavior: 'smooth' });
 }
 
-// While the manual is open, a phone scrolls it (▲▼) and closes it (○ or △), and the game behind
+// While the manual is open, a phone scrolls it (▲▼) and closes it (Drop or Star), and the game behind
 // it gets nothing. Call it first in the game's input loop: true = it took this pad's input.
 export function manualPadInput(c: Controller) {
   if (!open) return false;
   const fy = c.flickY();
   if (fy) scrollManual(fy);
-  for (const ev of c.drain()) if (ev.down && (ev.bit === BIT.circle || ev.bit === BIT.triangle)) closeManual();
+  for (const ev of c.drain()) if (ev.down && (ev.bit === BIT.drop || ev.bit === BIT.star)) closeManual();
   return true;
 }
 
 // What the phones show while the manual is open
 export const manualScreen = (s: Omit<PadScreen, 'labels' | 'hint' | 'layout'>): PadScreen =>
-  ({ ...s, layout: 'dpad', labels: { circle: 'Close' }, hint: 'How to play: ▲▼ to scroll' });
+  ({ ...s, layout: 'dpad', labels: { drop: 'Close' }, hint: 'How to play: ▲▼ to scroll' });

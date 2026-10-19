@@ -17,7 +17,7 @@ import android.webkit.WebViewClient
 import kotlin.concurrent.thread
 
 // The TV is the game screen: a full-screen WebView on the game select page, served by the
-// game-night server running alongside (GameServer). Phones join it over the Wi-Fi as usual.
+// beacon-arcade server running alongside (GameServer). Phones join it over the Wi-Fi as usual.
 //
 // While the app is in front, the server runs; when you leave it (Home, another app), the page and
 // the server stop, so nothing keeps working the TV in the background.
@@ -38,7 +38,7 @@ class MainActivity : Activity() {
         super.onStart()
         hideSystemBars()
         web?.loadDataWithBaseURL(null, STARTING, "text/html", "utf-8", null)
-        thread(name = "game-night-start") {
+        thread(name = "beacon-arcade-start") {
             val url = runCatching { server.start() }.getOrElse {
                 Log.e(TAG, "server didn't start", it)
                 null
@@ -79,7 +79,7 @@ class MainActivity : Activity() {
         view.requestFocus()
     }
 
-    // Only Game Night's own pages; and if the page's renderer is killed (a 1 GB TV running out of
+    // Only Beacon Arcade's own pages; and if the page's renderer is killed (a 1 GB TV running out of
     // memory), start a fresh WebView on the game select page instead of crashing the app.
     private inner class LocalPages : WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) =
@@ -123,7 +123,7 @@ class MainActivity : Activity() {
             "for (const type of ['keydown', 'keyup']) dispatchEvent(new KeyboardEvent(type, { key: 'Escape', code: 'Escape' }));"
         private fun page(text: String) = """<html><body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;
             background:#07080b;color:#a6a4ae;font:600 18px/1.4 sans-serif;letter-spacing:.14em;text-transform:uppercase">$text</body></html>"""
-        private val STARTING = page("Starting Game Night…")
-        private val FAILED = page("Game Night couldn't start. Restart the app.")
+        private val STARTING = page("Starting Beacon Arcade…")
+        private val FAILED = page("Beacon Arcade couldn't start. Restart the app.")
     }
 }

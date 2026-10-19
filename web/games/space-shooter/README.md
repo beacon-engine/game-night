@@ -6,15 +6,15 @@ A vertical shooter you play together on one screen. Waves of raiders, power-ups 
 
 ## Controls (a first plan)
 
-Every game uses the same phone pad: a stick (pushed past its ring = sprint), ✕ ○ □ △, L1, R1, and a swipe
+Every game uses the same phone pad: a stick (pushed past its ring = sprint), Bolt, Drop, Leaf, Star, L1, R1, and a swipe
 across a button. This is what each does here; it goes into `controls.json` once the game exists, and the
 phone dims the buttons a situation doesn't use.
 
 | Button | Flying |
 |---|---|
-| ✕ | Fire (hold) |
-| ○ | Bomb (clears bullets) |
-| □ | Focus: slow, precise movement |
+| Bolt | Fire (hold) |
+| Drop | Bomb (clears bullets) |
+| Leaf | Focus: slow, precise movement |
 | Stick | Move |
 
 ## Competition
@@ -38,7 +38,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Enemy waves and bullet patterns
 - [ ] Power-ups and bombs
 - [ ] Shared lives, high score
-- [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Phones show what each button does (`input.show`); Drop in the lobby goes back to the games (`backToHub`)
 - [ ] A manual (`manual.json`): what it is, how you win, how to play, tips
 - [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)

@@ -6,16 +6,16 @@ Close to the table, fast. Spin is the game: topspin dips, backspin floats, sides
 
 ## Controls (a first plan)
 
-Every game uses the same phone pad: a stick (pushed past its ring = sprint), ✕ ○ □ △, L1, R1, and a swipe
+Every game uses the same phone pad: a stick (pushed past its ring = sprint), Bolt, Drop, Leaf, Star, L1, R1, and a swipe
 across a button. This is what each does here; it goes into `controls.json` once the game exists, and the
 phone dims the buttons a situation doesn't use.
 
 | Button | Rally | Serving |
 |---|---|---|
-| ✕ | Topspin drive | Serve (topspin) |
-| ○ | Push / backspin | Serve (backspin) |
-| □ | Smash | Serve (sidespin) |
-| △ | Block | — |
+| Bolt | Topspin drive | Serve (topspin) |
+| Drop | Push / backspin | Serve (backspin) |
+| Leaf | Smash | Serve (sidespin) |
+| Star | Block | — |
 | Stick | Move and aim | Aim the serve |
 
 ## Competition
@@ -35,7 +35,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Bat follows the stick; shot choice decides spin
 - [ ] Serve rules (bounce on each side)
 - [ ] Games to 11
-- [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Phones show what each button does (`input.show`); Drop in the lobby goes back to the games (`backToHub`)
 - [ ] A manual (`manual.json`): what it is, how you win, how to play, tips
 - [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)

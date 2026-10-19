@@ -55,7 +55,7 @@ function connect() {
 function setDisplay(on: boolean) {
   displayOn = on;
   if (on) hideOverlay();
-  else showOverlay('Waiting for the game<small>Open Game Night on the TV or laptop</small>');
+  else showOverlay('Waiting for the game<small>Open Beacon Arcade on the TV or laptop</small>');
 }
 function showOverlay(html: string) { $('ov-text').innerHTML = html; $('overlay').style.display = 'flex'; }
 function hideOverlay() { $('overlay').style.display = 'none'; }

@@ -2,7 +2,7 @@
 // every game; a game names its situations ("contexts", e.g. attack / defend) and its actions,
 // and the json binds buttons to actions per context, so players can remap without code:
 //
-//   { "attack": { "cross": "pass", "triangle+swipe": "loftedThroughBall" },
+//   { "attack": { "bolt": "pass", "star+swipe": "loftedThroughBall" },
 //     "labels": { "pass": "Pass" } }
 //
 // `<button>+swipe` is a swipe across that button on the phone (a second action on it).

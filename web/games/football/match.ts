@@ -2133,7 +2133,7 @@ export class Match {
       // if a human is already closest, the AI only covers
       const humanClose = t.humans.some((c) => c.player && dist(c.player) < dist(cands[0]));
       if (!humanClose) this.chasers.add(cands[0]);
-      // human holding triangle: a teammate joins the press
+      // a human asking for team press (R1): a teammate joins the press
       if (t.humans.some((c) => c.pressing) && b.owner) this.chasers.add(humanClose ? cands[0] : cands[1] || cands[0]);
       const second = humanClose ? cands[0] : cands[1];
       // in our half, a second man covers (goal-side of the ball, not on it)

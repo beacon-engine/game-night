@@ -6,16 +6,16 @@ Hold the compound together against waves of shambling creatures. Board up window
 
 ## Controls (a first plan)
 
-Every game uses the same phone pad: a stick (pushed past its ring = sprint), ✕ ○ □ △, L1, R1, and a swipe
+Every game uses the same phone pad: a stick (pushed past its ring = sprint), Bolt, Drop, Leaf, Star, L1, R1, and a swipe
 across a button. This is what each does here; it goes into `controls.json` once the game exists, and the
 phone dims the buttons a situation doesn't use.
 
 | Button | Fighting | Between waves |
 |---|---|---|
-| ✕ | Fire | Repair / board up |
-| ○ | Melee | Buy |
-| □ | Reload | — |
-| △ | Revive (hold, near a teammate) | Ready |
+| Bolt | Fire | Repair / board up |
+| Drop | Melee | Buy |
+| Leaf | Reload | — |
+| Star | Revive (hold, near a teammate) | Ready |
 | R1 | Switch weapon | — |
 | Stick | Move and face | Move |
 
@@ -36,7 +36,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Waves that grow
 - [ ] Shooting, reloading, melee
 - [ ] Downed and revive; game over when all are down
-- [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Phones show what each button does (`input.show`); Drop in the lobby goes back to the games (`backToHub`)
 - [ ] A manual (`manual.json`): what it is, how you win, how to play, tips
 - [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)

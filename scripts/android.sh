@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds the Android TV app: dist/game-night_<version>_android-tv.apk
+# Builds the Android TV app: dist/beacon-arcade_<version>_android-tv.apk
 # Usage: scripts/android.sh v1.2.0   (run `make web` first; `make android` does both)
 # Needs a JDK 17+ and the Android SDK (ANDROID_HOME).
 set -eu
@@ -27,5 +27,5 @@ case "$code" in ''|*[!0-9]*) code=1 ;; esac
 
 (cd android && ./gradlew -q assembleRelease -PgnVersionName="$version" -PgnVersionCode="$code")
 mkdir -p dist
-cp android/app/build/outputs/apk/release/app-release.apk "dist/game-night_${version}_android-tv.apk"
-echo "  dist/game-night_${version}_android-tv.apk (versionCode $code)"
+cp android/app/build/outputs/apk/release/app-release.apk "dist/beacon-arcade_${version}_android-tv.apk"
+echo "  dist/beacon-arcade_${version}_android-tv.apk (versionCode $code)"

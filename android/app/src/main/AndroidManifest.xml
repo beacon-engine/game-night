@@ -10,7 +10,7 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
     <application
-        android:label="Game Night"
+        android:label="Beacon Arcade"
         android:icon="@mipmap/ic_launcher"
         android:banner="@drawable/banner"
         android:networkSecurityConfig="@xml/network_security_config"

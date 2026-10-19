@@ -6,19 +6,19 @@ A 2D-plane fighting game with a small cast. Light and heavy attacks chain into c
 
 ## Controls (a first plan)
 
-Every game uses the same phone pad: a stick (pushed past its ring = sprint), ✕ ○ □ △, L1, R1, and a swipe
+Every game uses the same phone pad: a stick (pushed past its ring = sprint), Bolt, Drop, Leaf, Star, L1, R1, and a swipe
 across a button. This is what each does here; it goes into `controls.json` once the game exists, and the
 phone dims the buttons a situation doesn't use.
 
 | Button | Fighting |
 |---|---|
-| ✕ | Light punch |
-| ○ | Heavy punch |
-| □ | Light kick |
-| △ | Heavy kick |
+| Bolt | Light punch |
+| Drop | Heavy punch |
+| Leaf | Light kick |
+| Star | Heavy kick |
 | L1 | Block (hold) |
 | R1 | Special |
-| Swipe across △ | Super (when the bar is full) |
+| Swipe across Star | Super (when the bar is full) |
 | Stick | Move, jump (up), crouch (down) |
 
 ## Competition
@@ -41,7 +41,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Two fighters, one stage
 - [ ] Attacks with hitboxes, hit stun, blocking
 - [ ] Health, a super bar, best of 3 rounds
-- [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Phones show what each button does (`input.show`); Drop in the lobby goes back to the games (`backToHub`)
 - [ ] A manual (`manual.json`): what it is, how you win, how to play, tips
 - [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
