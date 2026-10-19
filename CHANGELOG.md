@@ -23,6 +23,17 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   race weekends with qualifying, championships with points tables, playoffs, title fights and careers,
   ladders, arcade high scores, and a Game Night Cup across games. Each game's README says which it uses.
 
+### Added (pad)
+- Pad layouts, picked by the game per screen: a **d-pad** (one tap, one step) for menus and grid games, the
+  analog **stick** for moving freely, and **racing** (slide to steer, throttle and brake pedals). The game
+  select page and football's menus now use the d-pad; football matches use the stick.
+
+### Fixed
+- A quick tap on the phone could be missed by menus; d-pad taps now always register.
+- Two open game screens kept taking the phones from each other every second. The newest screen now
+  wins, and the other one says so, with a button to take over again.
+- A slow old connection being replaced could pause everyone's input for a few seconds.
+
 ### Removed
 - The generic "Racing" plan, replaced by the three motorsport games and Kart Rush.
 - The original art packs for football (Quaternius characters and animations) are now in the repo, in

@@ -1,8 +1,9 @@
 // The phone controller. The same pad for every game: a floating stick on the left, the four
 // face buttons and two shoulder buttons on the right. The game decides what they say.
-import { $, BIT, FACE_BITS, socketUrl, type Button, type PadScreen, type PadToServer, type ServerToPad } from '@platform';
+import { $, BIT, FACE_BITS, socketUrl, type Button, type PadLayout, type PadScreen, type PadToServer, type ServerToPad } from '@platform';
 
-const STICK_R = 60;
+const STICK_R = 60; // px from the centre to full tilt
+const STEER_R = 90; // the steering slider (racing) is wider and only goes sideways
 const store = {
   get: (k: string) => { try { return localStorage.getItem(`gamenight.${k}`) ?? ''; } catch { return ''; } },
   set: (k: string, v: string) => { try { localStorage.setItem(`gamenight.${k}`, v); } catch { /* private mode */ } },
@@ -60,8 +61,22 @@ function showOverlay(html: string) { $('ov-text').innerHTML = html; $('overlay')
 function hideOverlay() { $('overlay').style.display = 'none'; }
 
 const buttonEls = [...document.querySelectorAll<HTMLElement>('[data-button]')];
+let layout: PadLayout = 'stick';
+
+// The game picks the layout per screen. Switching lets go of everything, so nothing stays held.
+function setLayout(next: PadLayout) {
+  if (next === layout) return;
+  layout = next;
+  document.body.dataset.layout = next;
+  buttons = 0;
+  for (const el of document.querySelectorAll('.down')) el.classList.remove('down');
+  releaseStick();
+  $('stick-help').innerHTML = next === 'racing' ? 'Slide sideways to steer' : 'Touch &amp; drag to move<br>past the ring to sprint';
+  $('stick-help').hidden = false;
+}
 
 function show(s: PadScreen) {
+  setLayout(s.layout ?? 'stick');
   const root = document.documentElement.style;
   root.setProperty('--accent', s.accent || 'var(--volt)');
   root.setProperty('--me', s.color || 'var(--chalk)');
@@ -103,6 +118,14 @@ zone.addEventListener('pointermove', (e) => {
   if (e.pointerId !== stickId) return;
   const r = zone.getBoundingClientRect();
   let dx = e.clientX - r.left - ox, dy = e.clientY - r.top - oy;
+  if (layout === 'racing') {
+    // steering: sideways only, no sprint
+    dx = Math.max(-STEER_R, Math.min(STEER_R, dx));
+    knob.style.left = `${ox + dx}px`;
+    stick.x = dx / STEER_R;
+    stick.y = 0;
+    return flush();
+  }
   const d = Math.hypot(dx, dy);
   sprinting = d > STICK_R * 1.25;
   if (d > STICK_R) { dx *= STICK_R / d; dy *= STICK_R / d; }
@@ -113,21 +136,24 @@ zone.addEventListener('pointermove', (e) => {
   stick.y = -dy / STICK_R; // up = +1
   flush();
 });
-const endStick = (e: PointerEvent) => {
-  if (e.pointerId !== stickId) return;
+function releaseStick() {
   stickId = null;
   sprinting = false;
   base.hidden = knob.hidden = true;
   base.classList.remove('sprint');
   stick.x = stick.y = 0;
   flush();
-};
+}
+const endStick = (e: PointerEvent) => { if (e.pointerId === stickId) releaseStick(); };
 zone.addEventListener('pointerup', endStick);
 zone.addEventListener('pointercancel', endStick);
 
-// --- Buttons ----------------------------------------------------------------------------
-for (const el of buttonEls) {
-  const bit = BIT[el.dataset.button as Button];
+// --- Buttons (face, shoulders, pedals and the d-pad arrows) ----------------------------------
+const pressables = [
+  ...buttonEls.map((el) => [el, BIT[el.dataset.button as Button]] as const),
+  ...[...document.querySelectorAll<HTMLElement>('[data-dir]')].map((el) => [el, BIT[el.dataset.dir as 'up' | 'down' | 'left' | 'right']] as const),
+];
+for (const [el, bit] of pressables) {
   let sx = 0, sy = 0;
   el.addEventListener('pointerdown', (e) => {
     el.setPointerCapture(e.pointerId);

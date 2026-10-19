@@ -3,8 +3,8 @@
 //   const input = new Input({ state: () => ({ team: 0, score: 0 }) });
 //   input.list[0].team   // typed
 import { DEFAULT_KEYMAPS, type KeyAction, type Keymap } from './keyboard.ts';
-import { ALL_BITS, BIT, type Bit, playerColor } from './pad.ts';
-import { socketUrl, type DisplayToServer, type PadScreen, type ServerToDisplay } from './protocol.ts';
+import { ALL_BITS, BIT, DPAD, type Bit, playerColor } from './pad.ts';
+import { CLOSE_REPLACED, socketUrl, type DisplayToServer, type PadScreen, type ServerToDisplay } from './protocol.ts';
 
 export interface PadEvent {
   bit: Bit;
@@ -18,6 +18,7 @@ export class Controller {
   connected = true;
   lastScreen = '';
   private queue: PadEvent[] = [];
+  private steps: [number, number][] = []; // d-pad taps not yet read by flickX/flickY
   private latchX = 0;
   private latchY = 0;
 
@@ -35,6 +36,10 @@ export class Controller {
   setState(x: number, y: number, b: number) {
     const diff = b ^ this.buttons;
     for (const bit of ALL_BITS) if (diff & bit) this.queue.push({ bit, down: !!(b & bit) });
+    for (const [dir, step] of Object.entries(DPAD)) {
+      const bit = BIT[dir as keyof typeof DPAD];
+      if (diff & b & bit) this.steps.push([...step]);
+    }
     this.x = Math.max(-1, Math.min(1, Number(x) || 0));
     this.y = Math.max(-1, Math.min(1, Number(y) || 0));
     this.buttons = b;
@@ -48,18 +53,29 @@ export class Controller {
   drain() {
     const q = this.queue;
     this.queue = [];
+    this.steps = []; // (anything a menu hasn't read by now is stale)
     return q;
   }
 
-  // -1/+1 once per flick of the stick left/right (for menus)
+  // The d-pad (or the arrow keys) as a direction: -1, 0 or 1 on each axis, y down = +1
+  get dpad() {
+    const h = (bit: number) => (this.held(bit) ? 1 : 0);
+    return { x: h(BIT.right) - h(BIT.left), y: h(BIT.down) - h(BIT.up) };
+  }
+
+  // -1/+1 once per d-pad tap or flick of the stick left/right (for menus)
   flickX() {
+    const i = this.steps.findIndex(([dx]) => dx);
+    if (i >= 0) return this.steps.splice(i, 1)[0][0];
     if (Math.abs(this.x) < 0.4) this.latchX = 0;
     else if (!this.latchX && Math.abs(this.x) > 0.7) return (this.latchX = Math.sign(this.x));
     return 0;
   }
 
-  // -1/+1 once per flick up/down (menus): +1 = down the list
+  // -1/+1 once per d-pad tap or flick up/down (menus): +1 = down the list
   flickY() {
+    const i = this.steps.findIndex(([, dy]) => dy);
+    if (i >= 0) return this.steps.splice(i, 1)[0][1];
     if (Math.abs(this.y) < 0.4) this.latchY = 0;
     else if (!this.latchY && Math.abs(this.y) > 0.7) return (this.latchY = -Math.sign(this.y));
     return 0;
@@ -78,6 +94,8 @@ export class Input<T extends object = object> {
   onLeave: (c: Pad<T>) => void = () => {};
   onRename: (c: Pad<T>) => void = () => {};
   onPause: (c: Pad<T>) => void = () => {};
+  // Another screen opened Game Night and took the phones. By default this page says so.
+  onReplaced: () => void = showReplaced;
 
   private controllers = new Map<string, Pad<T>>();
   private ws: WebSocket | null = null;
@@ -137,7 +155,13 @@ export class Input<T extends object = object> {
     const ws = new WebSocket(socketUrl());
     this.ws = ws;
     ws.onopen = () => this.send({ t: 'hello', role: 'display' });
-    ws.onclose = () => { if (this.ws === ws) setTimeout(() => this.connect(), 1000); };
+    ws.onclose = (e) => {
+      if (this.ws !== ws) return;
+      if (e.code === CLOSE_REPLACED) {
+        this.ws = null;
+        this.onReplaced();
+      } else setTimeout(() => this.connect(), 1000);
+    };
     ws.onmessage = (ev) => this.receive(JSON.parse(ev.data) as ServerToDisplay);
   }
 
@@ -214,4 +238,16 @@ export class Input<T extends object = object> {
       for (const c of this.controllers.values()) if (c.kind === 'keyboard') c.setState(0, 0, 0);
     });
   }
+}
+
+// A notice over the page, in the brand's style (needs /brand/brand.css)
+function showReplaced() {
+  const el = document.createElement('div');
+  el.className = 'panel';
+  el.style.cssText = 'position:fixed;inset:auto 24px 24px auto;z-index:99;max-width:360px;padding:18px 20px;display:flex;flex-direction:column;gap:12px';
+  el.innerHTML = `<div class="h3">Open on another screen</div>
+    <div class="muted" style="font-size:14px">Game Night was opened somewhere else, so the phones went there.</div>
+    <button class="btn btn-primary" style="align-self:flex-start">Use this screen</button>`;
+  el.querySelector('button')!.addEventListener('click', () => location.reload());
+  document.body.append(el);
 }
