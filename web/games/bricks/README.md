@@ -6,14 +6,14 @@ The classic, for a crowd: up to four paddles on the sides of the board, or two p
 
 ## Controls (a first plan)
 
-Every game uses the same phone pad: a stick (pushed past its ring = sprint), ✕ ○ □ △, L1, R1, and a swipe
+Every game uses the same phone pad: a stick (pushed past its ring = sprint), Bolt, Drop, Leaf, Star, L1, R1, and a swipe
 across a button. This is what each does here; it goes into `controls.json` once the game exists, and the
 phone dims the buttons a situation doesn't use.
 
 | Button | Playing |
 |---|---|
-| ✕ | Launch the ball |
-| ○ | Use power-up |
+| Bolt | Launch the ball |
+| Drop | Use power-up |
 | Stick | Move the paddle |
 
 ## Competition
@@ -37,7 +37,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Angles off the paddle
 - [ ] Power-ups: multi-ball, wide paddle
 - [ ] Levels
-- [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Phones show what each button does (`input.show`); Drop in the lobby goes back to the games (`backToHub`)
 - [ ] A manual (`manual.json`): what it is, how you win, how to play, tips
 - [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)

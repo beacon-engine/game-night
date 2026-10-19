@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- the mark: the pad's four buttons (web/brand/mark.svg), centred in the adaptive icon's safe zone -->
+<!-- the mark: the pad's four buttons in their diamond (web/brand/mark.svg, web/platform/icons.ts),
+     centred in the adaptive icon's safe zone -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
-    <group android:translateX="34" android:translateY="34">
-        <path android:strokeColor="#2EE59D" android:strokeWidth="4" android:pathData="M10,2a8,8 0 1,0 0.01,0z" />
-        <path android:strokeColor="#FF4D5A" android:strokeWidth="4" android:pathData="M30,2a8,8 0 1,0 0.01,0z" />
-        <path android:strokeColor="#FF5ECF" android:strokeWidth="4" android:pathData="M2.5,22.5h15v15h-15z" />
-        <path android:strokeColor="#4C8DFF" android:strokeWidth="4" android:pathData="M30,22a8,8 0 1,0 0.01,0z" />
+    <group android:translateX="30" android:translateY="30">
+        <group android:translateX="16" android:translateY="0" android:scaleX="0.667" android:scaleY="0.667">
+            <path android:strokeColor="#FF5ECF" android:strokeWidth="2.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="m12 3 2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 16.9l-5.4 2.9 1-6.1-4.4-4.3 6.1-.8z" />
+        </group>
+        <group android:translateX="0" android:translateY="16" android:scaleX="0.667" android:scaleY="0.667">
+            <path android:strokeColor="#2EE59D" android:strokeWidth="2.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M5 19.5C5 11 10 5 20 4c-.6 9.8-6.6 15.5-15 15.5z" />
+            <path android:strokeColor="#2EE59D" android:strokeWidth="2.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M5 19.5 13 11.5" />
+        </group>
+        <group android:translateX="32" android:translateY="16" android:scaleX="0.667" android:scaleY="0.667">
+            <path android:strokeColor="#4C8DFF" android:strokeWidth="2.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z" />
+        </group>
+        <group android:translateX="16" android:translateY="32" android:scaleX="0.667" android:scaleY="0.667">
+            <path android:strokeColor="#FFC23D" android:strokeWidth="2.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z" />
+        </group>
     </group>
 </vector>

@@ -1,18 +1,18 @@
-# Game Night for Android TV
+# Beacon Arcade for Android TV
 
-The TV runs everything: it's the game screen, and it runs the game-night server the phones join.
+The TV runs everything: it's the game screen, and it runs the beacon-arcade server the phones join.
 No laptop needed.
 
 ## Put it on your TV
 
-1. Get `game-night_<version>_android-tv.apk` (from a release, or `make android`).
+1. Get `beacon-arcade_<version>_android-tv.apk` (from a release, or `make android`).
 2. Install it, one of:
    - **Over the network (adb):** on the TV, turn on Developer options (Settings → Device Preferences → About →
      click Build 7 times), then Developer options → USB / Network debugging. On a computer on the same Wi-Fi:
-     `adb connect <tv-ip>` then `adb install game-night_<version>_android-tv.apk`.
+     `adb connect <tv-ip>` then `adb install beacon-arcade_<version>_android-tv.apk`.
    - **From a USB stick:** copy the APK onto it, and open it on the TV with a file manager app
      (allow it to install unknown apps when asked).
-3. Open **Game Night** from the TV's apps. Phones on the same Wi-Fi scan the QR code, as usual.
+3. Open **Beacon Arcade** from the TV's apps. Phones on the same Wi-Fi scan the QR code, as usual.
 
 The remote works on the game select page (arrows, OK). **Back** acts like Esc inside a game (pause, back
 to the lobby, back to the games) and leaves the app from the game select page.
@@ -20,7 +20,7 @@ to the lobby, back to the games) and leaves the app from the game select page.
 ## Looking after the TV
 
 A TV is both the screen and the computer here, and many have little memory (1 GB is common).
-So Game Night checks what it's running on before offering anything:
+So Beacon Arcade checks what it's running on before offering anything:
 
 - The app tells the page the TV's real memory and CPU cores; the page tests its graphics. Each game says
   what it needs in its `game.json` (`light`: 2D, `standard`: simple 3D, `heavy`: big 3D like football).

@@ -1,6 +1,6 @@
 #!/bin/sh
-# Builds game-night for every platform into dist/ as release archives:
-#   game-night_<version>_<platform>.tar.gz (.zip for Windows), plus checksums.txt
+# Builds beacon-arcade for every platform into dist/ as release archives:
+#   beacon-arcade_<version>_<platform>.tar.gz (.zip for Windows), plus checksums.txt
 # Usage: scripts/package.sh v1.2.0   (run `make web` first; `make release` does both)
 set -eu
 version=${1:?usage: scripts/package.sh <version>}
@@ -15,9 +15,9 @@ linux amd64 linux-x64
 linux arm64 linux-arm64-raspberry-pi"
 
 echo "$targets" | while read -r goos goarch name; do
-  dir="dist/game-night_${version}_${name}"
-  bin="game-night"
-  [ "$goos" = windows ] && bin="game-night.exe"
+  dir="dist/beacon-arcade_${version}_${name}"
+  bin="beacon-arcade"
+  [ "$goos" = windows ] && bin="beacon-arcade.exe"
   mkdir -p "$dir"
   CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build -trimpath -ldflags "-s -w -X main.version=$version" -o "$dir/$bin" .
   cp README.md LICENSE CHANGELOG.md "$dir/"
@@ -26,5 +26,5 @@ echo "$targets" | while read -r goos goarch name; do
   echo "  built $name"
 done
 
-(cd dist && shasum -a 256 game-night_* > checksums.txt)
+(cd dist && shasum -a 256 beacon-arcade_* > checksums.txt)
 echo "  dist/ ready for $version"

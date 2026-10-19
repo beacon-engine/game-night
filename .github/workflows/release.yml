@@ -36,4 +36,4 @@ jobs:
         run: |
           pre=""
           case "$GITHUB_REF_NAME" in *-*) pre="--prerelease" ;; esac
-          gh release create "$GITHUB_REF_NAME" dist/* --title "game-night $GITHUB_REF_NAME" --notes-file notes.md $pre
+          gh release create "$GITHUB_REF_NAME" dist/* --title "beacon-arcade $GITHUB_REF_NAME" --notes-file notes.md $pre

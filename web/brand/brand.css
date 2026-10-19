@@ -1,4 +1,4 @@
-/* Game Night brand: the one place colours, type and shared components are defined.
+/* Beacon Arcade brand: the one place colours, type and shared components are defined.
    Every page links it: <link rel="stylesheet" href="/brand/brand.css">. Rules: brand/README.md */
 
 @font-face {
@@ -53,10 +53,10 @@
   --volt-ink: #0b0d06;
 
   /* the pad's buttons: the secondary accents (highlight a word, colour a glyph) */
-  --cross: #4c8dff;
-  --circle: #ff4d5a;
-  --square: #ff5ecf;
-  --triangle: #2ee59d;
+  --bolt: #ffc23d;
+  --drop: #4c8dff;
+  --leaf: #2ee59d;
+  --star: #ff5ecf;
 
   --good: #2ee59d;
   --warn: #ffc23d;
@@ -114,10 +114,10 @@ body {
 
 /* one highlighted word per line, in a pad colour (or volt for the subject) */
 .hl-volt { color: var(--volt); }
-.hl-cross { color: var(--cross); }
-.hl-circle { color: var(--circle); }
-.hl-square { color: var(--square); }
-.hl-triangle { color: var(--triangle); }
+.hl-bolt { color: var(--bolt); }
+.hl-drop { color: var(--drop); }
+.hl-leaf { color: var(--leaf); }
+.hl-star { color: var(--star); }
 
 /* --- surfaces -------------------------------------------------------------- */
 .panel {
@@ -178,7 +178,7 @@ body {
 .btn-icon { width: 40px; padding: 0; }
 .btn:focus-visible { outline: 2px solid var(--volt); outline-offset: 3px; }
 
-/* a pad button, drawn small: <span class="glyph glyph-cross">✕</span> (see glyph() in @platform) */
+/* a pad button, drawn small: glyph('bolt') in @platform gives <span class="glyph glyph-bolt"><svg>…</svg></span> */
 .glyph {
   display: inline-flex;
   align-items: center;
@@ -192,10 +192,11 @@ body {
   font: 600 13px/1 var(--font-ui);
   vertical-align: middle;
 }
-.glyph-cross { color: var(--cross); }
-.glyph-circle { color: var(--circle); }
-.glyph-square { color: var(--square); }
-.glyph-triangle { color: var(--triangle); }
+.glyph svg { width: 15px; height: 15px; }
+.glyph-bolt { color: var(--bolt); }
+.glyph-drop { color: var(--drop); }
+.glyph-leaf { color: var(--leaf); }
+.glyph-star { color: var(--star); }
 .glyph-dpad { font-size: 16px; color: var(--chalk); }
 .glyph-l1, .glyph-r1, .glyph-stick { width: auto; padding: 0 8px; border-radius: var(--r-2); font-size: 11px; letter-spacing: 0.06em; color: var(--chalk); }
 .glyph-key { width: auto; min-width: 26px; padding: 0 7px; border-radius: var(--r-1); font-size: 11px; color: var(--chalk); }
@@ -245,13 +246,13 @@ body {
 /* subtle dot grid for empty canvas areas */
 .grid-bg { background-image: radial-gradient(rgb(243 240 232 / 0.05) 1px, transparent 1px); background-size: 24px 24px; }
 
-/* the mark: the pad's four buttons */
-.mark { display: inline-grid; grid-template-columns: 1fr 1fr; gap: 3px; width: 26px; height: 26px; }
-.mark i { border-radius: 50%; border: 2px solid; }
-.mark i:nth-child(1) { border-color: var(--triangle); }
-.mark i:nth-child(2) { border-color: var(--circle); }
-.mark i:nth-child(3) { border-color: var(--square); border-radius: 1px; }
-.mark i:nth-child(4) { border-color: var(--cross); }
+/* the mark: the pad's four buttons in their diamond (Star, Leaf, Drop, Bolt; markup in the hub and pad) */
+.mark { display: inline-grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); width: 30px; height: 30px; flex: none; }
+.mark svg { width: 100%; height: 100%; stroke-width: 2.6; }
+.mark svg:nth-child(1) { grid-area: 1 / 2; color: var(--star); }
+.mark svg:nth-child(2) { grid-area: 2 / 1; color: var(--leaf); }
+.mark svg:nth-child(3) { grid-area: 2 / 3; color: var(--drop); }
+.mark svg:nth-child(4) { grid-area: 3 / 2; color: var(--bolt); }
 .wordmark { display: inline-flex; align-items: center; gap: 12px; font: 800 28px/1 var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; }
 .wordmark .outline { -webkit-text-stroke-width: 1.2px; }
 

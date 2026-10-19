@@ -8,7 +8,7 @@ import java.net.ServerSocket
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-// Runs the game-night server (the same Go program as on a laptop, built for Linux on ARM) as a
+// Runs the beacon-arcade server (the same Go program as on a laptop, built for Linux on ARM) as a
 // child process. It ships as lib/<abi>/libgamenight.so and is unpacked on install.
 class GameServer(private val context: Context) {
     private var process: Process? = null
@@ -36,11 +36,11 @@ class GameServer(private val context: Context) {
         val lines = p.inputStream.bufferedReader()
         // wait for "is running", then keep passing its output to logcat
         while (true) {
-            val line = lines.readLine() ?: error("game-night exited: ${p.waitFor()}")
+            val line = lines.readLine() ?: error("beacon-arcade exited: ${p.waitFor()}")
             Log.i(TAG, line)
             if ("is running" in line) break
         }
-        thread(name = "game-night-log", isDaemon = true) { lines.forEachLine { Log.i(TAG, it) } }
+        thread(name = "beacon-arcade-log", isDaemon = true) { lines.forEachLine { Log.i(TAG, it) } }
         return "http://127.0.0.1:$port/"
     }
 
@@ -58,6 +58,6 @@ class GameServer(private val context: Context) {
     }.isSuccess
 
     private companion object {
-        const val TAG = "game-night"
+        const val TAG = "beacon-arcade"
     }
 }

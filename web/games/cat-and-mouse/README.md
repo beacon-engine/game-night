@@ -13,8 +13,8 @@ Every game uses the same phone pad. Here: the d-pad, and two buttons.
 | Button | Mouse | Cat |
 |---|---|---|
 | D-pad | Run | Prowl |
-| Button 1 | Dive into a mouse hole (when next to one) | Pounce (a short dash, then a pause) |
-| Button 2 | Squeak (lure the cat, score bonus if it works) | Listen (shows mice nearby for a moment) |
+| Bolt | Dive into a mouse hole (when next to one) | Pounce (a short dash, then a pause) |
+| Drop | Squeak (lure the cat, score bonus if it works) | Listen (shows mice nearby for a moment) |
 
 ## Competition
 

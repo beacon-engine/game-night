@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#07080b">
-<title>Game Night Pad</title>
+<title>Beacon Arcade Pad</title>
 <link rel="icon" href="/brand/mark.svg">
 <link rel="stylesheet" href="/brand/brand.css">
 <style>
@@ -42,7 +42,7 @@
   #stick-knob { width: 64px; height: 64px; background: var(--chalk); }
   #stick-help { position: absolute; left: 50%; top: 55%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; line-height: 1.8; }
 
-  /* --- buttons: the PlayStation diamond (triangle top, circle right, cross bottom, square left) and shoulders */
+  /* --- buttons: the diamond (Star top, Drop right, Bolt bottom, Leaf left) and shoulders */
   #buttons { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: 14px; width: 282px; height: 270px; }
   .pb, .sh {
     position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
@@ -51,15 +51,16 @@
   }
   .pb { width: 88px; height: 88px; border-radius: 50%; }
   .pb .sym { font: 300 38px/1 var(--font-ui); color: var(--c); }
+  .pb .sym svg { width: 34px; height: 34px; display: block; }
   .sh { top: 4px; width: 88px; height: 44px; border-radius: var(--r-2); }
   .sh .sym { font: 700 13px/1 var(--font-ui); letter-spacing: .06em; }
   .lbl { font: 600 9px/1.1 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--chalk-2); max-width: 80px; text-align: center; }
   .pb.down, .sh.down { transform: scale(.95); border-color: var(--c, var(--chalk)); background: color-mix(in srgb, var(--c, var(--chalk)) 22%, var(--ink-1)); }
   .unused { opacity: .25; } /* buttons the game doesn't use right now */
-  #bT { right: 96px; top: 0; --c: var(--triangle); }
-  #bO { right: 0; top: 90px; --c: var(--circle); }
-  #bX { right: 96px; top: 180px; --c: var(--cross); }
-  #bS { right: 192px; top: 90px; --c: var(--square); }
+  #bT { right: 96px; top: 0; --c: var(--star); }
+  #bO { right: 0; top: 90px; --c: var(--drop); }
+  #bX { right: 96px; top: 180px; --c: var(--bolt); }
+  #bS { right: 192px; top: 90px; --c: var(--leaf); }
   #bL1 { left: 0; } #bR1 { right: 0; }
 
   /* --- d-pad (menus, grid games): one tap, one step ----------------------------------- */
@@ -82,6 +83,7 @@
   #pedals .pedal.brake { grid-column: 1 / 3; height: 150px; align-self: end; }
   #pedals .pedal.throttle { grid-column: 3 / 5; }
   #pedals .pedal .sym { font-size: 26px; }
+  #pedals .pedal .sym svg, .sh .sym svg { width: 22px; height: 22px; display: block; }
   #pedals .pedal .lbl { font-size: 11px; }
   body[data-layout=racing] #stick-base { width: 220px; height: 64px; border-radius: 32px; }
   body[data-layout=racing] #stick-base::after { inset: 8px 60px; border-radius: 24px; }
@@ -127,30 +129,30 @@
   </div>
 
   <div id="pedals">
-    <div class="sh mini" data-button="square" style="--c:var(--square)"><span class="sym" style="color:var(--square)">□</span><span class="lbl"></span></div>
-    <div class="sh mini" data-button="triangle" style="--c:var(--triangle)"><span class="sym" style="color:var(--triangle)">△</span><span class="lbl"></span></div>
+    <div class="sh mini" data-button="leaf" style="--c:var(--leaf)"><span class="sym" style="color:var(--leaf)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19.5C5 11 10 5 20 4c-.6 9.8-6.6 15.5-15 15.5z"/><path d="M5 19.5 13 11.5"/></svg></span><span class="lbl"></span></div>
+    <div class="sh mini" data-button="star" style="--c:var(--star)"><span class="sym" style="color:var(--star)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 16.9l-5.4 2.9 1-6.1-4.4-4.3 6.1-.8z"/></svg></span><span class="lbl"></span></div>
     <div class="sh mini" data-button="l1"><span class="sym">L1</span><span class="lbl"></span></div>
     <div class="sh mini" data-button="r1"><span class="sym">R1</span><span class="lbl"></span></div>
-    <div class="pb pedal brake" data-button="circle" style="--c:var(--circle)"><span class="sym">○</span><span class="lbl"></span></div>
-    <div class="pb pedal throttle" data-button="cross" style="--c:var(--cross)"><span class="sym">✕</span><span class="lbl"></span></div>
+    <div class="pb pedal brake" data-button="drop" style="--c:var(--drop)"><span class="sym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg></span><span class="lbl"></span></div>
+    <div class="pb pedal throttle" data-button="bolt" style="--c:var(--bolt)"><span class="sym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span><span class="lbl"></span></div>
   </div>
 
   <div id="power"><div></div></div>
   <div id="buttons">
     <div class="sh" id="bL1" data-button="l1"><span class="sym">L1</span><span class="lbl"></span></div>
     <div class="sh" id="bR1" data-button="r1"><span class="sym">R1</span><span class="lbl"></span></div>
-    <div class="pb" id="bT" data-button="triangle"><span class="sym">△</span><span class="lbl"></span></div>
-    <div class="pb" id="bO" data-button="circle"><span class="sym">○</span><span class="lbl"></span></div>
-    <div class="pb" id="bX" data-button="cross"><span class="sym">✕</span><span class="lbl"></span></div>
-    <div class="pb" id="bS" data-button="square"><span class="sym">□</span><span class="lbl"></span></div>
+    <div class="pb" id="bT" data-button="star"><span class="sym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 16.9l-5.4 2.9 1-6.1-4.4-4.3 6.1-.8z"/></svg></span><span class="lbl"></span></div>
+    <div class="pb" id="bO" data-button="drop"><span class="sym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg></span><span class="lbl"></span></div>
+    <div class="pb" id="bX" data-button="bolt"><span class="sym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span><span class="lbl"></span></div>
+    <div class="pb" id="bS" data-button="leaf"><span class="sym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19.5C5 11 10 5 20 4c-.6 9.8-6.6 15.5-15 15.5z"/><path d="M5 19.5 13 11.5"/></svg></span><span class="lbl"></span></div>
   </div>
 
   <div id="overlay" class="grid-bg">
-    <span class="mark"><i></i><i></i><i></i><i></i></span>
+    <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 16.9l-5.4 2.9 1-6.1-4.4-4.3 6.1-.8z"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19.5C5 11 10 5 20 4c-.6 9.8-6.6 15.5-15 15.5z"/><path d="M5 19.5 13 11.5"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span>
     <div id="ov-text">Connecting…</div>
     <span class="caption faint">Tap to go full screen</span>
   </div>
-  <div id="rotate" class="grid-bg"><span class="mark"><i></i><i></i><i></i><i></i></span>Turn your phone sideways</div>
+  <div id="rotate" class="grid-bg"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 16.9l-5.4 2.9 1-6.1-4.4-4.3 6.1-.8z"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19.5C5 11 10 5 20 4c-.6 9.8-6.6 15.5-15 15.5z"/><path d="M5 19.5 13 11.5"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span>Turn your phone sideways</div>
 
 <script type="module" src="main.js"></script>
 </body>

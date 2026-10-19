@@ -1,24 +1,24 @@
 {
-  "_help": "Which pad button does which action, per situation. Buttons: cross, circle, square, triangle, l1, r1; 'triangle+swipe' is a swipe across that button on the phone. Actions are the keys of 'labels' (also listed in actions.ts). Unknown names are reported in the browser console and ignored. Keyboard keys are the same for every game (web/platform/keyboard.ts).",
+  "_help": "Which pad button does which action, per situation. Buttons: bolt, drop, leaf, star, l1, r1; 'star+swipe' is a swipe across that button on the phone. Actions are the keys of 'labels' (also listed in actions.ts). Unknown names are reported in the browser console and ignored. Keyboard keys are the same for every game (web/platform/keyboard.ts).",
   "attack": {
-    "cross": "pass",
-    "circle": "longPass",
-    "square": "shoot",
-    "triangle": "throughBall",
-    "triangle+swipe": "loftedThroughBall",
+    "bolt": "pass",
+    "drop": "longPass",
+    "leaf": "shoot",
+    "star": "throughBall",
+    "star+swipe": "loftedThroughBall",
     "l1": "stepOver",
     "r1": "dragBack"
   },
   "defend": {
-    "cross": "press",
-    "circle": "tackle",
+    "bolt": "press",
+    "drop": "tackle",
     "l1": "switchPlayer",
     "r1": "teammatePress"
   },
   "throwIn": {
-    "cross": "shortThrow",
-    "circle": "longThrow",
-    "triangle": "shortThrow"
+    "bolt": "shortThrow",
+    "drop": "longThrow",
+    "star": "shortThrow"
   },
   "labels": {
     "pass": "Pass",

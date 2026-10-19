@@ -1,11 +1,11 @@
-// Game Night: couch games on the TV, with phones as controllers.
+// Beacon Arcade: couch games on the TV, with phones as controllers.
 //
-//	game-night                  start and open the game select page
-//	game-night -port 8080       another port (or PORT=8080)
-//	game-night -no-open         don't open a browser
-//	game-night -dev             serve web/dist from disk (with `make dev`); -web DIR for another folder
-//	game-night -host 192.0.2.7  the address phones should use (detected if left out)
-//	game-night -version         print the version
+//	beacon-arcade                  start and open the game select page
+//	beacon-arcade -port 8080       another port (or PORT=8080)
+//	beacon-arcade -no-open         don't open a browser
+//	beacon-arcade -dev             serve web/dist from disk (with `make dev`); -web DIR for another folder
+//	beacon-arcade -host 192.0.2.7  the address phones should use (detected if left out)
+//	beacon-arcade -version         print the version
 package main
 
 import (
@@ -39,7 +39,7 @@ func main() {
 	userDir := flag.String("dir", defaultUserDir(), "folder with extra games, or files that replace built-in ones")
 	flag.Parse()
 	if *showVersion {
-		fmt.Println("game-night", version)
+		fmt.Println("beacon-arcade", version)
 		return
 	}
 
@@ -65,13 +65,13 @@ func main() {
 	srv.Host = *host
 	ln, err := srv.Listen()
 	if errors.Is(err, server.ErrPortInUse) {
-		log.Fatalf("Port %d is already in use (is Game Night already running?). Try another: -port %d", *port, *port+1)
+		log.Fatalf("Port %d is already in use (is Beacon Arcade already running?). Try another: -port %d", *port, *port+1)
 	} else if err != nil {
 		log.Fatal(err)
 	}
 
 	url := fmt.Sprintf("http://localhost:%d", *port)
-	fmt.Printf("\n  GAME NIGHT %s is running\n  Game screen : %s\n  Phones      : %s   (same Wi-Fi)\n", version, url, srv.PadURL())
+	fmt.Printf("\n  BEACON ARCADE %s is running\n  Game screen : %s\n  Phones      : %s   (same Wi-Fi)\n", version, url, srv.PadURL())
 	if *userDir != "" {
 		fmt.Printf("  Your folder : %s\n                (games you add go in games/, saved progress is kept in saves/)\n", *userDir)
 	}
@@ -102,7 +102,12 @@ func defaultUserDir() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(dir, "game-night")
+	user := filepath.Join(dir, "beacon-arcade")
+	// Before 0.2 the folder was called game-night: move it over, saves and all
+	if _, err := os.Stat(user); os.IsNotExist(err) {
+		_ = os.Rename(filepath.Join(dir, "game-night"), user)
+	}
+	return user
 }
 
 func envInt(key string, def int) int {

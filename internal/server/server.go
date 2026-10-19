@@ -1,4 +1,4 @@
-// Package server is the local host for Game Night: it serves the games and the phone
+// Package server is the local host for Beacon Arcade: it serves the games and the phone
 // controller page, and relays phone input to the game on the TV.
 package server
 

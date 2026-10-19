@@ -29,7 +29,7 @@ export interface DeviceProfile {
   webgl2: boolean;
   maxTexture: number;
   gpuMs: number | null; // the graphics test: ms per frame (lower is faster)
-  tv: boolean; // running in the Game Night TV app
+  tv: boolean; // running in the Beacon Arcade TV app
 }
 
 // The TV app (android/) describes the device to the page through this
@@ -243,7 +243,7 @@ function notice(title: string, text: string, action: string, autoBackSeconds: nu
   const el = document.createElement('div');
   el.className = 'grid-bg';
   el.style.cssText = 'position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;justify-content:center;gap:18px;padding:8vw;background:var(--ink-0)';
-  el.innerHTML = `<span class="eyebrow">Game Night</span><h1 class="h1"></h1><p class="muted" style="max-width:52ch;font-size:18px;margin:0"></p>
+  el.innerHTML = `<span class="eyebrow">Beacon Arcade</span><h1 class="h1"></h1><p class="muted" style="max-width:52ch;font-size:18px;margin:0"></p>
     <button class="btn btn-primary btn-lg" style="align-self:flex-start"></button>`;
   el.querySelector('h1')!.textContent = title;
   el.querySelector('p')!.textContent = text;

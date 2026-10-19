@@ -1,7 +1,7 @@
 .DS_Store
 node_modules/
 # build output
-/game-night
+/beacon-arcade
 /dist/
 /web/dist/
 # Android build output (scripts/android.sh puts the server and web files in the app)

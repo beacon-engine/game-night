@@ -12,7 +12,7 @@ import (
 )
 
 // Saves keeps what games want to remember between nights (progress, records, a league that runs
-// for weeks) as JSON files on the machine running Game Night:
+// for weeks) as JSON files on the machine running Beacon Arcade:
 //
 //	GET /api/saves/<game>/<key>   the saved value, or 404
 //	PUT /api/saves/<game>/<key>   save a value (JSON, up to 256 KB)

@@ -6,13 +6,13 @@ Neon bikes that leave a solid trail. Box people in, don't get boxed in. Rounds l
 
 ## Controls
 
-Every game uses the same phone pad: a stick (pushed past its ring = sprint), ✕ ○ □ △, L1, R1, and a swipe
-across a button. Here the phone shows the d-pad: turn with the arrows; ✕ boosts, hold ○ to brake (`controls.json`).
+Every game uses the same phone pad: a stick (pushed past its ring = sprint), Bolt, Drop, Leaf, Star, L1, R1, and a swipe
+across a button. Here the phone shows the d-pad: turn with the arrows; Bolt boosts, hold Drop to brake (`controls.json`).
 
 | Button | Riding |
 |---|---|
-| ✕ | Boost (short, then a 3 s wait) |
-| ○ | Brake (hold) |
+| Bolt | Boost (short, then a 3 s wait) |
+| Drop | Brake (hold) |
 | D-pad, stick or arrow keys | Turn 90° |
 
 ## Competition
@@ -33,7 +33,7 @@ Trail games go back to the late 1970s; the best known is the race in *Tron* (198
 - [x] Arena and trails
 - [x] Turning, crashing
 - [x] Rounds and a score
-- [x] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [x] Phones show what each button does (`input.show`); Drop in the lobby goes back to the games (`backToHub`)
 - [x] A manual (`manual.json`): what it is, how you win, how to play, tips
 - [x] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [x] Two keyboard players can play it too (they come free with `Input`)

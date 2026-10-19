@@ -4,7 +4,7 @@
   "goal": "Be the last one riding to take the round. The first to win the set number of rounds (3, 5 or 7) wins the match.",
   "howToPlay": [
     "Join with your phone, or play on your own against the computer riders.",
-    "In the lobby, choose how many computer riders to add and how many rounds it takes to win, then press ✕ to start.",
+    "In the lobby, choose how many computer riders to add and how many rounds it takes to win, then press {bolt} to start.",
     "After the countdown, you move on your own. Turn with the arrows: one tap, one turn. You can't turn straight back on yourself.",
     "Steer so that others run into your wall, and keep yourself out of theirs.",
     "When someone crashes, their wall disappears, opening up the board again.",

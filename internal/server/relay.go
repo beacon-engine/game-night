@@ -99,7 +99,7 @@ func (r *Relay) helloDisplay(c *client) {
 	defer r.mu.Unlock()
 	if r.display != nil && r.display != c {
 		// the newest screen wins; the old one is told why, so it doesn't reconnect and take over again
-		go r.display.conn.Close(StatusReplaced, "another screen opened Game Night") // (waits for the goodbye: not under the lock)
+		go r.display.conn.Close(StatusReplaced, "another screen opened Beacon Arcade") // (waits for the goodbye: not under the lock)
 	}
 	r.display = c
 	for id, p := range r.pads {

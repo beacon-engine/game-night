@@ -1,7 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke-width="3">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
   <rect width="32" height="32" rx="6" fill="#07080b" stroke="none"/>
-  <circle cx="10" cy="10" r="5" stroke="#2ee59d"/>
-  <circle cx="22" cy="10" r="5" stroke="#ff4d5a"/>
-  <rect x="5" y="17" width="10" height="10" rx="1" stroke="#ff5ecf"/>
-  <circle cx="22" cy="22" r="5" stroke="#4c8dff"/>
+  <!-- Beacon Arcade's four pad buttons in their diamond: Star, Leaf, Drop, Bolt (web/platform/icons.ts) -->
+  <g transform="translate(11 2) scale(.42)" stroke-width="5" stroke="#ff5ecf"><path d="m12 3 2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 16.9l-5.4 2.9 1-6.1-4.4-4.3 6.1-.8z"/></g>
+  <g transform="translate(2 11) scale(.42)" stroke-width="5" stroke="#2ee59d"><path d="M5 19.5C5 11 10 5 20 4c-.6 9.8-6.6 15.5-15 15.5z"/><path d="M5 19.5 13 11.5"/></g>
+  <g transform="translate(20 11) scale(.42)" stroke-width="5" stroke="#4c8dff"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></g>
+  <g transform="translate(11 20) scale(.42)" stroke-width="5" stroke="#ffc23d"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></g>
 </svg>

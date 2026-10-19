@@ -1,4 +1,4 @@
-# make                 build the web files and the game-night binary
+# make                 build the web files and the beacon-arcade binary
 # make dev             rebuild on change and serve from disk (http://localhost:10000)
 # make check           type-check the TypeScript, vet and test the Go
 # make release         archives for every platform in dist/ (what a GitHub release ships)
@@ -12,7 +12,7 @@ LDFLAGS := -s -w -X main.version=$(VERSION)
 .PHONY: all web dev check release android tag clean
 
 all: web
-	go build -ldflags "$(LDFLAGS)" -o game-night .
+	go build -ldflags "$(LDFLAGS)" -o beacon-arcade .
 
 web: web/node_modules
 	cd web && npm run build
@@ -40,4 +40,4 @@ tag:
 	scripts/tag.sh $(V)
 
 clean:
-	rm -rf game-night dist web/dist android/app/build android/app/src/main/jniLibs android/app/src/main/assets
+	rm -rf beacon-arcade dist web/dist android/app/build android/app/src/main/jniLibs android/app/src/main/assets

@@ -9,7 +9,7 @@ Versions follow [Semantic Versioning](https://semver.org): `vMAJOR.MINOR.PATCH`.
   While we're on 0.x, such breaks go in a MINOR release and are called out in the changelog.
 - Pre-releases: `1.2.0-beta.1`. They're published as pre-releases on GitHub.
 
-The git tag is the version: `make` stamps it into the binary (`game-night -version`), and between
+The git tag is the version: `make` stamps it into the binary (`beacon-arcade -version`), and between
 releases a build says how far it is from the last one (`v0.1.0-3-gabc1234`).
 
 ## Making a release
