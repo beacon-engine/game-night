@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game Night</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: #070d1c; color: #f1f5f9; font-family: "Arial Black", "Helvetica Neue", Arial, sans-serif; }
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px; padding: 40px 24px;
+    background: radial-gradient(ellipse at 50% 30%, #1e3a8a55, transparent 60%), radial-gradient(ellipse at center, #0b122a, #050914 75%); }
+  .hidden { display: none !important; }
+
+  .title { font-size: 92px; font-style: italic; letter-spacing: 6px; line-height: .9; transform: skewX(-10deg); text-align: center;
+    background: linear-gradient(#fef08a, #f59e0b); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 6px 0 #7c2d12); }
+  .title small { display: block; font-size: 22px; letter-spacing: 12px; color: #93c5fd; -webkit-text-fill-color: #93c5fd; margin-top: 10px; }
+
+  #games { display: flex; flex-wrap: wrap; justify-content: center; gap: 26px; max-width: 1200px; }
+  .game { width: 230px; height: 280px; background: linear-gradient(160deg, #1e293b, #0f172a); border: 2px solid #ffffff1f; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px; padding: 16px; transform: skewX(-6deg); cursor: pointer; position: relative; color: inherit; font: inherit;
+    transition: transform .15s, box-shadow .15s, border-color .15s, opacity .15s; }
+  .game:focus-visible { outline: none; }
+  .game .gicon { font-size: 84px; line-height: 1; filter: drop-shadow(0 8px 10px #000a); }
+  .game .gname { font-size: 28px; font-style: italic; letter-spacing: 2px; text-align: center; }
+  .game .gtag { font-family: system-ui, sans-serif; font-weight: 600; font-size: 13px; opacity: .7; text-align: center; }
+  .game .gplayers { font-family: system-ui, sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #93c5fd; }
+  .game .gsoon { position: absolute; top: 14px; right: -8px; background: #f59e0b; color: #111; font-size: 11px; padding: 3px 10px; letter-spacing: 1px; }
+  .game.soon { opacity: .55; }
+  .game.sel { transform: skewX(-6deg) scale(1.08); border-color: #fde047; box-shadow: 0 0 0 3px #fde04755, 0 18px 40px #000c, 0 0 50px #2563eb55; opacity: 1; }
+  .game.go { animation: go .35s ease-in forwards; }
+  @keyframes go { to { transform: skewX(-6deg) scale(1.25); opacity: 0; } }
+
+  .panel { background: #0f172acc; border: 2px solid #ffffff22; padding: 16px 20px; display: flex; gap: 18px; align-items: center; max-width: 560px; }
+  #qr { width: 120px; height: 120px; background: #fff; padding: 5px; flex: none; }
+  #qr svg { width: 100%; height: 100%; display: block; }
+  .panel p { margin: 0; font-family: system-ui, sans-serif; font-weight: 600; opacity: .85; font-size: 14px; }
+  #url { font-size: 20px; color: #fde047; margin: 6px 0 10px; word-break: break-all; }
+  #players { display: flex; gap: 8px; flex-wrap: wrap; }
+  #players span { color: #000; padding: 3px 10px; font-size: 14px; }
+  #players em { font-family: system-ui, sans-serif; font-style: normal; font-weight: 600; opacity: .6; font-size: 14px; }
+
+  .help { font-family: system-ui, sans-serif; font-weight: 600; font-size: 14px; opacity: .8; text-align: center; line-height: 1.7; }
+  .help b { font-family: "Arial Black", sans-serif; color: #fde047; font-weight: 400; }
+
+  #banner { position: fixed; left: 0; right: 0; top: 40%; text-align: center; pointer-events: none; opacity: 0; transition: opacity .25s; }
+  #banner.show { opacity: 1; }
+  #banner div { display: inline-block; font-size: 34px; font-style: italic; background: #0f172aee; padding: 10px 30px; transform: skewX(-10deg); border-left: 6px solid #fde047; }
+
+  @media (max-width: 700px) {
+    .title { font-size: 56px; }
+    .title small { font-size: 15px; letter-spacing: 8px; }
+    .game { width: 150px; height: 190px; }
+    .game .gicon { font-size: 54px; }
+    .game .gname { font-size: 20px; }
+    .panel { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+  <div class="title">GAME NIGHT<small>PICK A GAME</small></div>
+  <div id="games"></div>
+  <div class="panel">
+    <div id="qr"></div>
+    <div>
+      <p>Phones on the same Wi-Fi: scan or open</p>
+      <div id="url">…</div>
+      <div id="players"></div>
+    </div>
+  </div>
+  <div class="help">Phone: stick <b>◀ ▶ ▲ ▼</b> choose · <b>✕</b> play<br>Keyboard: arrows / WASD choose · <b>Enter</b> play · or just click a game</div>
+  <div id="banner"><div></div></div>
+
+  <script type="module">
+    // Game select: lists every folder in public/games that has a game.json (see README, "Adding a game").
+    import { Input, BTN } from '/js/input.js';
+
+    const $ = (id) => document.getElementById(id);
+    const COLORS = ['#38bdf8', '#f43f5e', '#facc15', '#a3e635', '#c084fc', '#fb923c', '#f472b6', '#2dd4bf'];
+    const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+    const { games } = await fetch('/api/games', { cache: 'no-store' }).then((r) => r.json());
+    let sel = Math.max(0, games.findIndex((g) => g.id === localStorageGet('lastGame')));
+    let leaving = false;
+
+    function localStorageGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+    function localStorageSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
+
+    function render() {
+      $('games').innerHTML = games.map((g, i) => `<button class="game ${g.status} ${i === sel ? 'sel' : ''}" data-i="${i}">
+          <div class="gicon">${escapeHtml(g.icon)}</div><div class="gname">${escapeHtml(g.name)}</div>
+          <div class="gtag">${escapeHtml(g.tagline)}</div>${g.players ? `<div class="gplayers">${escapeHtml(g.players)} players</div>` : ''}
+          ${g.status === 'soon' ? '<div class="gsoon">COMING SOON</div>' : ''}</button>`).join('');
+      for (const el of $('games').children) {
+        el.addEventListener('click', () => { sel = Number(el.dataset.i); play(); });
+        el.addEventListener('mouseenter', () => { if (sel !== Number(el.dataset.i)) { sel = Number(el.dataset.i); render(); } });
+      }
+    }
+
+    function renderPlayers() {
+      const pads = input.list.filter((c) => c.kind === 'pad');
+      $('players').innerHTML = pads.length
+        ? pads.map((c) => `<span style="background:${c.color}">P${c.slot + 1} ${escapeHtml(c.label)}</span>`).join('')
+        : '<em>No pads connected yet</em>';
+    }
+
+    let bannerT;
+    function banner(text) {
+      $('banner').firstElementChild.textContent = text;
+      $('banner').classList.add('show');
+      clearTimeout(bannerT);
+      bannerT = setTimeout(() => $('banner').classList.remove('show'), 1200);
+    }
+
+    function play() {
+      const g = games[sel];
+      if (!g || leaving) return;
+      render();
+      if (g.status !== 'ready') return banner(`${g.name.toUpperCase()}: coming soon`);
+      leaving = true;
+      localStorageSet('lastGame', g.id);
+      $('games').children[sel].classList.add('go');
+      setTimeout(() => { location.href = g.url; }, 300);
+    }
+
+    // Move the selection like a d-pad over the wrapped grid of cards
+    function move(dx, dy) {
+      if (!games.length) return;
+      let i = sel + dx;
+      if (dy) {
+        const cards = [...$('games').children];
+        const top = cards[sel].offsetTop;
+        const perRow = cards.filter((c) => c.offsetTop === top).length || 1;
+        i = sel + dy * perRow;
+        if (i < 0 || i >= games.length) return;
+      }
+      sel = (i + games.length) % games.length;
+      render();
+    }
+
+    // Pads: same controllers the games use. Colours/slots by join order, like the games do.
+    const input = new Input();
+    input.setKeymaps([{}]); // no keyboard pads on this page, see the keydown handler
+    input.onJoin = (c) => {
+      if (c.kind === 'pad' && !c.slotted) {
+        const used = new Set(input.list.filter((o) => o !== c && o.slotted).map((o) => o.slot));
+        let s = 0;
+        while (used.has(s)) s++;
+        c.slot = s;
+        c.slotted = true;
+        c.color = COLORS[s % COLORS.length];
+      }
+      renderPlayers();
+    };
+    input.onLeave = (c) => { c.slotted = false; renderPlayers(); };
+    input.onRename = renderPlayers;
+
+    function syncPads() {
+      const g = games[sel];
+      for (const c of input.list) {
+        if (c.kind !== 'pad') continue;
+        const msg = {
+          t: 'pad', label: `P${c.slot + 1}`, color: c.color, club: 'Game Night', clubColor: '#1d4ed8',
+          labels: { cross: 'Play', circle: '', square: '', triangle: '', l1: '', r1: '' },
+          hint: g ? `${g.name}: stick picks a game` : '', charge: -1,
+        };
+        const s = JSON.stringify(msg);
+        if (s !== c.lastSent) { c.lastSent = s; input.send(c, msg); }
+      }
+    }
+
+    function tick() {
+      requestAnimationFrame(tick);
+      for (const c of input.list) {
+        const fx = c.flick(), fy = c.flickY();
+        if (fx || fy) move(fx, fy);
+        for (const ev of c.drain()) if (ev.down && ev.bit === BTN.CROSS) play();
+      }
+      syncPads();
+    }
+
+    // Keys are read directly here: a quick tap can go down and up between two polls of a keyboard pad
+    const KEYS = { ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0], ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1] };
+    addEventListener('keydown', (e) => {
+      if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); play(); }
+      else if (KEYS[e.code]) { e.preventDefault(); move(...KEYS[e.code]); }
+    });
+
+    fetch('/info').then((r) => r.json()).then((info) => {
+      $('url').textContent = info.padUrl;
+      $('qr').innerHTML = info.qr;
+    });
+
+    render();
+    renderPlayers();
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
