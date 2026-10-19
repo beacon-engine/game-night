@@ -1,14 +1,20 @@
 // Game select: every folder in games/ with a game.json shows up here (see web/games/README.md).
-import { $, BIT, canRun, chip, deviceProfile, escapeHtml, glyph, hostInfo, Input, key, keyCode, listGames, thisDevice, type GameInfo } from '@platform';
+import {
+  $, BIT, canRun, chip, deviceProfile, escapeHtml, glyph, hostInfo, Input, key, keyCode, listGames, manualOpen,
+  manualPadInput, manualScreen, showManual, thisDevice, type GameInfo,
+} from '@platform';
 
 const [all, device] = await Promise.all([listGames(), deviceProfile()]);
 // too much for this screen: shown, but not playable here
 const tooHeavy = (g: GameInfo) => !canRun(device.tier, g.needs);
 const playable = (g: GameInfo) => g.status === 'ready' && !tooHeavy(g);
 const here = thisDevice(device); // 'this TV' / 'this device'
-// grouped by category, in the order they first appear (games come sorted by their "order")
-const categories = [...new Set(all.map((g) => g.category))];
-const games = categories.flatMap((c) => all.filter((g) => g.category === c));
+// What can be played here first, then everything else grouped by category, in the order the
+// categories first appear (games come sorted by their "order")
+const READY = 'Ready to play';
+const group = (g: GameInfo) => (g.status === 'ready' && canRun(device.tier, g.needs) ? READY : g.category);
+const categories = [...new Set([READY, ...all.map(group)])].filter((c) => all.some((g) => group(g) === c));
+const games = categories.flatMap((c) => all.filter((g) => group(g) === c));
 let sel = Math.max(0, games.findIndex((g) => g.id === remembered()));
 let leaving = false;
 
@@ -20,8 +26,8 @@ input.onJoin = input.onLeave = input.onRename = renderPlayers;
 function renderLibrary() {
   $('library').innerHTML = categories.map((cat) => `
     <section class="section">
-      <header><span class="eyebrow">${escapeHtml(cat)}</span><hr class="rule"><span class="caption faint">${games.filter((g) => g.category === cat).length}</span></header>
-      <div class="tiles">${games.map((g, i) => (g.category === cat ? tile(g, i) : '')).join('')}</div>
+      <header><span class="eyebrow">${escapeHtml(cat)}</span><hr class="rule"><span class="caption faint">${games.filter((g) => group(g) === cat).length}</span></header>
+      <div class="tiles">${games.map((g, i) => (group(g) === cat ? tile(g, i) : '')).join('')}</div>
     </section>`).join('');
   for (const el of document.querySelectorAll<HTMLElement>('.tile')) {
     const i = Number(el.dataset.i);
@@ -61,6 +67,7 @@ function select(i: number, scroll = false) {
   const btn = $<HTMLButtonElement>('play');
   btn.disabled = !ready;
   btn.innerHTML = ready ? `${glyph('cross')} Play` : tooHeavy(g) ? 'Not available' : 'Coming soon';
+  $('howto').classList.toggle('hidden', !g.manual);
   if (scroll) document.querySelector('.tile.sel')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
@@ -86,6 +93,11 @@ function play() {
   remember(g.id);
   document.body.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease-in', fill: 'forwards' });
   setTimeout(() => { location.href = g.url; }, 220);
+}
+
+function howTo() {
+  const g = games[sel];
+  if (g?.manual) showManual(g.url, g.name);
 }
 
 // Move like a d-pad, by where the tiles are on screen: sideways within a row, up and down
@@ -116,10 +128,12 @@ function syncPads() {
   const g = games[sel];
   const ready = !!g && playable(g);
   for (const c of input.list) {
+    const base = { label: c.tag, color: c.color, title: 'Game Night', accent: '#d7ff3b' };
+    if (manualOpen()) { input.show(c, manualScreen(base)); continue; }
     input.show(c, {
-      layout: 'dpad', label: c.tag, color: c.color, title: 'Game Night', accent: '#d7ff3b',
+      ...base, layout: 'dpad',
       hint: g ? `${g.name}${ready ? '' : tooHeavy(g) ? ` (not on ${here})` : ' (coming soon)'}` : '',
-      labels: ready ? { cross: 'Play' } : {},
+      labels: { ...(ready ? { cross: 'Play' } : {}), ...(g?.manual ? { triangle: 'How to play' } : {}) },
     });
   }
 }
@@ -127,9 +141,13 @@ function syncPads() {
 function tick() {
   requestAnimationFrame(tick);
   for (const c of input.list) {
+    if (manualPadInput(c)) continue;
     const fx = c.flickX(), fy = c.flickY();
     if (fx || fy) move(fx, fy);
-    for (const ev of c.drain()) if (ev.down && ev.bit === BIT.cross) play();
+    for (const ev of c.drain()) {
+      if (ev.down && ev.bit === BIT.cross) play();
+      else if (ev.down && ev.bit === BIT.triangle) howTo();
+    }
   }
   syncPads();
 }
@@ -139,11 +157,14 @@ const KEYS: Record<string, [number, number]> = {
   ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1],
 };
 addEventListener('keydown', (e) => {
+  if (manualOpen()) return;
   const code = keyCode(e);
+  if (code === 'KeyI') return howTo();
   if (code === 'Enter' || code === 'Space') { e.preventDefault(); play(); }
   else if (KEYS[code]) { e.preventDefault(); move(...KEYS[code]); }
 });
 $('play').addEventListener('click', play);
+$('howto').addEventListener('click', howTo);
 
 // the last game played starts selected (per browser; fine if storage is unavailable)
 function remembered() {
@@ -156,7 +177,8 @@ function remember(id: string) {
 $('legend').innerHTML = [
   `<span>${glyph('dpad')} Choose</span>`,
   `<span>${glyph('cross')} Play</span>`,
-  `<span class="keys">${key('←')}${key('→')}${key('↑')}${key('↓')} ${key('Enter')} Keyboard</span>`,
+  `<span>${glyph('triangle')} How to play</span>`,
+  `<span class="keys">${key('←')}${key('→')}${key('↑')}${key('↓')} ${key('Enter')} ${key('I')} Keyboard</span>`,
 ].join('');
 hostInfo().then((info) => {
   $('url').textContent = info.padUrl;

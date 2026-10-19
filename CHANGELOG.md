@@ -23,6 +23,15 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   race weekends with qualifying, championships with points tables, playoffs, title fights and careers,
   ladders, arcade high scores, and a Game Night Cup across games. Each game's README says which it uses.
 
+### Added (games)
+- **Light Cycles**, the second playable game: 1–8 riders on phones or keyboards, computer riders to fill in,
+  first to 3, 5 or 7 rounds, walls that close in so rounds don't drag, a demo round behind the lobby.
+- **Saved progress** for every game (`gameSaves()`): kept as files on the machine running Game Night
+  (`<your folder>/saves/`), so it's there next time. Light Cycles keeps each player's record, by phone.
+- **How to play**: every playable game has a manual (`manual.json`), opened with △ on the game select page
+  and in the lobby. The controls in it come from the game's `controls.json`.
+- The game select page lists the games you can play right now first, under "Ready to play".
+
 ### Added (TV)
 - **Android TV app** (`make android`, `android/README.md`): the TV runs the server and is the game screen;
   phones join it as usual. The remote works on the game select page; Back is Esc in games.

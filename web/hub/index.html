@@ -20,7 +20,7 @@
   #fTitle.soon { color: var(--chalk); }
   .meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   #fTagline { font-size: 18px; color: var(--chalk-2); max-width: 30ch; margin: 0; }
-  .feature .btn { align-self: flex-start; margin-top: 8px; }
+  .feature .btn { align-self: flex-start; }
   .feature .btn:disabled { background: transparent; border-color: var(--line-strong); color: var(--chalk-3); cursor: default; }
 
   .join { display: flex; gap: 18px; align-items: center; padding: 16px; }
@@ -112,7 +112,10 @@
       <p id="fTagline"></p>
       <div class="meta"><span class="tag" id="fPlayers"></span><span class="tag" id="fStatus"></span></div>
       <p id="fWhy"></p>
-      <button class="btn btn-primary btn-lg" id="play"></button>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-primary btn-lg" id="play"></button>
+        <button class="btn btn-lg" id="howto"><span class="glyph glyph-triangle">△</span> How to play</button>
+      </div>
     </section>
 
     <section class="join panel">
