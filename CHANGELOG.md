@@ -5,6 +5,10 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 
 ## [Unreleased]
 
+### Added
+- The original art packs for football (Quaternius characters and animations) are now in the repo, in
+  `web/games/football/source/`. Each game keeps its source art in its own `source/` folder; it's never shipped.
+
 ## [0.1.0] - 2026-10-19
 
 First release.

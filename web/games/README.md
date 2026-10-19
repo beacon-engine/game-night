@@ -46,6 +46,7 @@ web/games/my-game/
   index.html      the page; loads main.js
   main.ts         the game; bundled to main.js
   controls.json   which pad button does which action, per situation
+  source/         the original art (zips unpacked, Blender files...): in git, never shipped
   ...             anything else (models, sounds, data) is served next to it
 ```
 
