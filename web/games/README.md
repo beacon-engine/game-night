@@ -10,7 +10,7 @@ Pick one and go.
 | | Game | Players | Competition | Status |
 |---|---|---|---|---|
 | ⚽ | [Football](football) | 1–8 | Exhibition (League, Cup next) | **playable** |
-| ⚡ | [Light Cycles](light-cycles) | 1–8 | First to 3/5/7, saved records | **playable** |
+| ⚡ | [Neon Trails](neon-trails) | 1–8 | First to 3/5/7, saved records | **playable** |
 | | **Sports** | | | |
 | 🏀 | [Basketball](basketball) | 1–6 | Exhibition, League, Cup, Groups + knockout | coming soon |
 | ⚾ | [Baseball](baseball) | 1–2 (teams) | Exhibition, League, Series | coming soon |
@@ -21,20 +21,19 @@ Pick one and go.
 | 🏐 | [Beach Volleyball](volleyball) | 1–4 | Exhibition, Cup, Tour | coming soon |
 | 🥊 | [Boxing](boxing) | 1–2 | Exhibition, Title fight, Tournament, Career | coming soon |
 | ⛳ | [Crazy Golf](golf) | 1–8 | Exhibition, Tournament | coming soon |
-| 🏒 | [Air Hockey](air-hockey) | 1–2 | Exhibition, Cup, Ladder | coming soon |
+| 🏒 | [Puck Duel](puck-duel) | 1–2 | Exhibition, Cup, Ladder | coming soon |
 | 🤾 | [Dodgeball](dodgeball) | 2–8 | Exhibition, League, Cup | coming soon |
 | | **Racing** | | | |
-| 🚌 | [Danfo Rush](danfo-rush) | 1–4 | Score attack, Championship | coming soon |
 | 🏍️ | [Superbikes](superbikes) | 1–4 | Exhibition, Race weekend, Championship, Career | coming soon |
 | 🏎️ | [Grand Prix](grand-prix) | 1–4 | Exhibition, Race weekend, Championship, Career | coming soon |
 | 🚗 | [Stock Cars](stock-cars) | 1–4 | Exhibition, Race weekend, Championship, Playoffs | coming soon |
-| 🏁 | [Kart Rush](kart-rush) | 1–4 | Exhibition, Cup, Battle | coming soon |
+| 🏁 | [Go-Karts](go-karts) | 1–4 | Exhibition, Cup, Battle | coming soon |
 | | **Action** | | | |
 | 🥋 | [Fighters](fighters) | 1–2 | Arcade ladder, Tournament, Ranked | coming soon |
-| 👊 | [Street Brawler](brawler) | 1–4 | Story, Score attack | coming soon |
+| 👊 | [Brawlers](brawler) | 1–4 | Story, Score attack | coming soon |
 | 🪖 | [Tanks](tanks) | 2–8 | Exhibition, League, Party | coming soon |
-| ⚡ | [Laser Tag](laser-tag) | 2–8 | Exhibition, League, Cup | coming soon |
-| 💣 | [Blast Zone](blast-zone) | 2–8 | Exhibition, Party, Cup | coming soon |
+| ⚡ | [Laser Arena](laser-arena) | 2–8 | Exhibition, League, Cup | coming soon |
+| 💣 | [Bomb Maze](bomb-maze) | 2–8 | Exhibition, Party, Cup | coming soon |
 | 🤼 | [Sumo Push](sumo) | 2–8 | Exhibition, Basho | coming soon |
 | ✈️ | [Dogfight](dogfight) | 1–8 | Exhibition, League, Campaign | coming soon |
 | 🧟 | [Last Stand](last-stand) | 1–4 | Survival, Score attack | coming soon |
@@ -42,11 +41,11 @@ Pick one and go.
 | 🏙️ | [Rooftop Brawl](rooftop-brawl) | 2–4 | Exhibition, Tournament, Ranked | coming soon |
 | 🕵️ | [Heist](heist) | 2–4 | Campaign, Score attack | coming soon |
 | | **Arcade** | | | |
-| 👾 | [Space Raiders](space-raiders) | 1–4 | Arcade, Score attack | coming soon |
-| 🧱 | [Brick Breaker](brick-breaker) | 1–4 | Arcade, Versus | coming soon |
+| 👾 | [Space Shooter](space-shooter) | 1–4 | Arcade, Score attack | coming soon |
+| 🧱 | [Bricks](bricks) | 1–4 | Arcade, Versus | coming soon |
 | 🐍 | [Snake Battle](snake-battle) | 2–8 | Party, Cup | coming soon |
-| 👻 | [Maze Chase](maze-chase) | 1–5 | Party, Score attack | coming soon |
-| ☄️ | [Asteroid Storm](asteroid-storm) | 1–4 | Arcade, Versus | coming soon |
+| 👻 | [Cat and Mouse](cat-and-mouse) | 1–5 | Party, Score attack | coming soon |
+| ☄️ | [Space Rocks](space-rocks) | 1–4 | Arcade, Versus | coming soon |
 | 🎰 | [Pinball](pinball) | 1–4 | Arcade, Tournament | coming soon |
 | 🐸 | [Road Hopper](road-hopper) | 1–8 | Party, Score attack | coming soon |
 
@@ -159,6 +158,28 @@ guard.watchCanvas(renderer.domElement); // out of graphics memory: end the game 
 If the game can't hold its target, `onStruggle(1)`, `onStruggle(2)`… ask it to lower its detail; after
 that, Game Night stops the game and goes back to the games. Football is the example. To see your game as a
 weak screen would, open it with `?device=light` (in a browser; the TV app ignores it).
+
+## Originality
+
+Game ideas and rules are free for anyone to use. What belongs to their makers is the **expression**: names,
+logos, characters, art, sounds, music, level layouts, and a game's overall look and feel. Courts have found
+infringement when a game copied too much of that (*Atari v. Philips*, 1982, a maze game too close to Pac-Man;
+*Tetris v. Xio*, 2012, a game that copied Tetris's look). So:
+
+- **Take the idea, never the look.** Our own art, colours, sounds, characters and level layouts. If a screenshot
+  of ours could be mistaken for the original, change it.
+- **Names**: search the web and app stores before naming a game. No names that are close to a known game or
+  brand (we renamed Kart Rush, Blast Zone, Space Raiders and others for this reason). Plain, descriptive names
+  (Bricks, Space Rocks, Go-Karts) are the safe default.
+- **No real people**: no real players', drivers' or boxers' names or faces. Fictional teams and riders.
+- **No real brands** on billboards, kits or cars, unless it's ours or we have written permission.
+- **No other platforms' symbols**, like a console's controller button shapes.
+- **Say where an idea comes from**, plainly, in the manual's `inspiredBy` ("Trail games like this go back to…"),
+  without using the original's name as ours.
+- **Assets**: only ones we made, or with a licence that allows it (CC0, CC-BY with credit, OFL for fonts, MIT
+  for code). Record the licence next to them (see `football/source/README.md`).
+
+This is good practice, not legal advice. Before a big public launch, have a trademark lawyer check the names.
 
 ### Conventions
 

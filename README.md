@@ -44,7 +44,7 @@ make release    # binaries for macOS, Windows and Linux in dist/
 make android    # the Android TV app in dist/ (needs a JDK and the Android SDK)
 ```
 
-## Football: PS2-style 3D football
+## Football: 11-a-side 3D football (in progress)
 
 In the lobby: stick ◀ ▶ changes your club, □ swaps side, ✕ kicks off, ○ goes back to the games.
 
@@ -76,8 +76,8 @@ Each player in `teams.json` has ratings out of 100:
 - **stamina**: how quickly a player tires (tired players are slower and can't sprint as much)
 - **tackling**: chance of winning the ball cleanly
 - **keeping** (keepers): reach, reactions, catching instead of parrying
-- **style** (optional): how he runs with the ball: `"close"` (little touches, sharp turns, like Messi),
-  `"knock"` (pushes it into space and sprints onto it, like Ronaldo/Rashford) or `"balanced"`.
+- **style** (optional): how he runs with the ball: `"close"` (little touches, sharp turns),
+  `"knock"` (pushes it into space and sprints onto it) or `"balanced"`.
   If left out it's worked out from the ratings: dribbling 86+ = close, pace 86+ = knock.
 
 ### Fatigue and substitutions

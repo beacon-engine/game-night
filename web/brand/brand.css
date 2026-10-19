@@ -234,6 +234,7 @@ body {
   color: var(--chalk-2);
 }
 .tag-volt { border-color: var(--volt); color: var(--volt); }
+.tag-warn { border-color: var(--warn); color: var(--warn); }
 
 /* the QR code: a light tile, so phones read it in a dark room */
 .qr { width: 120px; height: 120px; padding: 8px; background: var(--chalk); border-radius: var(--r-2); flex: none; }

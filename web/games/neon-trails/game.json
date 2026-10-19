@@ -1,0 +1,9 @@
+{
+  "name": "Neon Trails",
+  "icon": "⚡",
+  "tagline": "Leave a wall of light; make them hit it",
+  "players": "1–8",
+  "category": "Arcade",
+  "needs": "light",
+  "order": 83
+}

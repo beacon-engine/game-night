@@ -1,0 +1,10 @@
+{
+  "name": "Laser Arena",
+  "icon": "⚡",
+  "tagline": "Twin-stick arena shooter, teams or free-for-all",
+  "players": "2–8",
+  "category": "Action",
+  "needs": "standard",
+  "order": 63,
+  "status": "soon"
+}

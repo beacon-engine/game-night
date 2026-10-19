@@ -189,8 +189,8 @@ export function buildStadium(
 
   // --- LED advertising boards ---------------------------------------------
   const ads = [
-    ['FUTBOL 26', '#1d4ed8'], ['YOKE SOLUTIONS', '#0f172a'], ['JOLLOF FC', '#b91c1c'], ['NAIJA BOOTS', '#047857'],
-    ['ZOBO COLA', '#9d174d'], ['PUFF PUFF', '#a16207'], ['PS2 FOREVER', '#6d28d9'], ['SUYA SPOT', '#7c2d12'],
+    ['OKADA EXPRESS', '#1d4ed8'], ['YOKE SOLUTIONS', '#0f172a'], ['JOLLOF FC', '#b91c1c'], ['NAIJA BOOTS', '#047857'],
+    ['ZOBO COLA', '#9d174d'], ['PUFF PUFF', '#a16207'], ['CHAPMAN', '#6d28d9'], ['SUYA SPOT', '#7c2d12'],
   ];
   const adTex = canvasTex(4096, 96, (g, w, h) => {
     const seg = w / ads.length;

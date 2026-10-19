@@ -1,0 +1,10 @@
+{
+  "name": "Space Rocks",
+  "icon": "☄️",
+  "tagline": "Thrust, turn, shoot the rocks (and each other)",
+  "players": "1–4",
+  "category": "Arcade",
+  "needs": "light",
+  "order": 85,
+  "status": "soon"
+}

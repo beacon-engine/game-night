@@ -1,4 +1,4 @@
-# Street Brawler
+# Brawlers
 
 Co-op beat-'em-up through the streets · 1–4 players · Action · **coming soon**
 

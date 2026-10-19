@@ -199,8 +199,8 @@ export class Player {
   readonly model: PlayerModel;
   readonly maxSpeed: number; // pace: about 7.0 m/s at 60 up to 8.4 m/s at 100
   readonly mass: number; // kg: bigger builds and physical defenders are heavier; decides who wins a bump
-  // how he carries the ball: 'close' (Messi: little touches), 'knock' (Ronaldo/Rashford: push it
-  // into space and race onto it) or 'balanced'. Can be set per player in teams.json.
+  // how he carries the ball: 'close' (little touches), 'knock' (push it into space and race onto
+  // it) or 'balanced'. Can be set per player in teams.json.
   readonly style: DribbleStyle;
   human: Human | null = null;
 

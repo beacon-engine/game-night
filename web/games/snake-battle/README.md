@@ -24,6 +24,10 @@ Best of 5 rounds; knockout for big groups.
 The formats (and how standings, brackets and seasons work in every game) are in
 [COMPETITIONS.md](../COMPETITIONS.md).
 
+## Originality
+
+Snake games go back to *Blockade* (1976). The idea is shared by many; our own look and modes. See [Originality](../README.md#originality).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:

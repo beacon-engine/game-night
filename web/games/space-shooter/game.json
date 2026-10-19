@@ -1,0 +1,10 @@
+{
+  "name": "Space Shooter",
+  "icon": "🚀",
+  "tagline": "Co-op space shooter: waves, bosses, power-ups",
+  "players": "1–4",
+  "category": "Arcade",
+  "needs": "light",
+  "order": 80,
+  "status": "soon"
+}

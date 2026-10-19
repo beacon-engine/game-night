@@ -17,7 +17,7 @@ each game's README says which formats it will use.
 | **Groups + knockout** | Groups play a mini league, the top N go into a cup. | football, cricket, table tennis, basketball |
 | **Series** | Best of N between two sides (baseball playoffs). | baseball |
 | **Race weekend** | One event in stages: practice, qualifying (sets the grid, possibly in knockout parts), sprint, race. | racing |
-| **Championship** | A season of events (races, rounds, tournaments) with points per finishing position, adding up to a table. | racing, tour sports, danfo rush |
+| **Championship** | A season of events (races, rounds, tournaments) with points per finishing position, adding up to a table. | racing, tour sports |
 | **Playoffs** | A championship whose last rounds eliminate drivers until a few race for the title. | stock cars |
 | **Tour** | A season of tournaments with ranking points (tennis, beach volleyball). | long tennis, volleyball |
 | **Title fight / Career** | Rankings per weight class or class of car/bike; challenge the champion, win the belt, defend it. Career: one player's path from the bottom. | boxing, racing, fighters |

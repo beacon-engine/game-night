@@ -25,6 +25,10 @@ Race to the line, or furthest distance.
 The formats (and how standings, brackets and seasons work in every game) are in
 [COMPETITIONS.md](../COMPETITIONS.md).
 
+## Originality
+
+Crossing games go back to *Frogger* (1981). No frog, no river-logs-and-turtles lookalike; our own characters and roads. See [Originality](../README.md#originality).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:

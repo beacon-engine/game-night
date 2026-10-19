@@ -1,10 +1,11 @@
 {
   "name": "Football",
   "icon": "⚽",
-  "tagline": "11-a-side, PS2 style",
+  "tagline": "11-a-side 3D football",
   "players": "1–8",
   "status": "ready",
   "order": 1,
   "category": "Sports",
-  "needs": "heavy"
+  "needs": "heavy",
+  "inProgress": true
 }
