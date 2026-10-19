@@ -1,6 +1,6 @@
 // The phone controller. The same pad for every game: a floating stick on the left, the four
 // face buttons and two shoulder buttons on the right. The game decides what they say.
-import { $, BIT, FACE_BITS, socketUrl, type Button, type PadLayout, type PadScreen, type PadToServer, type ServerToPad } from '@platform';
+import { $, BIT, CLOSE_REPLACED, FACE_BITS, socketUrl, type Button, type PadLayout, type PadScreen, type PadToServer, type ServerToPad } from '@platform';
 
 const STICK_R = 60; // px from the centre to full tilt
 const STEER_R = 90; // the steering slider (racing) is wider and only goes sideways
@@ -45,8 +45,14 @@ function connect() {
       case 'buzz': navigator.vibrate?.(m.ms || 40); break;
     }
   };
-  ws.onclose = () => {
+  ws.onclose = (e) => {
     $('dot').classList.remove('on');
+    if (e.code === CLOSE_REPLACED) {
+      // this pad is open in another tab: let that one play (tapping the overlay takes it back)
+      ws = null;
+      showOverlay('Open in another tab<small>Tap to use this one instead</small>');
+      return;
+    }
     showOverlay('Reconnecting…<small>Lost the connection to the game</small>');
     setTimeout(connect, 1000);
   };
@@ -197,12 +203,14 @@ $('pause').addEventListener('click', () => {
 $('overlay').addEventListener('click', () => {
   document.documentElement.requestFullscreen?.().catch(() => {});
   (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }).lock?.('landscape').catch(() => {});
-  if (displayOn) hideOverlay();
+  if (!ws) connect();
+  else if (displayOn) hideOverlay();
 });
 
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 // leaving the page: hang up now (the close handler reconnects if the page comes back)
 addEventListener('pagehide', () => ws?.close());
+addEventListener('pageshow', (e) => { if (e.persisted && !ws) connect(); });
 // Resend the state now and then, so a dropped message never leaves a button "stuck"
 setInterval(() => { lastSent = ''; flush(); }, 500);
 

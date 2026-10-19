@@ -6,6 +6,20 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 ## [Unreleased]
 
 ### Changed
+- **Game Night is now Beacon Arcade** (the old name is already used by other game services). The program
+  is `beacon-arcade`, and the user folder is `beacon-arcade` (an existing `game-night` folder is moved
+  over, saved progress and all).
+- The pad's four buttons are our own icons: **Bolt** (bottom), **Drop** (right), **Leaf** (left), **Star** (top),
+  in amber, blue, green and pink. The logo is the four in their diamond. In `controls.json` the
+  buttons are `bolt`, `drop`, `leaf`, `star`; manuals can draw one with `{bolt}`.
+- Games renamed or reworked so none copies an existing game's name or look (see "Originality" in
+  `web/games/README.md`); Danfo Rush is dropped.
+- Football is marked **In progress**: playable, but still being worked on.
+
+### Fixed
+- A phone with the pad open in two tabs no longer flips between them every second (so nothing it
+  pressed counted). The older tab stops and offers to take over.
+
 - New look everywhere, defined once in `web/brand/` (colours, type, components; rules in its README):
   a dark night palette with one volt accent and the pad's four button colours, Big Shoulders Display and
   Inter (bundled, works offline), line icons instead of emoji, and a selection frame.
