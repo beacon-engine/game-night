@@ -1,7 +1,7 @@
 // Builds web/ into web/dist/, which the Go server embeds.
 //
 // Every app is a folder with an optional main.ts entry; everything else in it (html, json,
-// models...) is copied next to the bundle:
+// models...) is copied next to the bundle, except READMEs:
 //   hub/            -> dist/              the game select page
 //   pad/            -> dist/pad/          the phone controller
 //   games/<id>/     -> dist/games/<id>/   one folder per game
@@ -28,7 +28,7 @@ function apps(): App[] {
 }
 
 function copyStatic(app: App) {
-  cpSync(app.src, app.out, { recursive: true, filter: (f) => !f.endsWith('.ts') });
+  cpSync(app.src, app.out, { recursive: true, filter: (f) => !/\.(ts|md)$/.test(f) && !f.endsWith('.gitkeep') });
 }
 
 const list = apps();

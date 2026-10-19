@@ -24,6 +24,9 @@ function render() {
   }
 }
 
+// keep the selected card on screen when the stick moves past the fold
+const reveal = () => $('games').children[sel]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+
 function renderPlayers() {
   const pads = input.list;
   $('players').innerHTML = pads.length
@@ -62,6 +65,7 @@ function move(dx: number, dy: number) {
   }
   sel = (i + games.length) % games.length;
   render();
+  reveal();
 }
 
 function syncPads() {
@@ -101,6 +105,7 @@ function remember(id: string) {
 hostInfo().then((info) => {
   $('url').textContent = info.padUrl;
   $('qr').innerHTML = info.qr;
+  $('version').textContent = `game-night ${info.version}`;
 });
 render();
 renderPlayers();
