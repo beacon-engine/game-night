@@ -24,7 +24,7 @@ web/node_modules: web/package.json
 dev: web
 	(cd web && exec node build.ts --watch) & watcher=$$!; trap "kill $$watcher" EXIT; go run . -dev
 
-check: web/node_modules
+check: web
 	cd web && npm run check
 	go vet ./...
 	go test ./...
