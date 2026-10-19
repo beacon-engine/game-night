@@ -1,4 +1,4 @@
-# Game Night
+# Beacon Arcade
 
 Couch games for the TV after a long day: the laptop is the console, everyone's phone is a pad.
 No accounts, no app to install on the phones, nothing leaves your Wi-Fi.
@@ -10,15 +10,15 @@ weekends, championships). Pick one and help build it.
 ## Play
 
 Download the archive for your computer from [Releases](https://github.com/beacon-engine/game-night/releases/latest),
-unpack it and run `game-night`. It opens the game select page in your browser.
+unpack it and run `beacon-arcade`. It opens the game select page in your browser.
 
 - **macOS**: it isn't signed with an Apple certificate yet, so the first run is blocked: allow it in
-  System Settings → Privacy & Security → Open Anyway (or run `xattr -d com.apple.quarantine game-night`).
+  System Settings → Privacy & Security → Open Anyway (or run `xattr -d com.apple.quarantine beacon-arcade`).
 - **Windows**: allow it through the firewall when asked, so phones can reach it.
 - **Raspberry Pi** (64-bit OS): the `linux-arm64-raspberry-pi` archive; plug the Pi into the TV.
 - **Android TV**: install the `android-tv` APK on the TV itself, no computer needed. See [android/README.md](android/README.md).
 
-Game Night checks what each screen can handle and only offers the games it runs well: a TV with 1 GB of
+Beacon Arcade checks what each screen can handle and only offers the games it runs well: a TV with 1 GB of
 memory gets the 2D games, a laptop gets everything.
 
 1. Put the browser on the TV (HDMI, or just play on the laptop) and pick a game. Click once to enable sound.
@@ -28,16 +28,16 @@ memory gets the 2D games, a laptop gets everything.
 No phones? Two keyboard players work too: `WASD` + `F G H T` + Left Shift, or the arrows + `, / . ;` + Right Shift.
 
 ```
-game-night                 start (and open the browser)
-game-night -port 8080      another port (PORT=8080 works too)
-game-night -no-open        don't open a browser
+beacon-arcade                 start (and open the browser)
+beacon-arcade -port 8080      another port (PORT=8080 works too)
+beacon-arcade -no-open        don't open a browser
 ```
 
 ### Build it yourself
 Needs [Go](https://go.dev) 1.23+ and [Node.js](https://nodejs.org) 22+ (Node is only for building the web pages).
 
 ```
-make            # builds web/dist and the ./game-night binary
+make            # builds web/dist and the ./beacon-arcade binary
 make dev        # rebuilds on change and serves from disk: http://localhost:10000
 make check      # type-checks the TypeScript, vets and tests the Go
 make release    # binaries for macOS, Windows and Linux in dist/
@@ -46,25 +46,25 @@ make android    # the Android TV app in dist/ (needs a JDK and the Android SDK)
 
 ## Football: 11-a-side 3D football (in progress)
 
-In the lobby: stick ◀ ▶ changes your club, □ swaps side, ✕ kicks off, ○ goes back to the games.
+In the lobby: stick ◀ ▶ changes your club, Leaf swaps side, Bolt kicks off, Drop goes back to the games.
 
-### Controls (PlayStation layout on the phone pad)
+### Controls (on the phone pad)
 Defaults below; every button can be remapped in `games/football/controls.json` (per situation:
-`attack`, `defend`, `throwIn`; `"triangle+swipe"` = a swipe across △).
+`attack`, `defend`, `throwIn`; `"star+swipe"` = a swipe across Star).
 
 | Button | With the ball | Without it | Throw-in |
 |--------|---------------|------------|----------|
-| ✕ | Pass toward the stick | Hold: press (chase the ball, stab at it in reach) | Short throw |
-| ○ | Long pass | Tackle (standing if close, slides in from a few metres) | Long throw |
-| □ | Shoot: hold for power, stick aims | — | — |
-| △ | Through ball along the ground; swipe across it: lofted | — | Short throw |
+| Bolt | Pass toward the stick | Hold: press (chase the ball, stab at it in reach) | Short throw |
+| Drop | Long pass | Tackle (standing if close, slides in from a few metres) | Long throw |
+| Leaf | Shoot: hold for power, stick aims | — | — |
+| Star | Through ball along the ground; swipe across it: lofted | — | Short throw |
 | L1 | Step-over | Switch player | |
 | R1 | Drag-back | Hold: a teammate presses too | |
 | Stick past its ring | Sprint | Sprint | |
-| ❚❚ (top bar) | Pause menu: stick ▲▼ choose, ✕ select, ○ back (resume, subs, controls, camera, name tags, sound, restart, quit) | | |
+| ❚❚ (top bar) | Pause menu: stick ▲▼ choose, Bolt select, Drop back (resume, subs, controls, camera, name tags, sound, restart, quit) | | |
 
-Keyboard: WASD + F (✕) H (○) G (□) T (△) Y (lofted △), Q/E step-over/drag-back, L-Shift sprint;
-or arrows + `,` (✕) `/` (○) `.` (□) `;` (△) `'` (lofted △), K/L, R-Shift.
+Keyboard: WASD + F (Bolt) H (Drop) G (Leaf) T (Star) Y (lofted Star), Q/E step-over/drag-back, L-Shift sprint;
+or arrows + `,` (Bolt) `/` (Drop) `.` (Leaf) `;` (Star) `'` (lofted Star), K/L, R-Shift.
 Enter kicks off, Esc/P pauses, C cycles the camera (full-width / broadcast / wide / close), N name tags (all / active / none), M mutes.
 
 ### Player abilities
@@ -82,7 +82,7 @@ Each player in `teams.json` has ratings out of 100:
 
 ### Fatigue and substitutions
 Players tire as they run and recover when they ease off; your player's stamina bar is on screen.
-Each team has 5 substitutes on the bench and can make 5 changes: pause, choose Substitutions, pick who comes off (✕) and who comes on (✕).
+Each team has 5 substitutes on the bench and can make 5 changes: pause, choose Substitutions, pick who comes off (Bolt) and who comes on (Bolt).
 Computer-controlled teams bring on fresh legs themselves in the second half.
 
 ### Rules
@@ -95,8 +95,8 @@ On a free kick, corner or penalty you're the taker: aim with the stick, then PAS
 
 ## Customising (no code needed)
 
-Game Night reads an optional folder before its built-in files: `~/Library/Application Support/game-night/`
-on macOS, `%AppData%\game-night\` on Windows, `~/.config/game-night/` on Linux (or pass `-dir`).
+Beacon Arcade reads an optional folder before its built-in files: `~/Library/Application Support/beacon-arcade/`
+on macOS, `%AppData%\beacon-arcade\` on Windows, `~/.config/beacon-arcade/` on Linux (or pass `-dir`).
 Anything you put there replaces the built-in file with the same path. For football:
 
 - `games/football/teams.json`: clubs, kits, players and their ratings
@@ -143,7 +143,7 @@ Send everyone back to the game select page with `backToHub()`.
 ## How it fits together
 
 ```
-main.go                 the game-night command
+main.go                 the beacon-arcade command
 internal/server/        HTTP server, game discovery, the phone <-> game relay (WebSocket)
 web/
   build.ts              bundles each app with esbuild into web/dist (embedded in the binary)
@@ -160,7 +160,7 @@ so a phone keeps its number and colour across games and reconnects.
 ## Versions
 
 Releases follow [Semantic Versioning](https://semver.org) and are listed in [CHANGELOG.md](CHANGELOG.md).
-`game-night -version` says which one you have. How to cut a release: [RELEASING.md](RELEASING.md).
+`beacon-arcade -version` says which one you have. How to cut a release: [RELEASING.md](RELEASING.md).
 
 ## Where it's headed
 
@@ -168,10 +168,10 @@ The idea this started from: a small portable console (a Raspberry Pi) that plugs
 with phones connecting as pads over Bluetooth through a pad app, speaking one shared protocol. Today the
 pads are web pages over Wi-Fi, which needs nothing installed; the protocol in
 [`web/platform/protocol.ts`](web/platform/protocol.ts) is the one a Bluetooth pad would speak too, and
-`game-night` already runs on a Pi.
+`beacon-arcade` already runs on a Pi.
 
 ## Troubleshooting
-- Phone can't connect: allow game-night through the firewall prompt; some guest/office Wi-Fi blocks devices talking to each other, so use a phone hotspot instead.
+- Phone can't connect: allow beacon-arcade through the firewall prompt; some guest/office Wi-Fi blocks devices talking to each other, so use a phone hotspot instead.
 - Phone screen dims mid-game: raise auto-lock time (browsers can't keep it awake over plain http).
 - A typo in a `controls.json` shows up as a warning in the browser console (that button just does nothing).
 

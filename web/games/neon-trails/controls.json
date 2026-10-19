@@ -1,8 +1,8 @@
 {
   "_help": "Which pad button does what while riding. Turning is the d-pad (or the stick, or the keyboard's arrows/WASD). Actions: boost, brake.",
   "ride": {
-    "cross": "boost",
-    "circle": "brake"
+    "bolt": "boost",
+    "drop": "brake"
   },
   "labels": {
     "boost": "Boost",

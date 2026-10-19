@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Game Night. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+All notable changes to Beacon Arcade. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (see [RELEASING.md](RELEASING.md)).
 
 ## [Unreleased]
@@ -21,14 +21,14 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   Space Rocks, Pinball, Road Hopper. Racing is now its own category.
 - A shared plan for competitions in every game (`web/games/COMPETITIONS.md`): leagues, cups, groups,
   race weekends with qualifying, championships with points tables, playoffs, title fights and careers,
-  ladders, arcade high scores, and a Game Night Cup across games. Each game's README says which it uses.
+  ladders, arcade high scores, and a Arcade Cup across games. Each game's README says which it uses.
 
 ### Added (games)
 - **Neon Trails**, the second playable game: 1–8 riders on phones or keyboards, computer riders to fill in,
   first to 3, 5 or 7 rounds, walls that close in so rounds don't drag, a demo round behind the lobby.
-- **Saved progress** for every game (`gameSaves()`): kept as files on the machine running Game Night
+- **Saved progress** for every game (`gameSaves()`): kept as files on the machine running Beacon Arcade
   (`<your folder>/saves/`), so it's there next time. Neon Trails keeps each player's record, by phone.
-- **How to play**: every playable game has a manual (`manual.json`), opened with △ on the game select page
+- **How to play**: every playable game has a manual (`manual.json`), opened with Star on the game select page
   and in the lobby. The controls in it come from the game's `controls.json`.
 - The game select page lists the games you can play right now first, under "Ready to play".
 
@@ -65,10 +65,10 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 First release.
 
 ### Added
-- `game-night`: one program for macOS, Windows, Linux and Raspberry Pi that serves the games on your
+- `beacon-arcade`: one program for macOS, Windows, Linux and Raspberry Pi that serves the games on your
   Wi-Fi and opens the game select page. Phones join by scanning a QR code; no app to install.
 - Game select page, driven by phone, keyboard or mouse. Every folder in `games/` with a `game.json` is listed.
-- The phone pad: stick, ✕ ○ □ △, L1, R1 and swipes, the same in every game. Buttons a game isn't using are
+- The phone pad: stick, Bolt, Drop, Leaf, Star, L1, R1 and swipes, the same in every game. Buttons a game isn't using are
   dimmed. Players keep their number and colour across games and reconnects.
 - Football: 11-a-side 3D football, 1–8 players, with fouls, cards, set pieces, substitutions, stamina,
   day and night, four cameras, and remappable controls.

@@ -6,15 +6,15 @@ Two teams, a handful of balls in the middle. Hit someone and they're out; catch 
 
 ## Controls (a first plan)
 
-Every game uses the same phone pad: a stick (pushed past its ring = sprint), ✕ ○ □ △, L1, R1, and a swipe
+Every game uses the same phone pad: a stick (pushed past its ring = sprint), Bolt, Drop, Leaf, Star, L1, R1, and a swipe
 across a button. This is what each does here; it goes into `controls.json` once the game exists, and the
 phone dims the buttons a situation doesn't use.
 
 | Button | With a ball | Without |
 |---|---|---|
-| ✕ | Throw (at the nearest in front) | Pick up |
-| ○ | Lob | Catch (timing) |
-| □ | Fake throw | Dodge roll |
+| Bolt | Throw (at the nearest in front) | Pick up |
+| Drop | Lob | Catch (timing) |
+| Leaf | Fake throw | Dodge roll |
 | Stick past the ring | Sprint | Sprint |
 
 ## Competition
@@ -34,7 +34,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Throw, catch, dodge
 - [ ] Outs and comebacks
 - [ ] Rounds
-- [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Phones show what each button does (`input.show`); Drop in the lobby goes back to the games (`backToHub`)
 - [ ] A manual (`manual.json`): what it is, how you win, how to play, tips
 - [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)

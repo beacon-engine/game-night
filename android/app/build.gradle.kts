@@ -1,4 +1,4 @@
-// The Game Night TV app: a full-screen WebView on the game select page, with the game-night
+// The Beacon Arcade TV app: a full-screen WebView on the game select page, with the beacon-arcade
 // server running alongside it. Built by `make android` (scripts/android.sh), which first puts
 // the server binaries in src/main/jniLibs and the web files in src/main/assets/web.zip.
 plugins {

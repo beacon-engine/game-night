@@ -9,3 +9,4 @@ export * from './protocol.ts';
 export * from './device.ts';
 export * from './saves.ts';
 export * from './manual.ts';
+export * from './icons.ts';

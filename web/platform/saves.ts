@@ -1,4 +1,4 @@
-// Saved progress: kept by the Game Night server, as files on the machine running it (the laptop, or
+// Saved progress: kept by the Beacon Arcade server, as files on the machine running it (the laptop, or
 // the TV in the TV app), so it's there next time, whoever's phone joins. See internal/server/saves.go.
 //
 //   const saves = gameSaves();                         // this game's saves

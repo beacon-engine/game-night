@@ -6,16 +6,16 @@ Three-inning games: one side pitches and fields, the other bats. Pitching is cho
 
 ## Controls (a first plan)
 
-Every game uses the same phone pad: a stick (pushed past its ring = sprint), ✕ ○ □ △, L1, R1, and a swipe
+Every game uses the same phone pad: a stick (pushed past its ring = sprint), Bolt, Drop, Leaf, Star, L1, R1, and a swipe
 across a button. This is what each does here; it goes into `controls.json` once the game exists, and the
 phone dims the buttons a situation doesn't use.
 
 | Button | Batting | Pitching | Fielding |
 |---|---|---|---|
-| ✕ | Swing (timing) | Fastball | Throw to first |
-| ○ | Bunt | Curveball | Throw to second |
-| □ | Power swing | Changeup | Throw to third |
-| △ | Steal / run | Pickoff | Throw home |
+| Bolt | Swing (timing) | Fastball | Throw to first |
+| Drop | Bunt | Curveball | Throw to second |
+| Leaf | Power swing | Changeup | Throw to third |
+| Star | Steal / run | Pickoff | Throw home |
 | Stick | Aim the swing | Aim the pitch | Move the fielder |
 
 ## Competition
@@ -35,7 +35,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Swing timing decides contact; aim decides direction
 - [ ] AI fielders chase and throw; runners advance
 - [ ] Balls, strikes, outs, three innings
-- [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Phones show what each button does (`input.show`); Drop in the lobby goes back to the games (`backToHub`)
 - [ ] A manual (`manual.json`): what it is, how you win, how to play, tips
 - [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)

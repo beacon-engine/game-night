@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Neon Trails · Game Night</title>
+<title>Neon Trails · Beacon Arcade</title>
 <link rel="icon" href="/brand/mark.svg">
 <link rel="stylesheet" href="/brand/brand.css">
 <style>
@@ -70,7 +70,7 @@
 
   <div id="lobby" class="hidden">
     <aside class="side">
-      <button class="btn back" id="back"><span class="glyph glyph-circle">○</span> Games</button>
+      <button class="btn back" id="back"><span class="glyph glyph-drop" title="Drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg></span> Games</button>
       <div>
         <span class="eyebrow">Arcade</span>
         <h1 class="h1" style="margin-top:10px">Neon <span class="hl-volt">Trails</span></h1>
@@ -79,8 +79,8 @@
       <div><div class="caption" style="margin-bottom:10px">Riders</div><div id="riders"></div></div>
       <div id="settings"></div>
       <div style="display:flex;gap:10px">
-        <button id="start" class="btn btn-primary btn-lg"><span class="glyph glyph-cross">✕</span> Start</button>
-        <button id="howto" class="btn btn-lg"><span class="glyph glyph-triangle">△</span> How to play</button>
+        <button id="start" class="btn btn-primary btn-lg"><span class="glyph glyph-bolt" title="Bolt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span> Start</button>
+        <button id="howto" class="btn btn-lg"><span class="glyph glyph-star" title="Star"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 16.9l-5.4 2.9 1-6.1-4.4-4.3 6.1-.8z"/></svg></span> How to play</button>
       </div>
       <div class="panel join">
         <div class="qr" id="qr"></div>
@@ -103,15 +103,15 @@
     <h1 class="h1" id="champion"></h1>
     <div id="standings"></div>
     <div class="actions">
-      <button class="btn btn-primary btn-lg" id="rematch"><span class="glyph glyph-cross">✕</span> Rematch</button>
-      <button class="btn btn-lg" id="toLobby"><span class="glyph glyph-circle">○</span> Lobby</button>
+      <button class="btn btn-primary btn-lg" id="rematch"><span class="glyph glyph-bolt" title="Bolt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span> Rematch</button>
+      <button class="btn btn-lg" id="toLobby"><span class="glyph glyph-drop" title="Drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg></span> Lobby</button>
     </div>
   </div>
 
   <div id="pause" class="overlay hidden">
     <span class="eyebrow">Neon Trails</span>
     <h1 class="h1">Paused</h1>
-    <div class="legend"><span><span class="glyph glyph-cross">✕</span> Resume</span><span><span class="glyph glyph-circle">○</span> Quit to the lobby</span></div>
+    <div class="legend"><span><span class="glyph glyph-bolt" title="Bolt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span> Resume</span><span><span class="glyph glyph-drop" title="Drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg></span> Quit to the lobby</span></div>
   </div>
 
   <script type="module" src="main.js"></script>

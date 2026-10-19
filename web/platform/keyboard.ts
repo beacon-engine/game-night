@@ -8,10 +8,10 @@ export type Keymap = Partial<Record<KeyAction, string>>;
 export const DEFAULT_KEYMAPS: Keymap[] = [
   {
     up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', sprint: 'ShiftLeft',
-    cross: 'KeyF', circle: 'KeyH', square: 'KeyG', triangle: 'KeyT', 'triangle+swipe': 'KeyY', l1: 'KeyQ', r1: 'KeyE',
+    bolt: 'KeyF', drop: 'KeyH', leaf: 'KeyG', star: 'KeyT', 'star+swipe': 'KeyY', l1: 'KeyQ', r1: 'KeyE',
   },
   {
     up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight', sprint: 'ShiftRight',
-    cross: 'Comma', circle: 'Slash', square: 'Period', triangle: 'Semicolon', 'triangle+swipe': 'Quote', l1: 'KeyK', r1: 'KeyL',
+    bolt: 'Comma', drop: 'Slash', leaf: 'Period', star: 'Semicolon', 'star+swipe': 'Quote', l1: 'KeyK', r1: 'KeyL',
   },
 ];

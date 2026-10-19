@@ -68,7 +68,7 @@ function select(i: number, scroll = false) {
     : ready && g.inProgress ? `${g.name} is playable, but still being worked on. Expect rough edges.` : '';
   const btn = $<HTMLButtonElement>('play');
   btn.disabled = !ready;
-  btn.innerHTML = ready ? `${glyph('cross')} Play` : tooHeavy(g) ? 'Not available' : 'Coming soon';
+  btn.innerHTML = ready ? `${glyph('bolt')} Play` : tooHeavy(g) ? 'Not available' : 'Coming soon';
   $('howto').classList.toggle('hidden', !g.manual);
   if (scroll) document.querySelector('.tile.sel')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
@@ -130,12 +130,12 @@ function syncPads() {
   const g = games[sel];
   const ready = !!g && playable(g);
   for (const c of input.list) {
-    const base = { label: c.tag, color: c.color, title: 'Game Night', accent: '#d7ff3b' };
+    const base = { label: c.tag, color: c.color, title: 'Beacon Arcade', accent: '#d7ff3b' };
     if (manualOpen()) { input.show(c, manualScreen(base)); continue; }
     input.show(c, {
       ...base, layout: 'dpad',
       hint: g ? `${g.name}${ready ? '' : tooHeavy(g) ? ` (not on ${here})` : ' (coming soon)'}` : '',
-      labels: { ...(ready ? { cross: 'Play' } : {}), ...(g?.manual ? { triangle: 'How to play' } : {}) },
+      labels: { ...(ready ? { bolt: 'Play' } : {}), ...(g?.manual ? { star: 'How to play' } : {}) },
     });
   }
 }
@@ -147,8 +147,8 @@ function tick() {
     const fx = c.flickX(), fy = c.flickY();
     if (fx || fy) move(fx, fy);
     for (const ev of c.drain()) {
-      if (ev.down && ev.bit === BIT.cross) play();
-      else if (ev.down && ev.bit === BIT.triangle) howTo();
+      if (ev.down && ev.bit === BIT.bolt) play();
+      else if (ev.down && ev.bit === BIT.star) howTo();
     }
   }
   syncPads();
@@ -178,14 +178,14 @@ function remember(id: string) {
 
 $('legend').innerHTML = [
   `<span>${glyph('dpad')} Choose</span>`,
-  `<span>${glyph('cross')} Play</span>`,
-  `<span>${glyph('triangle')} How to play</span>`,
+  `<span>${glyph('bolt')} Play</span>`,
+  `<span>${glyph('star')} How to play</span>`,
   `<span class="keys">${key('←')}${key('→')}${key('↑')}${key('↓')} ${key('Enter')} ${key('I')} Keyboard</span>`,
 ].join('');
 hostInfo().then((info) => {
   $('url').textContent = info.padUrl;
   $('qr').innerHTML = info.qr;
-  $('version').textContent = `game-night ${info.version}`;
+  $('version').textContent = `beacon-arcade ${info.version}`;
 });
 function cap(s: string) {
   return s[0].toUpperCase() + s.slice(1);

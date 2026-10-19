@@ -1,4 +1,5 @@
-import { SYMBOL, type Button } from './pad.ts';
+import { ICON } from './icons.ts';
+import { BUTTON_NAME, type Button } from './pad.ts';
 
 // An element by id. Pages are static html, so a missing one is a bug: fail loudly.
 export function $<E extends HTMLElement = HTMLElement>(id: string): E {
@@ -25,9 +26,12 @@ export function keyCode(e: KeyboardEvent): string {
 
 // Markup for the brand components in /brand/brand.css, so every page draws them the same way.
 
-// A pad button drawn small, in its colour: glyph('cross') is a blue ✕. 'dpad' and 'stick' for steering.
-const GLYPH_TEXT = { ...SYMBOL, dpad: '✥', stick: 'STICK' };
-export const glyph = (btn: Button | 'dpad' | 'stick') => `<span class="glyph glyph-${btn}">${GLYPH_TEXT[btn]}</span>`;
+// A pad button drawn small, in its colour: glyph('bolt') is the amber Bolt icon. 'dpad' and 'stick' for steering.
+export function glyph(btn: Button | 'dpad' | 'stick') {
+  const inner = btn in ICON ? ICON[btn as keyof typeof ICON] : btn === 'dpad' ? '✥' : btn === 'stick' ? 'STICK' : BUTTON_NAME[btn as Button];
+  const name = btn in BUTTON_NAME ? BUTTON_NAME[btn as Button] : '';
+  return `<span class="glyph glyph-${btn}"${name ? ` title="${name}"` : ''}>${inner}</span>`;
+}
 
 // A keyboard key, for help text: key('Enter')
 export const key = (name: string) => `<span class="glyph glyph-key">${escapeHtml(name)}</span>`;

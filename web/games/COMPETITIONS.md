@@ -25,7 +25,7 @@ each game's README says which formats it will use.
 | **Tournament (fighting games)** | Double elimination: you're out after two losses. | fighters, rooftop brawl |
 | **Arcade** | Credits and continues, a high-score table with initials. | arcade games |
 | **Party** | Short rounds, first to N wins. | party and arcade games |
-| **Game Night Cup** | Across games: the evening as a decathlon. Points for placings in each game played tonight, one overall table. | the hub |
+| **Arcade Cup** | Across games: the evening as a decathlon. Points for placings in each game played tonight, one overall table. | the hub |
 
 ## What a game decides
 
@@ -59,7 +59,7 @@ Matches between two AI sides can be simulated instantly so the table moves witho
 
 ## Saved between nights
 
-A league or season is saved on the machine running Game Night, in the user folder
+A league or season is saved on the machine running Beacon Arcade, in the user folder
 (`<user folder>/saves/<game>/<competition>.json`), so you can continue next week. The server stores and
 lists saves; it doesn't need to understand them.
 
@@ -88,11 +88,11 @@ comp.table();                                // standings, already sorted by the
 ```
 
 Plus ready-made screens (`renderTable`, `renderBracket`, `renderPodium`) that any game can drop into its
-menus. Once two or three games use it, the hub can show "tonight's standings" for the Game Night Cup.
+menus. Once two or three games use it, the hub can show "tonight's standings" for the Arcade Cup.
 
 ## Order of work
 
 1. Football: League and Cup, with the platform pieces above (tables, brackets, saves).
 2. The first racing game: Race weekend and Championship (points tables, grids).
 3. Boxing: Title fights and rankings.
-4. The Game Night Cup on the hub.
+4. The Arcade Cup on the hub.

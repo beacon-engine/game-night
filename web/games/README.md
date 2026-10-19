@@ -92,8 +92,8 @@ Games build on `@platform` ([`../platform/`](../platform)). The parts you'll use
 | `input.buzz(c, ms)` | Vibrate their phone. |
 | `loadControls(contexts, actions)` | Reads your `controls.json`; typos are reported in the console and skipped. Then `controls.action(ctx, bit)`, `controls.labels(ctx)`. |
 | `backToHub()` | Back to the game select page (the phones stay connected). |
-| `gameSaves()`, `playerKey(c)` | Saved progress: `saves.get(key)` / `saves.set(key, value)`, kept on the machine running Game Night. `playerKey(c)` is that player's own (it follows their phone). |
-| `showManual('', name)`, `manualPadInput(c)` | Open this game's manual (△ in the lobby); while it's open, `manualPadInput` lets the phones scroll and close it. |
+| `gameSaves()`, `playerKey(c)` | Saved progress: `saves.get(key)` / `saves.set(key, value)`, kept on the machine running Beacon Arcade. `playerKey(c)` is that player's own (it follows their phone). |
+| `showManual('', name)`, `manualPadInput(c)` | Open this game's manual (Star in the lobby); while it's open, `manualPadInput` lets the phones scroll and close it. |
 
 ```ts
 import { Input, loadControls, backToHub } from '@platform';
@@ -116,10 +116,10 @@ requestAnimationFrame(tick);
 `controls.json` for that:
 
 ```json
-{ "play": { "cross": "jump", "circle": "duck" }, "labels": { "jump": "Jump", "duck": "Duck" } }
+{ "play": { "bolt": "jump", "drop": "duck" }, "labels": { "jump": "Jump", "duck": "Duck" } }
 ```
 
-Buttons are `cross`, `circle`, `square`, `triangle`, `l1`, `r1`; `"triangle+swipe"` is a swipe across △.
+Buttons are `bolt`, `drop`, `leaf`, `star`, `l1`, `r1`; `"star+swipe"` is a swipe across Star.
 
 ### Pad layouts
 
@@ -129,7 +129,7 @@ Each screen picks how the phone lets you steer, with `layout` in `input.show`:
 |---|---|---|
 | `'dpad'` | four arrow buttons and the face buttons | **every menu** (lobbies, pause, picking a club), and grid games (snake, blast zone, maze chase) |
 | `'stick'` | a floating analog stick (past its ring = sprint) and the face buttons | moving freely: football, brawlers, twin-stick shooters |
-| `'racing'` | slide sideways to steer (analog `c.x`, springs back), a throttle (✕) and brake (○) pedal, and □ △ L1 R1 | anything you drive or ride |
+| `'racing'` | slide sideways to steer (analog `c.x`, springs back), a throttle (Bolt) and brake (Drop) pedal, and Leaf Star L1 R1 | anything you drive or ride |
 
 Menus read `c.flickX()` / `c.flickY()`: one step per d-pad tap (taps can't be missed) or per flick of the stick.
 
@@ -156,7 +156,7 @@ guard.watchCanvas(renderer.domElement); // out of graphics memory: end the game 
 ```
 
 If the game can't hold its target, `onStruggle(1)`, `onStruggle(2)`… ask it to lower its detail; after
-that, Game Night stops the game and goes back to the games. Football is the example. To see your game as a
+that, Beacon Arcade stops the game and goes back to the games. Football is the example. To see your game as a
 weak screen would, open it with `?device=light` (in a browser; the TV app ignores it).
 
 ## Originality
@@ -185,8 +185,8 @@ This is good practice, not legal advice. Before a big public launch, have a trad
 
 - Use the brand: link `/brand/brand.css` and follow [`../brand/README.md`](../brand/README.md) for menus and
   HUD (colours, type, the selection frame, `glyph()` for pad buttons). Football's `index.html` is the example.
-- ○ in the lobby (and Esc on the keyboard) goes back to the games with `backToHub()`.
-- Every game has a manual (`manual.json`), offered on △ in its lobby. Plain words: what it is, how you win,
+- Drop in the lobby (and Esc on the keyboard) goes back to the games with `backToHub()`.
+- Every game has a manual (`manual.json`), offered on Star in its lobby. Plain words: what it is, how you win,
   how to play in a few steps. If it's based on an existing game, say so (`inspiredBy`).
 - Menus use the `'dpad'` layout; switch to `'stick'` or `'racing'` only while actually playing.
 - The pad's ❚❚ button arrives as `input.onPause`; pause the game.
