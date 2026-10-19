@@ -7,33 +7,51 @@ Pick one and go.
 
 ## Roadmap
 
-| | Game | Players | Status |
-|---|---|---|---|
-| ⚽ | [Football](football) | 1–8 | **playable** |
-| 🏀 | [Basketball](basketball) | 1–6 | coming soon (sports) |
-| ⚾ | [Baseball](baseball) | 1–2 (teams) | coming soon (sports) |
-| 🏏 | [Cricket](cricket) | 1–4 | coming soon (sports) |
-| 🎾 | [Long Tennis](long-tennis) | 1–4 | coming soon (sports) |
-| 🏓 | [Table Tennis](table-tennis) | 1–4 | coming soon (sports) |
-| 🎱 | [Pool](pool) | 1–2 | coming soon (sports) |
-| 🏎️ | [Racing](racing) | 1–4 | coming soon (sports) |
-| 🏐 | [Beach Volleyball](volleyball) | 1–4 | coming soon (sports) |
-| 🥊 | [Boxing](boxing) | 1–2 | coming soon (sports) |
-| ⛳ | [Crazy Golf](golf) | 1–8 | coming soon (sports) |
-| 🏒 | [Air Hockey](air-hockey) | 1–2 | coming soon (sports) |
-| 🤾 | [Dodgeball](dodgeball) | 2–8 | coming soon (sports) |
-| 🥋 | [Fighters](fighters) | 1–2 | coming soon (action) |
-| 👊 | [Street Brawler](brawler) | 1–4 | coming soon (action) |
-| 🪖 | [Tanks](tanks) | 2–8 | coming soon (action) |
-| ⚡ | [Laser Tag](laser-tag) | 2–8 | coming soon (action) |
-| 💣 | [Blast Zone](blast-zone) | 2–8 | coming soon (action) |
-| 🤼 | [Sumo Push](sumo) | 2–8 | coming soon (action) |
-| ✈️ | [Dogfight](dogfight) | 1–8 | coming soon (action) |
-| 🧟 | [Last Stand](last-stand) | 1–4 | coming soon (action) |
-| 🚩 | [Capture the Flag](capture-the-flag) | 2–8 | coming soon (action) |
-| 🏙️ | [Rooftop Brawl](rooftop-brawl) | 2–4 | coming soon (action) |
-| 🚌 | [Danfo Rush](danfo-rush) | 1–4 | coming soon (action) |
-| 🕵️ | [Heist](heist) | 2–4 | coming soon (action) |
+| | Game | Players | Competition | Status |
+|---|---|---|---|---|
+| ⚽ | [Football](football) | 1–8 | Exhibition (League, Cup next) | **playable** |
+| | **Sports** | | | |
+| 🏀 | [Basketball](basketball) | 1–6 | Exhibition, League, Cup, Groups + knockout | coming soon |
+| ⚾ | [Baseball](baseball) | 1–2 (teams) | Exhibition, League, Series | coming soon |
+| 🏏 | [Cricket](cricket) | 1–4 | Exhibition, League, Groups + knockout | coming soon |
+| 🎾 | [Long Tennis](long-tennis) | 1–4 | Exhibition, Cup, Tour | coming soon |
+| 🏓 | [Table Tennis](table-tennis) | 1–4 | Exhibition, Cup, Groups + knockout | coming soon |
+| 🎱 | [Pool](pool) | 1–2 | Exhibition, Cup, Ladder | coming soon |
+| 🏐 | [Beach Volleyball](volleyball) | 1–4 | Exhibition, Cup, Tour | coming soon |
+| 🥊 | [Boxing](boxing) | 1–2 | Exhibition, Title fight, Tournament, Career | coming soon |
+| ⛳ | [Crazy Golf](golf) | 1–8 | Exhibition, Tournament | coming soon |
+| 🏒 | [Air Hockey](air-hockey) | 1–2 | Exhibition, Cup, Ladder | coming soon |
+| 🤾 | [Dodgeball](dodgeball) | 2–8 | Exhibition, League, Cup | coming soon |
+| | **Racing** | | | |
+| 🚌 | [Danfo Rush](danfo-rush) | 1–4 | Score attack, Championship | coming soon |
+| 🏍️ | [Superbikes](superbikes) | 1–4 | Exhibition, Race weekend, Championship, Career | coming soon |
+| 🏎️ | [Grand Prix](grand-prix) | 1–4 | Exhibition, Race weekend, Championship, Career | coming soon |
+| 🚗 | [Stock Cars](stock-cars) | 1–4 | Exhibition, Race weekend, Championship, Playoffs | coming soon |
+| 🏁 | [Kart Rush](kart-rush) | 1–4 | Exhibition, Cup, Battle | coming soon |
+| | **Action** | | | |
+| 🥋 | [Fighters](fighters) | 1–2 | Arcade ladder, Tournament, Ranked | coming soon |
+| 👊 | [Street Brawler](brawler) | 1–4 | Story, Score attack | coming soon |
+| 🪖 | [Tanks](tanks) | 2–8 | Exhibition, League, Party | coming soon |
+| ⚡ | [Laser Tag](laser-tag) | 2–8 | Exhibition, League, Cup | coming soon |
+| 💣 | [Blast Zone](blast-zone) | 2–8 | Exhibition, Party, Cup | coming soon |
+| 🤼 | [Sumo Push](sumo) | 2–8 | Exhibition, Basho | coming soon |
+| ✈️ | [Dogfight](dogfight) | 1–8 | Exhibition, League, Campaign | coming soon |
+| 🧟 | [Last Stand](last-stand) | 1–4 | Survival, Score attack | coming soon |
+| 🚩 | [Capture the Flag](capture-the-flag) | 2–8 | Exhibition, League, Cup | coming soon |
+| 🏙️ | [Rooftop Brawl](rooftop-brawl) | 2–4 | Exhibition, Tournament, Ranked | coming soon |
+| 🕵️ | [Heist](heist) | 2–4 | Campaign, Score attack | coming soon |
+| | **Arcade** | | | |
+| 👾 | [Space Raiders](space-raiders) | 1–4 | Arcade, Score attack | coming soon |
+| 🧱 | [Brick Breaker](brick-breaker) | 1–4 | Arcade, Versus | coming soon |
+| 🐍 | [Snake Battle](snake-battle) | 2–8 | Party, Cup | coming soon |
+| ⚡ | [Light Cycles](light-cycles) | 2–8 | Party, Cup | coming soon |
+| 👻 | [Maze Chase](maze-chase) | 1–5 | Party, Score attack | coming soon |
+| ☄️ | [Asteroid Storm](asteroid-storm) | 1–4 | Arcade, Versus | coming soon |
+| 🎰 | [Pinball](pinball) | 1–4 | Arcade, Tournament | coming soon |
+| 🐸 | [Road Hopper](road-hopper) | 1–8 | Party, Score attack | coming soon |
+
+Every game also gets competitions (leagues, cups, race weekends, championships, title fights...):
+see [COMPETITIONS.md](COMPETITIONS.md) for the shared plan.
 
 Want a game that isn't here? Add a folder with a `game.json` and a README in the same shape.
 
@@ -47,6 +65,7 @@ web/games/my-game/
   index.html      the page; loads main.js
   main.ts         the game; bundled to main.js
   controls.json   which pad button does which action, per situation
+  competitions.json  which competition formats it offers, points, tie-breakers (see COMPETITIONS.md)
   source/         the original art (zips unpacked, Blender files...): in git, never shipped
   ...             anything else (models, sounds, data) is served next to it
 ```

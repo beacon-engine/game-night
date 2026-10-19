@@ -1,6 +1,6 @@
-# 🏓 Table Tennis
+# Table Tennis
 
-Fast rallies, spin and smashes · 1–4 players · **coming soon**
+Fast rallies, spin and smashes · 1–4 players · Sports · **coming soon**
 
 Close to the table, fast. Spin is the game: topspin dips, backspin floats, sidespin curves, and returning it badly sends it long or into the net.
 
@@ -18,6 +18,15 @@ phone dims the buttons a situation doesn't use.
 | △ | Block | — |
 | Stick | Move and aim | Aim the serve |
 
+## Competition
+
+**Exhibition** · **Cup** · **Groups + knockout**
+
+Groups of 4, top two into a knockout; best of 5 games to 11.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -27,6 +36,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Serve rules (bounce on each side)
 - [ ] Games to 11
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

@@ -1,6 +1,6 @@
-# 🏏 Cricket
+# Cricket
 
-T5: five overs of bat, bowl, field · 1–4 players · **coming soon**
+T5: five overs of bat, bowl, field · 1–4 players · Sports · **coming soon**
 
 Five-over innings each. Batters pick their shot and time it; bowlers choose line, length and pace or spin; fielders chase it down.
 
@@ -18,6 +18,15 @@ phone dims the buttons a situation doesn't use.
 | △ | Run / call | Slower ball | — |
 | Stick | Where to hit it | Line and length | Move the fielder |
 
+## Competition
+
+**Exhibition** · **League** · **Groups + knockout**
+
+T5 league with net run rate on the table; knockouts end in a super over if tied.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -27,6 +36,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Bowled, caught, run out
 - [ ] Two five-over innings and a chase
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

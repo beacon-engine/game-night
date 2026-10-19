@@ -3,7 +3,7 @@
   "icon": "🥋",
   "tagline": "1-v-1 fighting: combos, blocks, specials",
   "players": "1–2",
-  "order": 30,
-  "status": "soon",
-  "category": "Action"
+  "category": "Action",
+  "order": 60,
+  "status": "soon"
 }

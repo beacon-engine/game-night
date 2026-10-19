@@ -3,7 +3,7 @@
   "icon": "🕵️",
   "tagline": "Co-op stealth: grab the loot, don't get seen",
   "players": "2–4",
-  "order": 41,
-  "status": "soon",
-  "category": "Action"
+  "category": "Action",
+  "order": 70,
+  "status": "soon"
 }

@@ -1,6 +1,6 @@
-# 🏙️ Rooftop Brawl
+# Rooftop Brawl
 
-Platform fighter: knock them off the roof · 2–4 players · **coming soon**
+Platform fighter: knock them off the roof · 2–4 players · Action · **coming soon**
 
 Smash-style: the more damage you take the further you fly. Knock everyone off the rooftops.
 
@@ -19,6 +19,15 @@ phone dims the buttons a situation doesn't use.
 | R1 | Grab |
 | Stick | Move |
 
+## Competition
+
+**Exhibition** · **Tournament** · **Ranked**
+
+Stock matches; tournaments double-elimination; ranked rating.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -28,6 +37,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Stocks (3 lives)
 - [ ] 2–4 players
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

@@ -1,6 +1,6 @@
-# ⚡ Laser Tag
+# Laser Tag
 
-Twin-stick arena shooter, teams or free-for-all · 2–8 players · **coming soon**
+Twin-stick arena shooter, teams or free-for-all · 2–8 players · Action · **coming soon**
 
 Neon arena, tag the other team. You're never out for long: get tagged, flash for three seconds, back in.
 
@@ -19,6 +19,15 @@ phone dims the buttons a situation doesn't use.
 | R1 | Hold: strafe (keep facing) |
 | Stick | Move and face |
 
+## Competition
+
+**Exhibition** · **League** · **Cup**
+
+Teams of up to 4; matches of 3 rounds.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -28,6 +37,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Tags and respawns
 - [ ] Teams and a 3-minute timer
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

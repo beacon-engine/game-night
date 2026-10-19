@@ -3,7 +3,7 @@
   "icon": "🚌",
   "tagline": "Endless run through Lagos traffic",
   "players": "1–4",
+  "category": "Racing",
   "order": 40,
-  "status": "soon",
-  "category": "Action"
+  "status": "soon"
 }

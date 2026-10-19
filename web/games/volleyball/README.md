@@ -1,6 +1,6 @@
-# 🏐 Beach Volleyball
+# Beach Volleyball
 
-2-on-2 on the sand · 1–4 players · **coming soon**
+2-on-2 on the sand · 1–4 players · Sports · **coming soon**
 
 Bump, set, spike. Each side gets three touches; the timing of the jump decides how hard the spike is.
 
@@ -18,6 +18,15 @@ phone dims the buttons a situation doesn't use.
 | △ | Block | — |
 | Stick | Move; aim the hit | Aim |
 
+## Competition
+
+**Exhibition** · **Cup** · **Tour**
+
+Beach tour: pairs, pool play then knockout, best of 3 sets.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -27,6 +36,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Spikes and blocks
 - [ ] Rally scoring to 21
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

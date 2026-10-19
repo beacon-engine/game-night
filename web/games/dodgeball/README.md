@@ -1,6 +1,6 @@
-# 🤾 Dodgeball
+# Dodgeball
 
-Team dodgeball · 2–8 players · **coming soon**
+Team dodgeball · 2–8 players · Sports · **coming soon**
 
 Two teams, a handful of balls in the middle. Hit someone and they're out; catch it and the thrower is out and a teammate comes back.
 
@@ -17,6 +17,15 @@ phone dims the buttons a situation doesn't use.
 | □ | Fake throw | Dodge roll |
 | Stick past the ring | Sprint | Sprint |
 
+## Competition
+
+**Exhibition** · **League** · **Cup**
+
+Teams play best-of-3 rounds; league table or a bracket.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -26,6 +35,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Outs and comebacks
 - [ ] Rounds
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

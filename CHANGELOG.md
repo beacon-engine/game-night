@@ -16,6 +16,15 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 
 ### Added
 - Games can have an `icon.svg` and a `category` in `game.json`.
+- Plans for 12 more games: Superbikes (motorbike grand prix), Grand Prix (open-wheel), Stock Cars (ovals),
+  Kart Rush, and an Arcade category: Space Raiders, Brick Breaker, Snake Battle, Light Cycles, Maze Chase,
+  Asteroid Storm, Pinball, Road Hopper. Racing is now its own category (with Danfo Rush).
+- A shared plan for competitions in every game (`web/games/COMPETITIONS.md`): leagues, cups, groups,
+  race weekends with qualifying, championships with points tables, playoffs, title fights and careers,
+  ladders, arcade high scores, and a Game Night Cup across games. Each game's README says which it uses.
+
+### Removed
+- The generic "Racing" plan, replaced by the three motorsport games and Kart Rush.
 - The original art packs for football (Quaternius characters and animations) are now in the repo, in
   `web/games/football/source/`. Each game keeps its source art in its own `source/` folder; it's never shipped.
 

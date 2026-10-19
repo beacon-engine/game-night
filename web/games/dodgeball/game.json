@@ -3,7 +3,7 @@
   "icon": "🤾",
   "tagline": "Team dodgeball",
   "players": "2–8",
-  "order": 21,
-  "status": "soon",
-  "category": "Sports"
+  "category": "Sports",
+  "order": 20,
+  "status": "soon"
 }

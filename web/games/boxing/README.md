@@ -1,6 +1,6 @@
-# 🥊 Boxing
+# Boxing
 
-Three rounds, one winner · 1–2 players · **coming soon**
+Three rounds, one winner · 1–2 players · Sports · **coming soon**
 
 Footwork and timing over button mashing. Stamina drains with every punch thrown; a tired boxer is slow and open.
 
@@ -20,6 +20,15 @@ phone dims the buttons a situation doesn't use.
 | R1 | Duck / slip |
 | Stick | Move around the ring |
 
+## Competition
+
+**Exhibition** · **Title fight** · **Tournament** · **Career**
+
+Weight classes (lightweight to heavyweight), rankings by class, belts to win and defend. Tournament: 8-boxer knockout. Career: start unranked, fight up the rankings, take the belt.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -29,6 +38,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Stamina and health
 - [ ] Knockdowns, a count, three rounds and points
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

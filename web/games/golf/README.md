@@ -1,6 +1,6 @@
-# ⛳ Crazy Golf
+# Crazy Golf
 
-Mini golf, everyone at once · 1–8 players · **coming soon**
+Mini golf, everyone at once · 1–8 players · Sports · **coming soon**
 
 Mini golf where everyone plays the hole at the same time (balls pass through each other). Ramps, windmills, loops.
 
@@ -17,6 +17,15 @@ phone dims the buttons a situation doesn't use.
 | △ | Look at the hole |
 | Stick | Aim |
 
+## Competition
+
+**Exhibition** · **Tournament**
+
+Stroke play over 9 or 18 holes; ties go to a sudden-death playoff hole.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -26,6 +35,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Simultaneous turns with a short timer
 - [ ] Strokes counted, scorecard at the end
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

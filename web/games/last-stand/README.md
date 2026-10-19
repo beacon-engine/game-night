@@ -1,6 +1,6 @@
-# 🧟 Last Stand
+# Last Stand
 
-Co-op survival against waves · 1–4 players · **coming soon**
+Co-op survival against waves · 1–4 players · Action · **coming soon**
 
 Hold the compound together against waves of shambling creatures. Board up windows between waves, revive each other.
 
@@ -19,6 +19,15 @@ phone dims the buttons a situation doesn't use.
 | R1 | Switch weapon | — |
 | Stick | Move and face | Move |
 
+## Competition
+
+**Survival** · **Score attack**
+
+How many waves you last; leaderboard per map.
+
+The formats (and how standings, brackets and seasons work in every game) are in
+[COMPETITIONS.md](../COMPETITIONS.md).
+
 ## First playable
 
 What it needs before `index.html` goes in and it shows up as playable on the game select page:
@@ -28,6 +37,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] Shooting, reloading, melee
 - [ ] Downed and revive; game over when all are down
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 
 ## Later

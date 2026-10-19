@@ -3,7 +3,7 @@
   "icon": "✈️",
   "tagline": "Planes in the sky, last one flying",
   "players": "1–8",
-  "order": 36,
-  "status": "soon",
-  "category": "Action"
+  "category": "Action",
+  "order": 66,
+  "status": "soon"
 }
