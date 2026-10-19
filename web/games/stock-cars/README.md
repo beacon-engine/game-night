@@ -2,8 +2,12 @@
 
 Oval racing: slipstreams, bump drafts, last-lap passes · 1–4 players · Racing · **playable**
 
-Heavy cars, a banked oval, a pack that never spreads out. The draft is everything: line up behind someone
+Heavy cars, banked ovals, a pack that never spreads out. The draft is everything: line up behind someone
 and you go faster (and give them a shove). Pull out late to pass, and stay off the wall.
+
+Pick a track in the lobby (`tracks.json`) and, after Start, everyone picks a car on their phone
+(`cars.json`): the Stocker, Hot Hatch, Prototype, Open Wheeler, Pickup or Big SUV, each with its own
+speed, pick-up, grip and weight.
 
 ## Controls
 
@@ -21,20 +25,23 @@ left and right to steer, with gas and brake pedals (`controls.json`). Menus use 
 
 | File | |
 |---|---|
-| `track.ts` | The oval as numbers: two straights, two half-circle turns banked at 24°. Everything is measured along it (`s`) and across it (`d`). |
-| `race.ts` | The cars, the slipstream, contact (bumps, not wrecks), laps, finishing order, and the computer drivers. No graphics, so it can be tested on its own. |
-| `scene.ts` | The night race in three.js: the track and walls built from `track.ts`, grandstand, lights, the cars (simple shapes in each car's colour, numbers painted on), a chase camera per person (the screen splits for 2 to 4) and a TV camera. |
-| `sound.ts` | A synthesised engine per person driving, and a thump for contact. |
-| `main.ts` | Lobby, countdown, race, results, saved records, what the phones show. |
+| `tracks.json` | The tracks: half a lap of straights and left turns (the other half is its mirror image, so it always closes), width, banking, time of day. Add one and it's in the lobby. |
+| `cars.json` | The cars: which model, how long, and top speed, pick-up, grip and weight compared with the Stocker. |
+| `track.ts` | A track as numbers, from its description. Everything is measured along it (`s`) and across it (`d`). |
+| `race.ts` | The cars, the slipstream, contact (cars bounce off the wall and each other by weight; hard hits spin you round), laps, finishing order, and the computer drivers. No graphics, so it can be tested on its own. |
+| `cars.ts` | Loads the models and repaints each in its driver's colour, with their number on the doors. |
+| `scene.ts` | The venue in three.js, built from `track.ts` and lit for day, dusk or night; sparks; a chase camera per person (the screen splits for 2 to 4), a TV camera, and the turntables for picking cars. |
+| `sound.ts` | A synthesised engine per person driving, a thump for contact and a crunch for the wall. |
+| `main.ts` | Lobby, picking cars, countdown, race, results, saved records, what the phones show. |
 
 Handling, in short: gas settles you at your top speed (more in a slipstream); the banking holds the turns up
 to a point, and beyond it you slide up toward the wall and scrub speed; steering moves you across the track,
 faster the faster you go; the outside wall costs a lot of speed.
 
-Saved: each driver's races, wins, podiums and best lap, and the lap record (with who set it).
+Saved: each driver's races, wins, podiums, best lap and last car, and each track's lap record.
 
-Everything is drawn in code: no downloaded models or textures yet. The cars could later use a free
-(CC0) low-poly car pack; record its licence in `source/` (see [Originality](../README.md#originality)).
+The cars are from [Kenney's Car Kit](https://kenney.nl/assets/car-kit) (CC0), kept with their licence in
+[`source/`](source/README.md). Everything else (track, scenery, textures) is drawn in code.
 
 ## Competition
 

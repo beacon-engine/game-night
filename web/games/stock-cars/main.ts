@@ -1,36 +1,44 @@
-// Stock Cars: the game flow. Lobby (with a race going on behind it), the grid, the race, results,
-// saved records. The racing is in race.ts, the oval in track.ts, the 3D world in scene.ts.
+// Stock Cars: the game flow. Lobby (with a race going on behind it), picking cars, the grid, the
+// race, results, saved records. The tracks and cars are data (tracks.json, cars.json); the racing is
+// in race.ts, the track's shape in track.ts, the models in cars.ts, the 3D world in scene.ts.
 import {
   $, backToHub, BIT, chip, escapeHtml, gameSaves, glyph, hostInfo, Input, keyCode, loadControls, manualOpen,
   manualPadInput, manualScreen, PerformanceGuard, playerKey, requireDevice, showManual, type Pad, type PadScreen,
 } from '@platform';
-import { Race, TICK, type Car, type CarSpec } from './race.ts';
+import { loadCars, type CarType } from './cars.ts';
+import { Race, TICK, type Car, type CarSpec, type Hit } from './race.ts';
 import { World } from './scene.ts';
 import { Engines } from './sound.ts';
-import { Track } from './track.ts';
+import { Track, type TrackSpec } from './track.ts';
 
 const device = await requireDevice(); // (simple 3D: not on the lightest screens)
-await document.fonts.load('900 100px "Big Shoulders Display"'); // (the cars' numbers are painted in it)
+const getJson = <T>(url: string) => fetch(url, { cache: 'no-store' }).then((r) => r.json() as Promise<T>);
+const [{ tracks: TRACKS }, { cars: CARS }] = await Promise.all([
+  getJson<{ tracks: (TrackSpec & { ground?: string })[] }>('tracks.json'),
+  getJson<{ cars: CarType[] }>('cars.json'),
+  document.fonts.load('900 100px "Big Shoulders Display"'), // (the cars' numbers are painted in it)
+]);
+const models = await loadCars(CARS);
 const controls = await loadControls(['drive'] as const, ['throttle', 'brake', 'lookBack'] as const);
 const saves = gameSaves();
 
-// What we remember about each driver, and the fastest lap anyone has done here
-interface PlayerRecord { name: string; races: number; wins: number; podiums: number; bestLap: number }
-interface LapRecord { time: number; name: string }
+// What we remember about each driver, and the fastest lap at each track
+interface PlayerRecord { name: string; races: number; wins: number; podiums: number; bestLap: number; car?: string }
+interface LapRecord { time: number; name: string; car?: string }
 const freshRecord = (name: string): PlayerRecord => ({ name, races: 0, wins: 0, podiums: 0, bestLap: 0 });
-let lapRecord: LapRecord | null = await saves.get<LapRecord>('lap-record');
+const lapRecords = new Map<string, LapRecord | null>();
 
-const input = new Input({ state: () => ({ record: null as PlayerRecord | null }) });
-type Player = Pad<{ record: PlayerRecord | null }>;
+const input = new Input({ state: () => ({ record: null as PlayerRecord | null, pick: 0, ready: false }) });
+type Player = Pad<{ record: PlayerRecord | null; pick: number; ready: boolean }>;
 
 // --- settings, chosen in the lobby --------------------------------------------------------------
 const LAPS = [3, 5, 10];
 const LEVELS = [{ name: 'Easy', skill: 0.94 }, { name: 'Medium', skill: 0.975 }, { name: 'Hard', skill: 1 }];
-const settings = { rivals: 7, laps: 5, level: 1 };
-const ROWS = ['rivals', 'laps', 'level'] as const;
+const settings = { track: 0, rivals: 7, laps: 5, level: 1 };
+const ROWS = ['track', 'rivals', 'laps', 'level'] as const;
 let row = 0; // the lobby row being changed
 
-type Stage = 'lobby' | 'grid' | 'racing' | 'results' | 'paused';
+type Stage = 'lobby' | 'garage' | 'grid' | 'racing' | 'results' | 'paused';
 let stage: Stage = 'lobby';
 let resumeTo: Stage = 'racing';
 let stageT = 0;
@@ -40,8 +48,16 @@ let countShown = 0;
 const drivers = new Map<string, Player>(); // the people in this race, even if their phone has gone since
 const lapShown = new Map<Car, number>(); // when each car's last lap time went up on its screen
 
-const track = new Track();
-const world = new World($<HTMLCanvasElement>('world'), track);
+const tracks = new Map<string, Track>();
+const trackSpec = () => TRACKS[settings.track];
+const track = () => {
+  const spec = trackSpec();
+  if (!tracks.has(spec.id)) tracks.set(spec.id, new Track(spec));
+  return tracks.get(spec.id)!;
+};
+const lapRecord = () => lapRecords.get(trackSpec().id) ?? null;
+
+const world = new World($<HTMLCanvasElement>('world'));
 const engines = new Engines();
 
 // A steady 30 on a TV is kinder than a ragged 60
@@ -58,8 +74,12 @@ const RIVALS = ['Rook', 'Dash', 'Mako', 'Vega', 'Blaze', 'Juno', 'Rex', 'Nova', 
 const LIVERIES = ['#e8e6df', '#ff8a3d', '#3fd0ff', '#9b6bff', '#2a2f3d', '#c0c4cc', '#0f8a63', '#d94040', '#f2d03b', '#2f5bd8', '#ff5ecf', '#8a5a34'];
 const NUMBERS = [7, 11, 14, 17, 22, 28, 31, 42, 55, 63, 77, 91];
 
+const carOf = (type: CarType): CarSpec['car'] => ({ ...type, width: models.get(type.id)!.width });
+
 function field(withPeople: boolean): CarSpec[] {
-  const people: CarSpec[] = (withPeople ? input.list : []).map((c) => ({ id: c.id, name: c.label, color: c.color, number: c.slot + 1, ai: false, skill: 1 }));
+  const people: CarSpec[] = (withPeople ? input.list : []).map((c) => ({
+    id: c.id, name: c.label, color: c.color, number: c.slot + 1, ai: false, skill: 1, car: carOf(CARS[c.pick]),
+  }));
   const taken = new Set(people.map((p) => p.color.toLowerCase()));
   const liveries = LIVERIES.filter((c) => !taken.has(c));
   const skill = LEVELS[settings.level].skill;
@@ -67,13 +87,15 @@ function field(withPeople: boolean): CarSpec[] {
   const rivals = Array.from({ length: n }, (_, i): CarSpec => ({
     id: `cpu${i}`, name: RIVALS[i], color: liveries[i % liveries.length], number: NUMBERS[i], ai: true,
     skill: skill + (Math.random() - 0.5) * 0.012,
+    car: carOf(i % 3 === 0 ? CARS[0] : CARS[Math.floor(Math.random() * CARS.length)]), // (mostly Stockers)
   }));
   return shuffle([...people, ...rivals]); // (a random grid)
 }
 
 function newRace(withPeople: boolean, laps: number) {
-  race = new Race(track, field(withPeople), laps);
-  world.setCars(race.cars);
+  world.setTrack(track(), trackSpec().ground);
+  race = new Race(track(), field(withPeople), laps);
+  world.setCars(race.cars, models);
   const slot = (c: Car) => input.list.find((p) => p.id === c.id)?.slot ?? 99;
   world.setViews(race.cars.filter((c) => !c.spec.ai).sort((a, b) => slot(a) - slot(b))); // (P1 top left)
   lapShown.clear();
@@ -88,6 +110,16 @@ function toLobby() {
   engines.silence();
   show('lobby');
   renderLobby();
+  loadLapRecord();
+}
+
+// Start: everyone picks a car first (on their own, the computer drivers just race)
+function start() {
+  if (!input.list.length) return startRace();
+  stage = 'garage';
+  for (const c of input.list) c.ready = false;
+  showroom();
+  show('hud');
 }
 
 function startRace() {
@@ -123,9 +155,11 @@ function onLap(car: Car) {
   if (car.laps === race.laps - 1 && race.laps > 1 && race.standings()[0] === car) callout('Final lap', 'White flag');
   if (car.spec.ai) return;
   lapShown.set(car, race.t);
-  if (!lapRecord || car.lastLap < lapRecord.time) {
-    lapRecord = { time: car.lastLap, name: car.spec.name };
-    saves.set('lap-record', lapRecord);
+  const record = lapRecord();
+  if (!record || car.lastLap < record.time) {
+    const next = { time: car.lastLap, name: car.spec.name, car: car.stats.name };
+    lapRecords.set(trackSpec().id, next);
+    saves.set(`lap-record-${trackSpec().id}`, next);
     callout(fmt(car.lastLap), `New lap record · ${car.spec.name}`);
     buzz(car, 150);
   }
@@ -138,9 +172,27 @@ function onFinish(car: Car) {
   buzz(car, 300);
 }
 
+// Sparks for every hit; sound and a buzz when it's one of the people
+function onHit(h: Hit, wall: boolean) {
+  world.hit(h.car, h.d, h.strength);
+  if (h.car.spec.ai) return;
+  buzz(h.car, Math.min(400, 40 + h.strength * 25));
+  if (wall) engines.crunch(Math.min(1, h.strength / 8));
+  else engines.thump(Math.min(1, h.strength / 8));
+}
+
 // --- saved records ----------------------------------------------------------------------------------
 async function loadRecord(c: Player) {
   c.record = (await saves.get<PlayerRecord>(playerKey(c))) ?? freshRecord(c.label);
+  const last = CARS.findIndex((t) => t.id === c.record?.car); // (the car they drove last time)
+  if (last >= 0) c.pick = last;
+  if (stage === 'lobby') renderLobby();
+}
+
+async function loadLapRecord() {
+  const id = trackSpec().id;
+  if (lapRecords.has(id)) return;
+  lapRecords.set(id, await saves.get<LapRecord>(`lap-record-${id}`));
   if (stage === 'lobby') renderLobby();
 }
 
@@ -157,6 +209,7 @@ function saveRecords() {
     if (pos === 1) r.wins++;
     if (pos <= 3) r.podiums++;
     if (car.bestLap && (!r.bestLap || car.bestLap < r.bestLap)) r.bestLap = car.bestLap;
+    r.car = car.stats.id;
     c.record = r;
     saves.set(playerKey(c), r);
   }
@@ -164,14 +217,19 @@ function saveRecords() {
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 const recordLine = (r: PlayerRecord | null) => !r || !r.races ? 'First race' :
-  `${plural(r.wins, 'win', 'wins')} from ${plural(r.races, 'race', 'races')}${r.bestLap ? ` · best lap ${fmt(r.bestLap)}` : ''}`;
+  `${plural(r.wins, 'win', 'wins')} from ${plural(r.races, 'race', 'races')}`;
 
-input.onJoin = (c) => { loadRecord(c); if (stage === 'lobby') renderLobby(); };
+input.onJoin = (c) => {
+  loadRecord(c);
+  if (stage === 'lobby') renderLobby();
+  if (stage === 'garage') showroom();
+};
 input.onLeave = (c) => {
   // their car finishes the race on its own
   const car = race.cars.find((x) => x.id === c.id);
   if (car && stage !== 'lobby') { car.spec.ai = true; car.lane = 0; }
   if (stage === 'lobby') renderLobby();
+  if (stage === 'garage') (input.list.length ? showroom() : toLobby());
 };
 input.onRename = () => stage === 'lobby' && renderLobby();
 input.onPause = () => togglePause();
@@ -186,30 +244,46 @@ function menuInput(c: Player) {
     if (fy) { row = (row + fy + ROWS.length) % ROWS.length; renderLobby(); }
     if (fx) change(fx);
   }
+  if (stage === 'garage' && fx && !c.ready) {
+    c.pick = (c.pick + fx + CARS.length) % CARS.length;
+    showroom();
+  }
   for (const ev of c.drain()) {
     if (!ev.down) continue;
-    if (ev.bit === BIT.bolt) confirm();
-    else if (ev.bit === BIT.drop) back();
+    if (ev.bit === BIT.bolt) (stage === 'garage' ? toggleReady(c) : confirm());
+    else if (ev.bit === BIT.drop) (stage === 'garage' && c.ready ? toggleReady(c) : back());
     else if (ev.bit === BIT.star && stage === 'lobby') howTo();
   }
 }
 
+function toggleReady(c: Player) {
+  c.ready = !c.ready;
+  renderGarage();
+  if (input.list.every((p) => p.ready)) startRace();
+}
+
 function change(d: number) {
   const cycle = <T>(list: T[], v: T) => list[(list.indexOf(v) + d + list.length) % list.length];
-  if (ROWS[row] === 'rivals') settings.rivals = Math.max(0, Math.min(11, settings.rivals + d));
-  else if (ROWS[row] === 'laps') settings.laps = cycle(LAPS, settings.laps);
+  const key = ROWS[row];
+  if (key === 'track') {
+    settings.track = (settings.track + d + TRACKS.length) % TRACKS.length;
+    return toLobby(); // (the race behind the menu moves to the new track)
+  }
+  if (key === 'rivals') settings.rivals = Math.max(0, Math.min(11, settings.rivals + d));
+  else if (key === 'laps') settings.laps = cycle(LAPS, settings.laps);
   else settings.level = (settings.level + d + LEVELS.length) % LEVELS.length;
   renderLobby();
 }
 
 function confirm() {
-  if (stage === 'lobby' || stage === 'results') startRace();
+  if (stage === 'lobby' || stage === 'results') start();
+  else if (stage === 'garage') startRace(); // (Enter on the keyboard: go now)
   else if (stage === 'paused') togglePause();
 }
 
 function back() {
   if (stage === 'lobby') backToHub();
-  else if (stage === 'results' || stage === 'paused') toLobby();
+  else if (stage === 'results' || stage === 'paused' || stage === 'garage') toLobby();
 }
 
 // The phone's steering slider (or the arrow keys) steers; gas and brake are held
@@ -231,7 +305,7 @@ addEventListener('keydown', (e) => {
   const code = keyCode(e);
   if (code === 'KeyI' && stage === 'lobby') howTo();
   else if (code === 'Enter') confirm();
-  else if (code === 'Escape') (stage === 'lobby' || stage === 'results' ? back() : togglePause());
+  else if (code === 'Escape') (stage === 'lobby' || stage === 'results' || stage === 'garage' ? back() : togglePause());
   else if (code === 'KeyP') togglePause();
 });
 addEventListener('pointerdown', () => engines.unlock());
@@ -242,6 +316,9 @@ function padScreen(c: Player): PadScreen {
   if (manualOpen()) return manualScreen(base);
   switch (stage) {
     case 'lobby': return { ...base, labels: { bolt: 'Start', drop: 'Games', star: 'How to play' }, hint: '▲▼ choose · ◀▶ change' };
+    case 'garage': return c.ready
+      ? { ...base, labels: { drop: 'Change car' }, hint: 'Ready. Waiting for the others' }
+      : { ...base, labels: { bolt: 'Ready', drop: 'Back' }, hint: `◀▶ pick your car: ${CARS[c.pick].name}` };
     case 'results': return { ...base, labels: { bolt: 'Race again', drop: 'Lobby' }, hint: 'Race over' };
     case 'paused': return { ...base, labels: { bolt: 'Resume', drop: 'Quit' }, hint: 'Paused' };
     default: {
@@ -264,11 +341,37 @@ function renderLobby() {
   $('drivers').innerHTML = people.length
     ? people.map((c) => `<div class="driver">${chip(c)}<span class="caption faint">${escapeHtml(recordLine(c.record))}</span></div>`).join('')
     : '<p class="muted" style="margin:0">Join with your phone to drive. On your own? Race the computer drivers.</p>';
-  const value = { rivals: String(settings.rivals), laps: `${settings.laps} laps`, level: LEVELS[settings.level].name };
-  const label = { rivals: 'Computer drivers', laps: 'Race', level: 'Their pace' };
-  $('settings').innerHTML = ROWS.map((r, i) => `<div class="setting ${i === row ? 'sel' : ''}">
-      <span>${label[r]}</span><span class="value"><span class="glyph glyph-key">◀</span><b>${value[r]}</b><span class="glyph glyph-key">▶</span></span></div>`).join('');
-  $('record').textContent = lapRecord ? `Lap record: ${fmt(lapRecord.time)} by ${lapRecord.name}` : 'No lap record yet. Set one.';
+  const value = { track: trackSpec().name, rivals: String(settings.rivals), laps: `${settings.laps} laps`, level: LEVELS[settings.level].name };
+  const label = { track: 'Track', rivals: 'Computer drivers', laps: 'Race', level: 'Their pace' };
+  $('settings').innerHTML = ROWS.map((r, i) => `<div class="setting ${i === row ? 'sel' : ''} ${r}">
+      <span>${label[r]}</span><span class="value"><span class="glyph glyph-key">◀</span><b>${escapeHtml(value[r])}</b><span class="glyph glyph-key">▶</span></span></div>`).join('');
+  const rec = lapRecord();
+  $('trackAbout').textContent = trackSpec().about;
+  $('record').textContent = rec ? `Lap record: ${fmt(rec.time)} by ${rec.name}${rec.car ? ` (${rec.car})` : ''}` : 'No lap record here yet. Set one.';
+}
+
+// Picking cars: each person's choice turning in their part of the screen
+function showroom() {
+  const list = [...input.list].sort((a, b) => a.slot - b.slot);
+  world.setTrack(track(), trackSpec().ground);
+  world.showroom(list.map((c) => ({ model: models.get(CARS[c.pick].id)!, color: c.color, number: c.slot + 1 })));
+  renderGarage();
+}
+
+function renderGarage() {
+  const list = [...input.list].sort((a, b) => a.slot - b.slot);
+  const bar = (label: string, v: number) => `<div class="stat"><span>${label}</span><i><b style="width:${Math.round(Math.max(0.08, Math.min(1, (v - 0.82) / 0.4)) * 100)}%"></b></i></div>`;
+  $('views').innerHTML = world.views.map((v, i) => {
+    const c = list[i], t = CARS[c.pick], r = v.rect;
+    return `<div class="view pick" style="left:${r.x * 100}%;top:${r.y * 100}%;width:${r.w * 100}%;height:${r.h * 100}%">
+      <div class="card panel">${chip(c)}
+        <div class="carname"><span class="glyph glyph-key">◀</span><h2>${escapeHtml(t.name)}</h2><span class="glyph glyph-key">▶</span></div>
+        <p class="muted">${escapeHtml(t.about)}</p>
+        ${bar('Top speed', t.top * 1.1)}${bar('Pick-up', t.accel)}${bar('Grip', t.grip)}${bar('Weight', t.weight * 0.85)}
+        <div class="ready ${c.ready ? 'on' : ''}">${c.ready ? 'Ready' : `${glyph('bolt')} when you're happy`}</div>
+      </div></div>`;
+  }).join('');
+  $('tower').classList.add('hidden');
 }
 
 // One box per view, laid over its part of the screen
@@ -286,7 +389,9 @@ function buildHud() {
 function updateHud() {
   const order = race.standings(), leader = order[0];
   world.views.forEach((v, i) => {
-    const el = $(`view${i}`), q = (s: string) => el.querySelector<HTMLElement>(s)!;
+    const el = document.getElementById(`view${i}`);
+    if (!el) return;
+    const q = (s: string) => el.querySelector<HTMLElement>(s)!;
     if (!v.car) {
       q('.pos b').textContent = 'Race';
       q('.pos span').textContent = `lap ${Math.min(leader.laps + 1, race.laps)} of ${race.laps}`;
@@ -298,8 +403,8 @@ function updateHud() {
     q('.lap').textContent = car.finish !== null ? 'Finished' : `Lap ${Math.min(car.laps + 1, race.laps)} / ${race.laps}`;
     q('.speed').innerHTML = `${Math.round(car.v * 2.237)}<span>mph</span>`;
     q('.tow').classList.toggle('on', car.tow > 0.015 && car.v > 20 && car.finish === null);
-    const shown = lapShown.get(car);
-    const flash = q('.flash');
+    const shown = lapShown.get(car), flash = q('.flash');
+    if (car.spinning > 0) { flash.textContent = 'Spun round!'; flash.classList.add('show'); return; }
     flash.classList.toggle('show', shown !== undefined && race.t - shown < 4);
     if (shown !== undefined) flash.textContent = `Lap ${fmt(car.lastLap)}${car.lastLap === car.bestLap ? ' · best' : ''}`;
   });
@@ -312,19 +417,20 @@ function gapText(c: Car, leader: Car, i: number) {
   if (i === 0) return c.finish !== null ? fmt(c.finish) : 'Leader';
   if (c.finish !== null && leader.finish !== null) return `+${(c.finish - leader.finish).toFixed(1)}`;
   const behind = leader.dist - c.dist;
-  if (behind >= track.length) return `+${plural(Math.floor(behind / track.length), 'lap', 'laps')}`;
+  if (behind >= race.track.length) return `+${plural(Math.floor(behind / race.track.length), 'lap', 'laps')}`;
   return `+${(behind / Math.max(c.v, 20)).toFixed(1)}`;
 }
 
 function renderResults() {
   const order = race.standings(), win = order[0];
   $('winner').innerHTML = `<span style="color:${win.spec.ai ? 'var(--chalk)' : win.spec.color}">${escapeHtml(win.spec.name)}</span> wins`;
+  $('resultsTrack').textContent = `${race.track.name} · ${plural(race.laps, 'lap', 'laps')}`;
   $('standings').innerHTML = order.map((c, i) => {
     const human = playerOf(c);
     const who = human ? chip(human) : `<span class="chip" style="--pc:${c.spec.color}"><b>${c.spec.number}</b>${escapeHtml(c.spec.name)}</span>`;
     const time = i === 0 ? (c.finish !== null ? fmt(c.finish) : '') : gapText(c, win, i);
     return `<div class="standing ${i === 0 ? 'first' : ''}"><span class="num">${i + 1}</span>${who}
-      <span class="caption">${human ? escapeHtml(recordLine(human.record)) : ''}</span>
+      <span class="caption">${escapeHtml(c.stats.name)}${human ? ` · ${escapeHtml(recordLine(human.record))}` : ''}</span>
       <span class="time">${time}</span><span class="best">${c.bestLap ? `best ${fmt(c.bestLap)}` : ''}</span></div>`;
   }).join('');
 }
@@ -343,7 +449,7 @@ function tvFocus(dt: number) {
   tvT -= dt;
   if (!tvCar || tvT <= 0 || !race.cars.includes(tvCar)) {
     const order = race.standings();
-    const battles = order.filter((c, i) => i > 0 && Math.abs(track.gap(order[i - 1].dist, c.dist)) < 12);
+    const battles = order.filter((c, i) => i > 0 && Math.abs(race.track.gap(order[i - 1].dist, c.dist)) < 12);
     tvCar = battles.length ? battles[Math.floor(Math.random() * battles.length)] : order[0];
     tvT = 9;
   }
@@ -353,6 +459,7 @@ function tvFocus(dt: number) {
 // --- the loop -----------------------------------------------------------------------------------------
 function tick() {
   stageT += TICK;
+  if (stage === 'garage') return;
   if (stage === 'grid') {
     const n = 3 - Math.floor(stageT / 0.9);
     if (n !== countShown) {
@@ -365,9 +472,12 @@ function tick() {
     return;
   }
   const ev = race.step(true);
+  for (const h of ev.wall) if (stage !== 'racing' || h.car.spec.ai) world.hit(h.car, h.d, h.strength);
+  for (const h of ev.contact) if (stage !== 'racing' || h.car.spec.ai) world.hit(h.car, h.d, h.strength);
   if (stage !== 'racing') return; // (the lobby's race, or the cool-down lap behind the results)
-  for (const c of ev.contact) if (!c.spec.ai) { buzz(c, 60); engines.thump(0.6); }
-  for (const c of ev.wall) if (!c.spec.ai) { buzz(c, 140); engines.thump(1); }
+  for (const h of ev.wall) if (!h.car.spec.ai) onHit(h, true);
+  for (const h of ev.contact) if (!h.car.spec.ai) onHit(h, false);
+  for (const c of ev.spun) if (!c.spec.ai) buzz(c, 500);
   for (const c of ev.lap) onLap(c);
   for (const c of ev.finished) onFinish(c);
   if (flagT >= 0) flagT += TICK;
@@ -428,9 +538,9 @@ $('toLobby').innerHTML = `${glyph('drop')} Lobby`;
 $('pauseLegend').innerHTML = `<span>${glyph('bolt')} Resume</span><span>${glyph('drop')} Quit to the lobby</span>`;
 $('legend').innerHTML = `<span>${glyph('stick')} Steer</span><span>${glyph('bolt')} Gas</span><span>${glyph('drop')} Brake</span><span>${glyph('r1')} Look back</span>`;
 $('back').addEventListener('click', backToHub);
-$('start').addEventListener('click', startRace);
+$('start').addEventListener('click', start);
 $('howto').addEventListener('click', howTo);
-$('again').addEventListener('click', startRace);
+$('again').addEventListener('click', start);
 $('toLobby').addEventListener('click', toLobby);
 document.body.classList.toggle('tv', device.tv);
 world.resize();
