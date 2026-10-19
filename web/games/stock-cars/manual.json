@@ -1,0 +1,20 @@
+{
+  "intro": "Heavy cars, a banked oval and a pack that never spreads out. Tuck in behind someone to go faster, then pull out and pass.",
+  "inspiredBy": "Oval stock car racing goes back to the 1940s. Stock Cars is our own take, with our own cars, track and drivers.",
+  "goal": "Be first across the line after the last lap. Races are 3, 5 or 10 laps.",
+  "howToPlay": [
+    "Join with your phone, or race the computer drivers on your own.",
+    "In the lobby, choose how many computer drivers, how many laps and how quick they are, then press {bolt} to start.",
+    "Your phone becomes a steering pad: slide your thumb left and right to steer. Hold {bolt} for gas and {drop} to brake.",
+    "Hold the gas through the countdown and go on Go. Every turn is a left turn.",
+    "Get right behind another car and its slipstream pulls you along faster (Draft lights up on your screen). Use the extra speed to pull out and pass.",
+    "Bumping is part of it. The outside wall isn't: hit it and you lose a lot of speed."
+  ],
+  "steering": "Slide left and right on your phone to steer (or use the arrow keys)",
+  "tips": [
+    "Pull out of the slipstream late, when you're right on their bumper, to slingshot past.",
+    "Sliding up toward the wall in a turn? Steer down. If that isn't enough, ease off the gas for a moment.",
+    "The bottom of the track is the shortest way round, so everyone wants it.",
+    "Hold {r1} to see who's behind you."
+  ]
+}

@@ -35,9 +35,13 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   Space Rocks, Pinball, Road Hopper. Racing is now its own category.
 - A shared plan for competitions in every game (`web/games/COMPETITIONS.md`): leagues, cups, groups,
   race weekends with qualifying, championships with points tables, playoffs, title fights and careers,
-  ladders, arcade high scores, and a Arcade Cup across games. Each game's README says which it uses.
+  ladders, arcade high scores, and an Arcade Cup across games. Each game's README says which it uses.
 
 ### Added (games)
+- **Stock Cars**, the third playable game: 1–4 drivers on a banked oval under the lights, with up to 11
+  computer drivers at three paces. Slipstreams, bump drafts, 3, 5 or 10 laps, a split screen for 2 to 4
+  people, a TV camera when nobody's driving, engine sounds, and saved records (wins, best lap, the lap record).
+  The phone becomes a steering pad with gas and brake. Everything is drawn in code, nothing downloaded.
 - **Neon Trails**, the second playable game: 1–8 riders on phones or keyboards, computer riders to fill in,
   first to 3, 5 or 7 rounds, walls that close in so rounds don't drag, a demo round behind the lobby.
 - **Saved progress** for every game (`gameSaves()`): kept as files on the machine running Beacon Arcade

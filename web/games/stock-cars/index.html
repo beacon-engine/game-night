@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stock Cars · Beacon Arcade</title>
+<link rel="icon" href="/brand/mark.svg">
+<link rel="stylesheet" href="/brand/brand.css">
+<style>
+  html, body { height: 100%; overflow: hidden; }
+  #world { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+
+  /* ---- lobby: over a race going on behind ---- */
+  #lobby { position: fixed; inset: 0; display: grid; grid-template-columns: minmax(400px, 36%) 1fr; }
+  #lobby .side { display: flex; flex-direction: column; gap: 22px; padding: 32px 40px; background: rgb(7 8 11 / 0.92); border-right: 1px solid var(--line); overflow-y: auto; }
+  #lobby .back { align-self: flex-start; }
+  #drivers { display: flex; flex-direction: column; gap: 8px; }
+  .driver { display: flex; align-items: center; gap: 12px; }
+  #settings { display: flex; flex-direction: column; }
+  .setting { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-left: 3px solid transparent;
+    font: 700 22px/1 var(--font-display); text-transform: uppercase; color: var(--chalk-2); }
+  .setting.sel { background: var(--ink-2); border-left-color: var(--volt); color: var(--chalk); }
+  .setting .value { display: flex; align-items: center; gap: 10px; }
+  .setting .value b { min-width: 3.6em; text-align: center; color: var(--chalk); }
+  .setting:not(.sel) .glyph { visibility: hidden; }
+  #record { font-size: 14px; }
+  #lobby .join { display: flex; gap: 14px; align-items: center; padding: 12px; margin-top: auto; }
+  #lobby .join .qr { width: 88px; height: 88px; padding: 5px; }
+  #lobby .join .url { font: 600 13px/1.3 var(--font-ui); word-break: break-all; margin-top: 4px; }
+  #lobby .help { position: absolute; right: 28px; bottom: 24px; padding: 12px 16px; }
+
+  /* ---- racing: one box per view (the screen splits for 2 to 4 drivers) ---- */
+  #hud { position: fixed; inset: 0; pointer-events: none; }
+  .view { position: absolute; box-shadow: inset 0 0 0 1px var(--ink-0); }
+  .view .pos { position: absolute; left: 20px; top: 14px; display: flex; align-items: baseline; gap: 8px; }
+  .view .pos b { font: 900 68px/0.9 var(--font-display); text-shadow: 0 2px 16px rgb(7 8 11 / 0.6); }
+  .view .pos span { font: 600 14px/1 var(--font-ui); color: var(--chalk-2); }
+  .view .who { position: absolute; left: 22px; top: 92px; }
+  .view .lap { position: absolute; right: 20px; top: 18px; font: 800 26px/1 var(--font-display); text-transform: uppercase; text-shadow: 0 2px 12px rgb(7 8 11 / 0.7); }
+  .view .speed { position: absolute; right: 20px; bottom: 14px; font: 900 56px/1 var(--font-display); font-variant-numeric: tabular-nums; text-shadow: 0 2px 16px rgb(7 8 11 / 0.6); }
+  .view .speed span { font: 600 14px/1 var(--font-ui); color: var(--chalk-2); margin-left: 6px; }
+  .view .tow { position: absolute; left: 20px; bottom: 22px; padding: 7px 12px; border-radius: var(--r-2); background: var(--volt); color: var(--volt-ink);
+    font: 800 18px/1 var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; opacity: 0; transition: opacity var(--t) var(--ease); }
+  .view .tow.on { opacity: 1; }
+  .view .flash { position: absolute; left: 50%; top: 20%; transform: translateX(-50%); padding: 10px 18px; border-radius: var(--r-2); background: rgb(14 16 22 / 0.85);
+    font: 800 30px/1 var(--font-display); text-transform: uppercase; white-space: nowrap; opacity: 0; transition: opacity var(--t) var(--ease); }
+  .view .flash.show { opacity: 1; }
+  .view.tv .pos b { font-size: 34px; color: var(--chalk-2); }
+
+  #tower { position: fixed; left: 18px; top: 50%; transform: translateY(-40%); display: flex; flex-direction: column; gap: 2px; font: 600 13px/1 var(--font-ui); }
+  #tower .row { display: grid; grid-template-columns: 20px 4px 1fr 64px; gap: 8px; align-items: center; min-width: 230px; padding: 5px 10px; background: rgb(14 16 22 / 0.82); }
+  #tower .row i { width: 4px; height: 16px; background: var(--pc); }
+  #tower .row .num { color: var(--chalk-3); font-variant-numeric: tabular-nums; }
+  #tower .row .gap { text-align: right; color: var(--chalk-2); font-variant-numeric: tabular-nums; }
+  #tower .row.me { background: var(--ink-3); }
+  #tower .row.me span:nth-child(3) { color: var(--chalk); font-weight: 700; }
+
+  #callout { position: fixed; left: 0; right: 0; top: 34%; display: flex; flex-direction: column; align-items: center; gap: 12px;
+    pointer-events: none; opacity: 0; transition: opacity var(--t) var(--ease); }
+  #callout.show { opacity: 1; }
+  #callout .big { font: 900 clamp(64px, 10vw, 140px)/0.9 var(--font-display); text-transform: uppercase; text-align: center; text-shadow: 0 4px 24px rgb(7 8 11 / 0.7); }
+
+  /* ---- results, pause ---- */
+  .overlay { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 22px; padding: 6vh 8vw;
+    background: rgb(7 8 11 / 0.86); backdrop-filter: blur(8px); }
+  #standings { display: flex; flex-direction: column; gap: 4px; max-width: 900px; overflow-y: auto; }
+  .standing { display: grid; grid-template-columns: 34px minmax(160px, auto) 1fr 90px 110px; align-items: center; gap: 14px; padding: 8px 14px;
+    background: var(--ink-1); border: 1px solid var(--line); border-radius: var(--r-2); }
+  .standing.first { border-left: 3px solid var(--volt); }
+  .standing > .num { font: 800 22px/1 var(--font-display); color: var(--chalk-3); }
+  .standing .time { font: 700 15px/1 var(--font-ui); text-align: right; font-variant-numeric: tabular-nums; }
+  .standing .best { font: 500 13px/1 var(--font-ui); text-align: right; color: var(--chalk-2); font-variant-numeric: tabular-nums; }
+  .actions { display: flex; gap: 10px; }
+
+  /* TVs (960x540 pages) */
+  @media (max-height: 640px) {
+    #lobby { grid-template-columns: 40% 1fr; }
+    #lobby .side { padding: 20px 26px; gap: 14px; }
+    .setting { font-size: 18px; padding: 9px 12px; }
+    #lobby .join .qr { width: 72px; height: 72px; }
+    .h1 { font-size: 44px; }
+    .view .pos b { font-size: 48px; }
+    .view .speed { font-size: 40px; }
+    .view .who { top: 66px; }
+    #tower .row { min-width: 190px; padding: 4px 8px; }
+  }
+  .tv .keys { display: none !important; }
+</style>
+</head>
+<body>
+  <canvas id="world"></canvas>
+
+  <div id="lobby" class="hidden">
+    <aside class="side">
+      <button class="btn back" id="back"></button>
+      <div>
+        <span class="eyebrow">Racing</span>
+        <h1 class="h1" style="margin-top:10px">Stock <span class="hl-volt">Cars</span></h1>
+        <p class="muted" style="margin:10px 0 0;max-width:36ch">Heavy cars on a banked oval. Tuck in behind someone to go faster, then pull out and pass.</p>
+      </div>
+      <div><div class="caption" style="margin-bottom:10px">Drivers</div><div id="drivers"></div></div>
+      <div id="settings"></div>
+      <div class="faint" id="record"></div>
+      <div style="display:flex;gap:10px">
+        <button id="start" class="btn btn-primary btn-lg"></button>
+        <button id="howto" class="btn btn-lg"></button>
+      </div>
+      <div class="panel join">
+        <div class="qr" id="qr"></div>
+        <div><div class="caption">Scan to join · same Wi-Fi</div><div class="url" id="url">…</div></div>
+      </div>
+    </aside>
+    <div style="position:relative">
+      <div class="panel panel-glass help legend" id="legend"></div>
+    </div>
+  </div>
+
+  <div id="hud" class="hidden">
+    <div id="views"></div>
+    <div id="tower"></div>
+  </div>
+  <div id="callout"></div>
+
+  <div id="results" class="overlay hidden">
+    <span class="eyebrow">Chequered flag</span>
+    <h1 class="h1" id="winner"></h1>
+    <div id="standings"></div>
+    <div class="actions">
+      <button class="btn btn-primary btn-lg" id="again"></button>
+      <button class="btn btn-lg" id="toLobby"></button>
+    </div>
+  </div>
+
+  <div id="pause" class="overlay hidden">
+    <span class="eyebrow">Stock Cars</span>
+    <h1 class="h1">Paused</h1>
+    <div class="legend" id="pauseLegend"></div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
