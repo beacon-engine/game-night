@@ -46,20 +46,35 @@ export const WALL = 255; // a cell the closing walls have taken
 export class Arena {
   readonly cells: Uint8Array; // 0 = free, WALL, or the index + 1 of the rider whose trail it is
   ring = 0; // how many rings the walls have closed in
+  pace = 1; // the game eases everyone in at the start of a round
   readonly riders: Rider[];
   private seen: Uint8Array; // scratch for the AI's search
 
   constructor(readonly w: number, readonly h: number, specs: RiderSpec[]) {
     this.cells = new Uint8Array(w * h);
     this.seen = new Uint8Array(w * h);
-    // spread out on an ellipse, all heading clockwise around it, so nobody starts head-on
+    // spread out on an ellipse, all heading clockwise around it, so nobody starts head-on.
+    // People get the spots with the longest run before a wall, so they have time to find themselves.
     const n = specs.length;
-    this.riders = specs.map((s, i) => {
+    const slots = Array.from({ length: n }, (_, i) => {
       const a = (i / n) * Math.PI * 2 + Math.PI;
       const x = Math.round(w / 2 + Math.cos(a) * w * 0.36);
       const y = Math.round(h / 2 + Math.sin(a) * h * 0.36);
       const tx = -Math.sin(a), ty = Math.cos(a);
       const dir: Dir = Math.abs(tx) > Math.abs(ty) ? (tx > 0 ? 1 : 3) : ty > 0 ? 2 : 0;
+      const run = [y, w - 1 - x, h - 1 - y, x][dir]; // cells to the edge, straight ahead
+      return { x, y, dir, run };
+    });
+    const roomiest = [...slots].sort((a, b) => b.run - a.run);
+    const take = (s: RiderSpec) => {
+      const slot = s.ai ? slots.find((x) => roomiest.includes(x))! : roomiest[0];
+      roomiest.splice(roomiest.indexOf(slot), 1);
+      return slot;
+    };
+    const placed = new Map(specs.filter((s) => !s.ai).map((s) => [s, take(s)]));
+    for (const s of specs) if (s.ai) placed.set(s, take(s));
+    this.riders = specs.map((s, i) => {
+      const { x, y, dir } = placed.get(s)!;
       return { ...s, index: i, x, y, dir, alive: true, progress: 0, braking: false, boostT: 0, boostCd: 0, turns: [] };
     });
     for (const r of this.riders) this.cells[this.at(r.x, r.y)] = r.index + 1;
@@ -95,7 +110,7 @@ export class Arena {
     for (const r of this.alive) {
       r.boostT = Math.max(0, r.boostT - TICK);
       r.boostCd = Math.max(0, r.boostCd - TICK);
-      r.progress += r.boostT > 0 ? BOOST_SPEED : r.braking ? BRAKE_SPEED : SPEED;
+      r.progress += (r.boostT > 0 ? BOOST_SPEED : r.braking ? BRAKE_SPEED : SPEED) * this.pace;
       if (r.progress >= 1) {
         r.progress -= 1;
         if (r.ai) this.think(r);
