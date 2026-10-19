@@ -4,6 +4,7 @@
   "tagline": "Table air hockey, first to 7",
   "players": "1–2",
   "category": "Sports",
+  "needs": "light",
   "order": 19,
   "status": "soon"
 }

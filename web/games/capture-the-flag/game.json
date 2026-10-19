@@ -4,6 +4,7 @@
   "tagline": "Two teams, two flags",
   "players": "2–8",
   "category": "Action",
+  "needs": "standard",
   "order": 68,
   "status": "soon"
 }

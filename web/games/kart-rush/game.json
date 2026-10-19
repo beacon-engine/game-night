@@ -4,6 +4,7 @@
   "tagline": "Arcade kart racing with items, drifts and shortcuts",
   "players": "1–4",
   "category": "Racing",
+  "needs": "standard",
   "order": 44,
   "status": "soon"
 }

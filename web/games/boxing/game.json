@@ -4,6 +4,7 @@
   "tagline": "Three rounds, one winner",
   "players": "1–2",
   "category": "Sports",
+  "needs": "standard",
   "order": 17,
   "status": "soon"
 }

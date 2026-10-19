@@ -4,6 +4,7 @@
   "tagline": "Motorbike Grand Prix: lean, brake late, get your knee down",
   "players": "1–4",
   "category": "Racing",
+  "needs": "heavy",
   "order": 41,
   "status": "soon"
 }

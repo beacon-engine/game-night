@@ -4,6 +4,7 @@
   "tagline": "Leave a wall of light; make them hit it",
   "players": "2–8",
   "category": "Arcade",
+  "needs": "light",
   "order": 83,
   "status": "soon"
 }

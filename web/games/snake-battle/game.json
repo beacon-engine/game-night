@@ -4,6 +4,7 @@
   "tagline": "Everyone is a snake. Eat, grow, cut them off",
   "players": "2–8",
   "category": "Arcade",
+  "needs": "light",
   "order": 82,
   "status": "soon"
 }

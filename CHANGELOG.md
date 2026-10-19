@@ -23,6 +23,18 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   race weekends with qualifying, championships with points tables, playoffs, title fights and careers,
   ladders, arcade high scores, and a Game Night Cup across games. Each game's README says which it uses.
 
+### Added (TV)
+- **Android TV app** (`make android`, `android/README.md`): the TV runs the server and is the game screen;
+  phones join it as usual. The remote works on the game select page; Back is Esc in games.
+- **Device checks**: each game says what it needs in `game.json` (`light`, `standard`, `heavy`), the screen
+  measures itself (memory and cores from the TV app or browser, graphics features, a short graphics test), and
+  games it can't run well are shown as "Not on this screen" with the reason. A game opened anyway stops before
+  loading anything big.
+- **Running safely**: games lower their detail, then stop, if they can't keep up; running out of graphics
+  memory ends the game cleanly. 3D games run at 30 fps on TVs. Leaving the app stops everything.
+- The server can serve the web files from a folder (`-web DIR`, builds tagged `noweb`), be told the address to
+  show the phones (`-host`), and stop when its parent app does (`-exit-with-stdin`).
+
 ### Added (pad)
 - Pad layouts, picked by the game per screen: a **d-pad** (one tap, one step) for menus and grid games, the
   analog **stick** for moving freely, and **racing** (slide to steer, throttle and brake pedals). The game

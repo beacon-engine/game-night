@@ -4,6 +4,7 @@
   "tagline": "Co-op survival against waves",
   "players": "1–4",
   "category": "Action",
+  "needs": "standard",
   "order": 67,
   "status": "soon"
 }

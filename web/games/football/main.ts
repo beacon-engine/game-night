@@ -1,11 +1,14 @@
 import * as THREE from 'three';
-import { $, backToHub, BIT, chip, escapeHtml, glyph, hostInfo, Input, type Button, type PadScreen } from '@platform';
+import { $, backToHub, BIT, chip, escapeHtml, glyph, hostInfo, Input, keyCode, PerformanceGuard, requireDevice, type Button, type PadScreen } from '@platform';
 import { loadFootballControls, type Context } from './actions.ts';
 import { Sfx } from './audio.ts';
 import { Match, newHuman, type Human, type MatchEvent, type Player, type Team } from './match.ts';
 import { loadPlayerAssets, makeLabel } from './player.ts';
 import { buildStadium } from './stadium.ts';
 import type { CameraMode, Club, Formations, PlayerData, Settings, TagMode, TimeOfDay } from './types.ts';
+
+// a heavy game: check this screen can take it before loading anything big (see game.json "needs")
+const device = await requireDevice();
 
 const load = <T>(file: string) => fetch(file, { cache: 'no-store' }).then((r) => r.json() as Promise<T>);
 const [settings, formations, clubs, controls] = await Promise.all([
@@ -314,13 +317,14 @@ function lobbyInput() {
 }
 
 addEventListener('keydown', (e) => {
-  if (e.code === 'Enter' && app.mode === 'lobby') startMatch();
-  else if (e.code === 'Escape' && app.mode === 'lobby') backToHub();
-  else if ((e.code === 'Escape' || e.code === 'KeyP') && app.mode === 'match') togglePause(null);
-  else if ((e.code === 'Escape' || e.code === 'KeyP') && app.mode === 'paused') menuBack();
-  else if (e.code === 'Enter' && app.mode === 'paused') menuSelect(input.list[0] || null);
-  else if ((e.code === 'ArrowUp' || e.code === 'ArrowDown') && app.mode === 'paused' && !input.list.length) menuMove(e.code === 'ArrowUp' ? -1 : 1);
-  else if (e.code === 'Escape' && app.mode === 'fulltime') toLobby();
+  const code = keyCode(e);
+  if (code === 'Enter' && app.mode === 'lobby') startMatch();
+  else if (code === 'Escape' && app.mode === 'lobby') backToHub();
+  else if ((code === 'Escape' || code === 'KeyP') && app.mode === 'match') togglePause(null);
+  else if ((code === 'Escape' || code === 'KeyP') && app.mode === 'paused') menuBack();
+  else if (code === 'Enter' && app.mode === 'paused') menuSelect(input.list[0] || null);
+  else if ((code === 'ArrowUp' || code === 'ArrowDown') && app.mode === 'paused' && !input.list.length) menuMove(code === 'ArrowUp' ? -1 : 1);
+  else if (code === 'Escape' && app.mode === 'fulltime') toLobby();
 });
 
 // ------------------------------------------------------------- pause ------
@@ -645,12 +649,13 @@ function updateCamera(dt: number) {
 }
 
 addEventListener('keydown', (e) => {
-  if (e.code === 'KeyC') {
+  const code = keyCode(e);
+  if (code === 'KeyC') {
     camMode = next(CAM_ORDER, camMode);
     banner(CAMERAS[camMode].label, '', true, 900);
-  } else if (e.code === 'KeyM') {
+  } else if (code === 'KeyM') {
     banner(sfx.toggleMute() ? 'SOUND OFF' : 'SOUND ON', '', true, 900);
-  } else if (e.code === 'KeyN') {
+  } else if (code === 'KeyN') {
     tagMode = next(TAG_MODES, tagMode);
     banner(`NAMES: ${tagMode.toUpperCase()}`, '', true, 900);
   }
@@ -674,8 +679,25 @@ function step(dt: number) {
 }
 
 // Cap the frame rate: on a 120Hz screen the browser would otherwise draw twice as often
-// as it needs to (and spin the laptop's fans up).
-const MIN_FRAME = 1000 / (settings.maxFps || 60) - 1;
+// as it needs to (and spin the laptop's fans up). On a TV, a steady 30 is kinder than a ragged 60.
+const maxFps = Math.min(settings.maxFps || 60, device.tv ? 30 : 60);
+const MIN_FRAME = 1000 / maxFps - 1;
+
+// If it can't keep up: lower the resolution, then drop shadows, then stop rather than grind
+const guard = new PerformanceGuard({
+  targetFps: maxFps,
+  onStruggle(level) {
+    if (level === 1) {
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 1) * 0.75);
+      resize();
+    } else {
+      renderer.shadowMap.enabled = false;
+      scene.traverse((o) => { if (o instanceof THREE.Mesh) o.castShadow = false; });
+    }
+    banner('Lowering detail', 'to keep it smooth on this screen', true, 1800);
+  },
+});
+guard.watchCanvas(renderer.domElement);
 function frame(now: number) {
   requestAnimationFrame(frame);
   if (now - last < MIN_FRAME) return;
@@ -700,6 +722,7 @@ function frame(now: number) {
     }
   }
   renderer.render(scene, camera);
+  guard.frame(now);
 }
 
 $('help').innerHTML = `<h4 class="caption">Controls</h4>${controlsTable()}`;

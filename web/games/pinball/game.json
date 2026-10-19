@@ -4,6 +4,7 @@
   "tagline": "Take turns on one table; beat the high score",
   "players": "1–4",
   "category": "Arcade",
+  "needs": "standard",
   "order": 86,
   "status": "soon"
 }

@@ -59,7 +59,7 @@ Want a game that isn't here? Add a folder with a `game.json` and a README in the
 
 ```
 web/games/my-game/
-  game.json       name, tagline, players, category, order on the page
+  game.json       name, tagline, players, category, order on the page, and "needs" (below)
   icon.svg        a line icon (see ../brand/README.md)
   README.md       the plan (not served)
   index.html      the page; loads main.js
@@ -134,6 +134,28 @@ Menus read `c.flickX()` / `c.flickY()`: one step per d-pad tap (taps can't be mi
 [Football](football) is the full example: `actions.ts` lists its actions, `main.ts` is the menus and HUD,
 `match.ts` the simulation. three.js is available (`import * as THREE from 'three'`) and bundled
 into each game that uses it.
+
+### What a game needs from the device
+
+Say it in `game.json` as `"needs"`: `"light"` (2D canvas), `"standard"` (simple 3D) or `"heavy"` (big 3D
+scenes: many animated characters, shadows, large textures). The game select page only offers a game on a
+screen that can run it, and says why when it can't (a 1 GB TV runs `light` games). Be honest: if in doubt,
+test on a weak device.
+
+In the game itself:
+
+```ts
+import { requireDevice, PerformanceGuard } from '@platform';
+
+const device = await requireDevice(); // before loading anything big: stops here if this screen can't run it
+const guard = new PerformanceGuard({ targetFps: device.tv ? 30 : 60, onStruggle: (level) => lowerDetail(level) });
+guard.watchCanvas(renderer.domElement); // out of graphics memory: end the game cleanly
+// in the render loop: guard.frame(now)
+```
+
+If the game can't hold its target, `onStruggle(1)`, `onStruggle(2)`… ask it to lower its detail; after
+that, Game Night stops the game and goes back to the games. Football is the example. To see your game as a
+weak screen would, open it with `?device=light` (in a browser; the TV app ignores it).
 
 ### Conventions
 

@@ -6,3 +6,4 @@ export * from './input.ts';
 export * from './keyboard.ts';
 export * from './pad.ts';
 export * from './protocol.ts';
+export * from './device.ts';

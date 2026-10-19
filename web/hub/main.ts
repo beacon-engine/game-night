@@ -1,7 +1,10 @@
 // Game select: every folder in games/ with a game.json shows up here (see web/games/README.md).
-import { $, BIT, chip, escapeHtml, glyph, hostInfo, Input, key, listGames, type GameInfo } from '@platform';
+import { $, BIT, canRun, chip, deviceProfile, escapeHtml, glyph, hostInfo, Input, key, keyCode, listGames, type GameInfo } from '@platform';
 
-const all: GameInfo[] = await listGames();
+const [all, device] = await Promise.all([listGames(), deviceProfile()]);
+// too much for this screen: shown, but not playable here
+const tooHeavy = (g: GameInfo) => !canRun(device.tier, g.needs);
+const playable = (g: GameInfo) => g.status === 'ready' && !tooHeavy(g);
 // grouped by category, in the order they first appear (games come sorted by their "order")
 const categories = [...new Set(all.map((g) => g.category))];
 const games = categories.flatMap((c) => all.filter((g) => g.category === c));
@@ -30,9 +33,10 @@ function tile(g: GameInfo, i: number) {
   const icon = g.iconUrl
     ? `<span class="icon" style="--icon:url('${g.iconUrl}')"></span>`
     : `<span class="emoji">${escapeHtml(g.icon)}</span>`;
-  return `<button class="tile frame ${g.status}" data-i="${i}">
+  const note = tooHeavy(g) ? 'Not on this screen' : g.status === 'soon' ? 'Soon' : '';
+  return `<button class="tile frame ${g.status} ${tooHeavy(g) ? 'unsupported' : ''}" data-i="${i}">
       <span class="top">${icon}<span class="caption faint num">${String(i + 1).padStart(2, '0')}</span></span>
-      <span><span class="name">${escapeHtml(g.name)}</span>${g.status === 'soon' ? '<div class="caption faint">Soon</div>' : ''}</span>
+      <span><span class="name">${escapeHtml(g.name)}</span>${note ? `<div class="caption faint">${note}</div>` : ''}</span>
     </button>`;
 }
 
@@ -43,18 +47,19 @@ function select(i: number, scroll = false) {
   for (const el of document.querySelectorAll('.tile')) el.classList.toggle('sel', Number((el as HTMLElement).dataset.i) === i);
   const g = games[i];
   if (!g) return;
-  const ready = g.status === 'ready';
+  const ready = playable(g);
   $('fIcon').style.setProperty('--icon', g.iconUrl ? `url('${g.iconUrl}')` : 'none');
   $('fIcon').classList.toggle('soon', !ready);
   $('fTitle').textContent = g.name;
   $('fTitle').classList.toggle('soon', !ready);
   $('fTagline').textContent = g.tagline;
   $('fPlayers').textContent = `${g.players} players`;
-  $('fStatus').textContent = ready ? 'Ready to play' : 'Coming soon';
+  $('fStatus').textContent = ready ? 'Ready to play' : tooHeavy(g) ? 'Not on this screen' : 'Coming soon';
   $('fStatus').classList.toggle('tag-volt', ready);
+  $('fWhy').textContent = tooHeavy(g) ? `Needs a stronger device: this screen has ${device.limit}.` : '';
   const btn = $<HTMLButtonElement>('play');
   btn.disabled = !ready;
-  btn.innerHTML = ready ? `${glyph('cross')} Play` : 'Coming soon';
+  btn.innerHTML = ready ? `${glyph('cross')} Play` : tooHeavy(g) ? 'Needs a stronger device' : 'Coming soon';
   if (scroll) document.querySelector('.tile.sel')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
@@ -74,6 +79,7 @@ function banner(text: string) {
 function play() {
   const g = games[sel];
   if (!g || leaving) return;
+  if (tooHeavy(g)) return banner(`${g.name} needs a stronger device`);
   if (g.status !== 'ready') return banner(`${g.name} is coming soon`);
   leaving = true;
   remember(g.id);
@@ -107,11 +113,11 @@ function move(dx: number, dy: number) {
 // --- phones -------------------------------------------------------------------------------
 function syncPads() {
   const g = games[sel];
-  const ready = g?.status === 'ready';
+  const ready = !!g && playable(g);
   for (const c of input.list) {
     input.show(c, {
       layout: 'dpad', label: c.tag, color: c.color, title: 'Game Night', accent: '#d7ff3b',
-      hint: g ? `${g.name}${ready ? '' : ' (coming soon)'}` : '',
+      hint: g ? `${g.name}${ready ? '' : tooHeavy(g) ? ' (not on this screen)' : ' (coming soon)'}` : '',
       labels: ready ? { cross: 'Play' } : {},
     });
   }
@@ -132,8 +138,9 @@ const KEYS: Record<string, [number, number]> = {
   ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1],
 };
 addEventListener('keydown', (e) => {
-  if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); play(); }
-  else if (KEYS[e.code]) { e.preventDefault(); move(...KEYS[e.code]); }
+  const code = keyCode(e);
+  if (code === 'Enter' || code === 'Space') { e.preventDefault(); play(); }
+  else if (KEYS[code]) { e.preventDefault(); move(...KEYS[code]); }
 });
 $('play').addEventListener('click', play);
 
@@ -148,13 +155,22 @@ function remember(id: string) {
 $('legend').innerHTML = [
   `<span>${glyph('dpad')} Choose</span>`,
   `<span>${glyph('cross')} Play</span>`,
-  `<span>${key('←')}${key('→')}${key('↑')}${key('↓')} ${key('Enter')} Keyboard</span>`,
+  `<span class="keys">${key('←')}${key('→')}${key('↑')}${key('↓')} ${key('Enter')} Keyboard</span>`,
 ].join('');
 hostInfo().then((info) => {
   $('url').textContent = info.padUrl;
   $('qr').innerHTML = info.qr;
   $('version').textContent = `game-night ${info.version}`;
+  $('device').textContent = describe();
 });
+// e.g. 'This screen: light games · 1 GB · Mali-G31'
+function describe() {
+  const kind = { light: '2D games', standard: '2D and simple 3D games', heavy: 'all games' }[device.tier];
+  const mem = device.memoryGB ? `${Math.round(device.memoryGB * 10) / 10} GB` : '';
+  return ['This screen runs ' + kind, device.limit && `limited by ${device.limit}`, device.limit ? '' : mem].filter(Boolean).join(' · ');
+}
+
+document.body.classList.toggle('tv', device.tv);
 renderLibrary();
 select(sel, true);
 renderPlayers();

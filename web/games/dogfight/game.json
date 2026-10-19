@@ -4,6 +4,7 @@
   "tagline": "Planes in the sky, last one flying",
   "players": "1–8",
   "category": "Action",
+  "needs": "standard",
   "order": 66,
   "status": "soon"
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- the mark: the pad's four buttons (web/brand/mark.svg), centred in the adaptive icon's safe zone -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <group android:translateX="34" android:translateY="34">
+        <path android:strokeColor="#2EE59D" android:strokeWidth="4" android:pathData="M10,2a8,8 0 1,0 0.01,0z" />
+        <path android:strokeColor="#FF4D5A" android:strokeWidth="4" android:pathData="M30,2a8,8 0 1,0 0.01,0z" />
+        <path android:strokeColor="#FF5ECF" android:strokeWidth="4" android:pathData="M2.5,22.5h15v15h-15z" />
+        <path android:strokeColor="#4C8DFF" android:strokeWidth="4" android:pathData="M30,22a8,8 0 1,0 0.01,0z" />
+    </group>
+</vector>

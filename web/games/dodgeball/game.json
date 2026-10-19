@@ -4,6 +4,7 @@
   "tagline": "Team dodgeball",
   "players": "2–8",
   "category": "Sports",
+  "needs": "standard",
   "order": 20,
   "status": "soon"
 }

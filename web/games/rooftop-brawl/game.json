@@ -4,6 +4,7 @@
   "tagline": "Platform fighter: knock them off the roof",
   "players": "2–4",
   "category": "Action",
+  "needs": "standard",
   "order": 69,
   "status": "soon"
 }

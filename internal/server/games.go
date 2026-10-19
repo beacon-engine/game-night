@@ -18,6 +18,7 @@ type Game struct {
 	Tagline  string `json:"tagline"`
 	Players  string `json:"players"`
 	Category string `json:"category"` // groups games on the page: "Sports", "Action"...
+	Needs    string `json:"needs"`    // how much device it takes: "light", "standard" or "heavy" (see web/platform/device.ts)
 	Status   string `json:"status"`   // "ready", or "soon" when it has no index.html yet
 	URL      string `json:"url"`
 	Order    int    `json:"-"`
@@ -30,6 +31,7 @@ type manifest struct {
 	Tagline  string `json:"tagline"`
 	Players  string `json:"players"`
 	Category string `json:"category"`
+	Needs    string `json:"needs"`
 	Status   string `json:"status"`
 	Order    int    `json:"order"`
 }
@@ -56,10 +58,13 @@ func Discover(files fs.FS) []Game {
 			log.Printf("[games] skipping %s: game.json: %v", id, err)
 			continue
 		}
-		g := Game{ID: id, Name: m.Name, Icon: m.Icon, Tagline: m.Tagline, Players: m.Players, Category: m.Category,
+		g := Game{ID: id, Name: m.Name, Icon: m.Icon, Tagline: m.Tagline, Players: m.Players, Category: m.Category, Needs: m.Needs,
 			Status: "soon", URL: "/games/" + id + "/", Order: m.Order}
 		if g.Category == "" {
 			g.Category = "Other"
+		}
+		if g.Needs != "light" && g.Needs != "standard" && g.Needs != "heavy" {
+			g.Needs = "standard" // (unknown or missing: be careful)
 		}
 		if _, err := fs.Stat(files, path.Join("games", id, "icon.svg")); err == nil {
 			g.IconURL = g.URL + "icon.svg"
