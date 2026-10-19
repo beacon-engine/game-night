@@ -3,8 +3,11 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -65,7 +68,7 @@ func TestOverlay(t *testing.T) {
 // Slots: the first pad is P1, a second P2; a pad that reconnects gets its own slot back, and
 // a new pad takes the lowest free one.
 func TestRelaySlots(t *testing.T) {
-	ts := httptest.NewServer(New(fstest.MapFS{}, 0).Handler())
+	ts := httptest.NewServer(New(fstest.MapFS{}, 0, "").Handler())
 	defer ts.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -147,5 +150,44 @@ func expect(t *testing.T, ctx context.Context, c *websocket.Conn, kv ...any) {
 		if match {
 			return
 		}
+	}
+}
+
+func TestSaves(t *testing.T) {
+	dir := t.TempDir()
+	ts := httptest.NewServer(New(fstest.MapFS{}, 0, dir).Handler())
+	defer ts.Close()
+	do := func(method, path, body string) (int, string) {
+		req, _ := http.NewRequest(method, ts.URL+path, strings.NewReader(body))
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer res.Body.Close()
+		b, _ := io.ReadAll(res.Body)
+		return res.StatusCode, string(b)
+	}
+	if code, _ := do("GET", "/api/saves/light-cycles/players/abc123", ""); code != 404 {
+		t.Fatalf("missing save: %d", code)
+	}
+	if code, _ := do("PUT", "/api/saves/light-cycles/players/abc123", `{"wins":3}`); code != 204 {
+		t.Fatalf("save: %d", code)
+	}
+	if code, body := do("GET", "/api/saves/light-cycles/players/abc123", ""); code != 200 || body != `{"wins":3}` {
+		t.Fatalf("read back: %d %s", code, body)
+	}
+	for _, bad := range []string{"/api/saves/../etc/passwd", "/api/saves/light-cycles/../../x", "/api/saves/Light/x", "/api/saves/a/b/c/d/e"} {
+		if code, _ := do("PUT", bad, `{}`); code != 400 && code != 404 && code != 301 {
+			t.Fatalf("%s should be refused, got %d", bad, code)
+		}
+	}
+	if code, _ := do("PUT", "/api/saves/light-cycles/x", `not json`); code != 400 {
+		t.Fatalf("non-JSON should be refused, got %d", code)
+	}
+	if code, _ := do("PUT", "/api/saves/light-cycles/x", `"`+strings.Repeat("a", maxSave)+`"`); code != 413 {
+		t.Fatalf("too big should be refused, got %d", code)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "light-cycles", "players", "abc123.json")); err != nil {
+		t.Fatalf("file not where expected: %v", err)
 	}
 }

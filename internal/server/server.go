@@ -22,10 +22,12 @@ type Server struct {
 	files fs.FS
 	port  int
 	relay *Relay
+	saves *Saves
 }
 
-func New(files fs.FS, port int) *Server {
-	return &Server{files: files, port: port, relay: NewRelay()}
+// New serves files on port. Games' saves go in savesDir (saving is off if it's empty).
+func New(files fs.FS, port int, savesDir string) *Server {
+	return &Server{files: files, port: port, relay: NewRelay(), saves: NewSaves(savesDir)}
 }
 
 // PadURL is what phones on the same Wi-Fi open to join.
@@ -41,6 +43,7 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/games", s.games)
 	mux.HandleFunc("GET /api/info", s.info)
+	mux.Handle("/api/saves/", s.saves)
 	mux.Handle("/ws", s.relay)
 	mux.Handle("/", s.static())
 	return mux

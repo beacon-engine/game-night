@@ -10,6 +10,7 @@ Pick one and go.
 | | Game | Players | Competition | Status |
 |---|---|---|---|---|
 | ⚽ | [Football](football) | 1–8 | Exhibition (League, Cup next) | **playable** |
+| ⚡ | [Light Cycles](light-cycles) | 1–8 | First to 3/5/7, saved records | **playable** |
 | | **Sports** | | | |
 | 🏀 | [Basketball](basketball) | 1–6 | Exhibition, League, Cup, Groups + knockout | coming soon |
 | ⚾ | [Baseball](baseball) | 1–2 (teams) | Exhibition, League, Series | coming soon |
@@ -44,7 +45,6 @@ Pick one and go.
 | 👾 | [Space Raiders](space-raiders) | 1–4 | Arcade, Score attack | coming soon |
 | 🧱 | [Brick Breaker](brick-breaker) | 1–4 | Arcade, Versus | coming soon |
 | 🐍 | [Snake Battle](snake-battle) | 2–8 | Party, Cup | coming soon |
-| ⚡ | [Light Cycles](light-cycles) | 2–8 | Party, Cup | coming soon |
 | 👻 | [Maze Chase](maze-chase) | 1–5 | Party, Score attack | coming soon |
 | ☄️ | [Asteroid Storm](asteroid-storm) | 1–4 | Arcade, Versus | coming soon |
 | 🎰 | [Pinball](pinball) | 1–4 | Arcade, Tournament | coming soon |
@@ -64,6 +64,7 @@ web/games/my-game/
   README.md       the plan (not served)
   index.html      the page; loads main.js
   main.ts         the game; bundled to main.js
+  manual.json     "How to play": intro, goal, steps, tips (shown from the game select page and the lobby)
   controls.json   which pad button does which action, per situation
   competitions.json  which competition formats it offers, points, tie-breakers (see COMPETITIONS.md)
   source/         the original art (zips unpacked, Blender files...): in git, never shipped
@@ -92,6 +93,8 @@ Games build on `@platform` ([`../platform/`](../platform)). The parts you'll use
 | `input.buzz(c, ms)` | Vibrate their phone. |
 | `loadControls(contexts, actions)` | Reads your `controls.json`; typos are reported in the console and skipped. Then `controls.action(ctx, bit)`, `controls.labels(ctx)`. |
 | `backToHub()` | Back to the game select page (the phones stay connected). |
+| `gameSaves()`, `playerKey(c)` | Saved progress: `saves.get(key)` / `saves.set(key, value)`, kept on the machine running Game Night. `playerKey(c)` is that player's own (it follows their phone). |
+| `showManual('', name)`, `manualPadInput(c)` | Open this game's manual (△ in the lobby); while it's open, `manualPadInput` lets the phones scroll and close it. |
 
 ```ts
 import { Input, loadControls, backToHub } from '@platform';
@@ -162,6 +165,8 @@ weak screen would, open it with `?device=light` (in a browser; the TV app ignore
 - Use the brand: link `/brand/brand.css` and follow [`../brand/README.md`](../brand/README.md) for menus and
   HUD (colours, type, the selection frame, `glyph()` for pad buttons). Football's `index.html` is the example.
 - ○ in the lobby (and Esc on the keyboard) goes back to the games with `backToHub()`.
+- Every game has a manual (`manual.json`), offered on △ in its lobby. Plain words: what it is, how you win,
+  how to play in a few steps. If it's based on an existing game, say so (`inspiredBy`).
 - Menus use the `'dpad'` layout; switch to `'stick'` or `'racing'` only while actually playing.
 - The pad's ❚❚ button arrives as `input.onPause`; pause the game.
 - Run the simulation at a fixed 60 steps a second and draw at up to 60 fps (see the loop at the bottom of

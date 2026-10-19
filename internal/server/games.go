@@ -20,6 +20,7 @@ type Game struct {
 	Category string `json:"category"` // groups games on the page: "Sports", "Action"...
 	Needs    string `json:"needs"`    // how much device it takes: "light", "standard" or "heavy" (see web/platform/device.ts)
 	Status   string `json:"status"`   // "ready", or "soon" when it has no index.html yet
+	Manual   bool   `json:"manual"`   // it has a manual.json ("How to play")
 	URL      string `json:"url"`
 	Order    int    `json:"-"`
 }
@@ -68,6 +69,9 @@ func Discover(files fs.FS) []Game {
 		}
 		if _, err := fs.Stat(files, path.Join("games", id, "icon.svg")); err == nil {
 			g.IconURL = g.URL + "icon.svg"
+		}
+		if _, err := fs.Stat(files, path.Join("games", id, "manual.json")); err == nil {
+			g.Manual = true
 		}
 		if g.Name == "" {
 			g.Name = id

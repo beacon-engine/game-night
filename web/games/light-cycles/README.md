@@ -1,20 +1,19 @@
 # Light Cycles
 
-Leave a wall of light; make them hit it · 2–8 players · Arcade · **coming soon**
+Leave a wall of light; make them hit it · 1–8 players · Arcade · **playable**
 
 Neon bikes that leave a solid trail. Box people in, don't get boxed in. Rounds last seconds.
 
-## Controls (a first plan)
+## Controls
 
 Every game uses the same phone pad: a stick (pushed past its ring = sprint), ✕ ○ □ △, L1, R1, and a swipe
-across a button. This is what each does here; it goes into `controls.json` once the game exists, and the
-phone dims the buttons a situation doesn't use.
+across a button. Here the phone shows the d-pad: turn with the arrows; ✕ boosts, hold ○ to brake (`controls.json`).
 
 | Button | Riding |
 |---|---|
-| ✕ | Boost (short, cooldown) |
-| ○ | Brake |
-| Stick | Turn 90° |
+| ✕ | Boost (short, then a 3 s wait) |
+| ○ | Brake (hold) |
+| D-pad, stick or arrow keys | Turn 90° |
 
 ## Competition
 
@@ -25,16 +24,25 @@ First to 5 round wins.
 The formats (and how standings, brackets and seasons work in every game) are in
 [COMPETITIONS.md](../COMPETITIONS.md).
 
-## First playable
+## First playable: done
 
-What it needs before `index.html` goes in and it shows up as playable on the game select page:
+- [x] Arena and trails
+- [x] Turning, crashing
+- [x] Rounds and a score
+- [x] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [x] A manual (`manual.json`): what it is, how you win, how to play, tips
+- [x] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
+- [x] Two keyboard players can play it too (they come free with `Input`)
 
-- [ ] Arena and trails
-- [ ] Turning, crashing
-- [ ] Rounds and a score
-- [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
-- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
-- [ ] Two keyboard players can play it too (they come free with `Input`)
+Also built: computer riders (they weigh up open space), walls that close in after 25 seconds, fast-forward
+once every person is out, a demo round behind the lobby, saved records per player, and a manual.
+
+## Files
+
+- `arena.ts`: the rules (grid, riders, crashes, the computer riders), no drawing
+- `draw.ts`: the canvas drawing, cheap enough for a 1 GB TV
+- `main.ts`: lobby, rounds, results, saved records, the phones
+- `manual.json`, `controls.json`, `game.json`
 
 ## Later
 

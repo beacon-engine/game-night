@@ -7,3 +7,5 @@ export * from './keyboard.ts';
 export * from './pad.ts';
 export * from './protocol.ts';
 export * from './device.ts';
+export * from './saves.ts';
+export * from './manual.ts';

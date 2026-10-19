@@ -56,7 +56,11 @@ func main() {
 	if *webDir == "" && !web.Embedded {
 		log.Fatal("this build has no web files built in: pass -web DIR")
 	}
-	srv := server.New(files(*webDir, *userDir), *port)
+	savesDir := ""
+	if *userDir != "" {
+		savesDir = filepath.Join(*userDir, "saves")
+	}
+	srv := server.New(files(*webDir, *userDir), *port, savesDir)
 	srv.Version = version
 	srv.Host = *host
 	ln, err := srv.Listen()
@@ -69,7 +73,7 @@ func main() {
 	url := fmt.Sprintf("http://localhost:%d", *port)
 	fmt.Printf("\n  GAME NIGHT %s is running\n  Game screen : %s\n  Phones      : %s   (same Wi-Fi)\n", version, url, srv.PadURL())
 	if *userDir != "" {
-		fmt.Printf("  Extra games : %s/games/\n", *userDir)
+		fmt.Printf("  Your folder : %s\n                (games you add go in games/, saved progress is kept in saves/)\n", *userDir)
 	}
 	fmt.Println()
 	if !*noOpen {

@@ -36,6 +36,7 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 - [ ] AI fielders chase and throw; runners advance
 - [ ] Balls, strikes, outs, three innings
 - [ ] Phones show what each button does (`input.show`); ○ in the lobby goes back to the games (`backToHub`)
+- [ ] A manual (`manual.json`): what it is, how you win, how to play, tips
 - [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [ ] Two keyboard players can play it too (they come free with `Input`)
 

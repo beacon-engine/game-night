@@ -1,5 +1,8 @@
 import * as THREE from 'three';
-import { $, backToHub, BIT, chip, escapeHtml, glyph, hostInfo, Input, keyCode, PerformanceGuard, requireDevice, type Button, type PadScreen } from '@platform';
+import {
+  $, backToHub, BIT, chip, escapeHtml, glyph, hostInfo, Input, keyCode, manualOpen, manualPadInput, manualScreen,
+  PerformanceGuard, requireDevice, showManual, type Button, type PadScreen,
+} from '@platform';
 import { loadFootballControls, type Context } from './actions.ts';
 import { Sfx } from './audio.ts';
 import { Match, newHuman, type Human, type MatchEvent, type Player, type Team } from './match.ts';
@@ -285,6 +288,7 @@ for (const b of document.querySelectorAll<HTMLElement>('.club button')) {
 }
 $('start').addEventListener('click', startMatch);
 $('back').addEventListener('click', backToHub);
+$('howto').addEventListener('click', howTo);
 $('tod').addEventListener('click', () => {
   timeOfDay = timeOfDay === 'day' ? 'night' : 'day';
   stadium.setTimeOfDay(timeOfDay);
@@ -303,8 +307,11 @@ function refreshLobby() {
   }
 }
 
+function howTo() { showManual('', 'Football'); }
+
 function lobbyInput() {
   for (const c of input.list) {
+    if (manualPadInput(c)) continue;
     const f = c.flickX();
     if (f) cycleClub(c.team, f);
     for (const ev of c.drain()) {
@@ -312,13 +319,16 @@ function lobbyInput() {
       if (ev.bit === BIT.cross) startMatch();
       else if (ev.bit === BIT.square) { c.team = c.team ? 0 : 1; refreshLobby(); }
       else if (ev.bit === BIT.circle) return backToHub();
+      else if (ev.bit === BIT.triangle) howTo();
     }
   }
 }
 
 addEventListener('keydown', (e) => {
+  if (manualOpen()) return;
   const code = keyCode(e);
-  if (code === 'Enter' && app.mode === 'lobby') startMatch();
+  if (code === 'KeyI' && app.mode === 'lobby') howTo();
+  else if (code === 'Enter' && app.mode === 'lobby') startMatch();
   else if (code === 'Escape' && app.mode === 'lobby') backToHub();
   else if ((code === 'Escape' || code === 'KeyP') && app.mode === 'match') togglePause(null);
   else if ((code === 'Escape' || code === 'KeyP') && app.mode === 'paused') menuBack();
@@ -526,7 +536,8 @@ function padScreen(c: Human): PadScreen {
   // menus use the d-pad; the match uses the stick
   const screen = { layout: 'dpad' as const, label: c.tag, color: c.color, title: club.name, accent: club.kit.shirt };
   if (app.mode === 'lobby') {
-    return { ...screen, labels: { cross: 'Kick off', circle: 'Games', square: 'Swap side' }, hint: '◀ ▶ changes your club' };
+    if (manualOpen()) return manualScreen(screen);
+    return { ...screen, labels: { cross: 'Kick off', circle: 'Games', square: 'Swap side', triangle: 'How to play' }, hint: '◀ ▶ changes your club' };
   }
   if (app.mode === 'paused') {
     const mine = !app.subs || app.subs.c === c;

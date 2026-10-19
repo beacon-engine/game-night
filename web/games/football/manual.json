@@ -1,0 +1,18 @@
+{
+  "intro": "Eleven against eleven in a stadium, in the style of the classic console football games. Everyone with a phone plays for one side; the computer plays the rest of the team, and the other side if no one is on it.",
+  "goal": "Score more goals than the other side by full time.",
+  "howToPlay": [
+    "Join with your phone. In the lobby, pick your club with ◀ ▶ and swap sides with □. Press ✕ to kick off.",
+    "You control one player at a time: the one with the ring under him. Move with the stick; push it past its ring to sprint.",
+    "With the ball, pass toward where the stick points, shoot (hold for more power), or play a through ball into space.",
+    "Without the ball, press the man with the ball or tackle him. Switch to the player nearest the ball when you need to.",
+    "The referee gives fouls, cards and penalties. Free kicks, corners and throw-ins are yours to take when your side has them.",
+    "Press ❚❚ on your phone to pause: substitutions, the camera and the controls are there."
+  ],
+  "steering": "Move with the stick; push it past its ring to sprint",
+  "tips": [
+    "A standing tackle from in front is safer than a slide; tackles from behind get you booked.",
+    "Players tire as they run. Rest them, or bring on substitutes in the second half.",
+    "Aim shots across the keeper, away from where he's standing."
+  ]
+}
