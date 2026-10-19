@@ -24,7 +24,7 @@ So Game Night checks what it's running on before offering anything:
 
 - The app tells the page the TV's real memory and CPU cores; the page tests its graphics. Each game says
   what it needs in its `game.json` (`light`: 2D, `standard`: simple 3D, `heavy`: big 3D like football).
-  Games the TV can't run well are shown as **Not on this screen**, with the reason, and can't be started.
+  Games the TV can't run well are shown as **Not on this TV**, with a plain explanation, and can't be started.
   On a 1 GB TV that leaves the 2D games.
 - 3D games run at a steady 30 fps on the TV.
 - If a game can't keep up anyway, it lowers its detail, then stops and goes back to the games rather than

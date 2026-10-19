@@ -139,7 +139,7 @@ into each game that uses it.
 
 Say it in `game.json` as `"needs"`: `"light"` (2D canvas), `"standard"` (simple 3D) or `"heavy"` (big 3D
 scenes: many animated characters, shadows, large textures). The game select page only offers a game on a
-screen that can run it, and says why when it can't (a 1 GB TV runs `light` games). Be honest: if in doubt,
+screen that can run it, and tells players in plain words when it can't (a 1 GB TV runs `light` games). Be honest: if in doubt,
 test on a weak device.
 
 In the game itself:
