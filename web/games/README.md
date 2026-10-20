@@ -105,6 +105,8 @@ Games build on `@platform` ([`../platform/`](../platform)). The parts you'll use
 | `loadControls(contexts, actions)` | Reads your `controls.json`; typos are reported in the console and skipped. Then `controls.action(ctx, bit)`, `controls.labels(ctx)`. |
 | `backToHub()` | Back to the game select page (the phones stay connected). |
 | `gameSaves()`, `playerKey(c)` | Saved progress: `saves.get(key)` / `saves.set(key, value)`, kept on the machine running Beacon Arcade. `playerKey(c)` is that player's own (it follows their phone). |
+| `earnStars(c, ['played', 'won'])` | Stars for a player at the end of a game. Say what happened (`played`, `won`, `podium`, `record`, `champion`); the server decides what it's worth, caps it per day and tells their phone. Returns `{ earned, balance, lines }` to show on your results. |
+| `ownedItems(c)`, `shopItems()` | What a player has bought for your game, and what's on sale. Your game sells looks with a `shop.json`: `{"items": [{"id", "name", "price", "about", ...your own fields}]}`. Only looks, never an advantage. |
 | `showManual('', name)`, `manualPadInput(c)` | Open this game's manual (Star in the lobby); while it's open, `manualPadInput` lets the phones scroll and close it. |
 
 ```ts

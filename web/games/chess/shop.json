@@ -1,0 +1,10 @@
+{
+  "_comment": "Board themes bought with stars. light/dark: the squares. Looks only.",
+  "items": [
+    { "id": "walnut", "name": "Walnut", "price": 60, "light": "#d8b483", "dark": "#8a5a36", "colors": ["#d8b483", "#8a5a36"], "about": "Warm wood, like a club board" },
+    { "id": "park", "name": "Park Green", "price": 60, "light": "#e7ead2", "dark": "#6e8c56", "colors": ["#e7ead2", "#6e8c56"], "about": "Cream and green, easy on the eyes" },
+    { "id": "marble", "name": "Marble", "price": 100, "light": "#e9e6e0", "dark": "#8e949c", "colors": ["#e9e6e0", "#8e949c"], "about": "Cool white and grey stone" },
+    { "id": "harbour", "name": "Harbour Blue", "price": 100, "light": "#a9cadc", "dark": "#3f6c88", "colors": ["#a9cadc", "#3f6c88"], "about": "Sea and sky" },
+    { "id": "rose", "name": "Rose", "price": 120, "light": "#f1d6da", "dark": "#a9606e", "colors": ["#f1d6da", "#a9606e"], "about": "Soft pink and deep rose" }
+  ]
+}

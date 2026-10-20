@@ -5,7 +5,20 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 
 ## [Unreleased]
 
+### Added
+- **Stars and a shop.** Finishing a game earns stars (more for a win, a podium, a record or a title, and a
+  bonus for the first game of the day; capped per day so replaying one quick game all night doesn't flood
+  the shop). Each phone shows its stars; tapping them opens the shop, where they buy looks, never an
+  advantage: paint jobs in Stock Cars (pick them in the garage with ▲▼), board themes in Chess. Games
+  sell items with a `shop.json` and pay out with `earnStars()`.
+- **Football tactics.** Five shapes for 11-a-side (4-4-2, 4-3-3, 4-2-3-1, 3-5-2, 5-3-2) and more for 7- and
+  5-a-side; team instructions (with the ball, back line, closing down, width) that change how the
+  computer-controlled teammates play; a choice of keeper. Set them on the team sheet in the lobby or from
+  the pause menu. Each player's plan is saved.
+
 ### Changed
+- Saved progress moved from JSON files to one database, `beacon-arcade.db` (SQLite, pure Go, so it runs
+  the same on Android TV). Saves from older versions are brought in automatically on the first run.
 - **Game Night is now Beacon Arcade** (the old name is already used by other game services). The program
   is `beacon-arcade`, and the user folder is `beacon-arcade` (an existing `game-night` folder is moved
   over, saved progress and all).

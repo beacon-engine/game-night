@@ -167,6 +167,15 @@ func (r *Relay) fromPad(id string, m envelope, data []byte) {
 	r.display.send(tagged)
 }
 
+// Tell sends a message from the server itself to one pad, if it's connected (e.g. stars earned).
+func (r *Relay) Tell(id string, v any) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if p := r.pads[id]; p != nil {
+		p.sendJSON(v)
+	}
+}
+
 func (r *Relay) disconnect(c *client, role, padID string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

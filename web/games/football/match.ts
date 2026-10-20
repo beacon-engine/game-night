@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { BIT, type Pad } from '@platform';
 import type { Action, Context, FootballControls } from './actions.ts';
 import { PlayerModel, type BodyState, type Card, type Fall, type Foot, type SkillKind } from './player.ts';
+import { DEFAULT_TACTICS, tune, type Tactics, type Tune } from './tactics.ts';
 import type { Club, DribbleStyle, FormationSlot, Kit, PlayerData, Settings, Stat } from './types.ts';
 
 // ------------------------------------------------------------------- types --
@@ -186,14 +187,21 @@ export class Team {
   subsLeft = 5;
   autoSubs = 0; // made by the AI manager
   stats = { poss: 0, shots: 0, onTarget: 0, fouls: 0, passes: 0 };
+  tactics: Tactics = DEFAULT_TACTICS;
+  tune: Tune = tune(DEFAULT_TACTICS); // what the instructions mean for the AI
+  wonAt = -99; // when we last won the ball off them (for breaking forward)
 
   constructor(readonly idx: 0 | 1, readonly club: Club) {
     this.side = idx === 0 ? 1 : -1; // home attacks +x
   }
+
+  instruct(t: Tactics) {
+    this.tactics = t;
+    this.tune = tune(t);
+  }
 }
 
 export class Player {
-  readonly role: FormationSlot['role'];
   readonly name: string;
   readonly number: number;
   readonly model: PlayerModel;
@@ -235,8 +243,8 @@ export class Player {
   turnTo: number | undefined;
   cutT = 0; cutSide = 1;
 
-  constructor(readonly team: Team, readonly idx: number, readonly data: PlayerData, readonly slot: FormationSlot, kit: Kit) {
-    this.role = slot.role;
+  // (the slot changes when the team changes shape; the keeper's never does)
+  constructor(readonly team: Team, readonly idx: number, readonly data: PlayerData, public slot: FormationSlot, kit: Kit) {
     this.name = data.name;
     this.number = data.number;
     this.maxSpeed = 5.0 + (data.pace / 100) * 3.4;
@@ -244,15 +252,23 @@ export class Player {
     this.model = new PlayerModel({ kit, number: data.number, name: data.name, gk: this.role === 'GK', seed: idx * 7 + team.idx * 31 + data.number * 3 + data.name.length });
     this.mass = 72 * this.model.build ** 3 * (0.88 + 0.24 * (data.tackling ?? 60) / 100);
   }
+  get role() { return this.slot.role; }
   get dirX() { return Math.sin(this.facing); }
   get dirZ() { return Math.cos(this.facing); }
   stat(k: Stat) { return (this.data[k] ?? 60) / 100; }
 }
 
+// How a side lines up: its shape, its instructions and who starts in goal (a name; else the first keeper)
+export interface TeamSetup {
+  shape: FormationSlot[];
+  tactics: Tactics;
+  keeper?: string;
+}
+
 export interface MatchOptions {
   scene: THREE.Scene;
   settings: Settings;
-  formation: FormationSlot[];
+  setups: [TeamSetup, TeamSetup];
   clubs: [Club, Club];
   controls: FootballControls;
   humans?: Human[];
@@ -307,7 +323,7 @@ export class Match {
   private covers = new Set<Player>();
   private marks = new Map<Player, Player>();
 
-  constructor({ scene, settings, formation, clubs, controls, humans = [], demo = false, onEvent = () => {} }: MatchOptions) {
+  constructor({ scene, settings, setups, clubs, controls, humans = [], demo = false, onEvent = () => {} }: MatchOptions) {
     this.controls = controls;
     this.scene = scene;
     this.L = settings.pitch.length;
@@ -328,15 +344,18 @@ export class Match {
     this.lastConceded = this.teams[1];
     for (const t of this.teams) {
       const club = t.club;
+      const setup = setups[t.idx];
+      t.instruct(setup.tactics);
       // fill each formation slot with an unused player of that position if possible
       const pool = [...club.players];
       const pick = (role: FormationSlot['role']) => {
-        let i = pool.findIndex((pl) => pl.pos === role);
+        let i = role === 'GK' ? pool.findIndex((pl) => pl.pos === 'GK' && pl.name === setup.keeper) : -1;
+        if (i < 0) i = pool.findIndex((pl) => pl.pos === role);
         if (i < 0) i = pool.findIndex((pl) => pl.pos !== 'GK');
         if (i < 0) i = 0;
         return pool.splice(i, 1)[0];
       };
-      formation.forEach((slot, i) => {
+      setup.shape.forEach((slot, i) => {
         const data = pick(slot.role);
         const kit = slot.role === 'GK' ? club.gk : club.kit;
         const p = new Player(t, i, data, slot, kit);
@@ -1360,6 +1379,7 @@ export class Match {
     // keeper receiving a deliberate kick from his own player: feet only
     this.gkFeet = p.role === 'GK' && b.footBy === p.team;
     b.footBy = null;
+    if (b.lastTouch !== p.team && !this.spot) p.team.wonAt = this.simT; // won in open play (not a restart)
     b.owner = p;
     b.lastTouch = p.team;
     b.lastPlayer = p;
@@ -1863,6 +1883,22 @@ export class Match {
     return p;
   }
 
+  // A new shape mid-match: each outfield player takes the free place nearest his old one,
+  // preferring his own position (a defender stays at the back if there's room there)
+  setShape(team: Team, shape: FormationSlot[]) {
+    const cost = (p: Player, s: FormationSlot) => Math.abs(p.slot.x - s.x) * 2 + Math.abs(p.slot.z - s.z) * 0.5 +
+      (p.data.pos === s.role ? 0 : 0.6) + (p.slot.role === s.role ? 0 : 0.2);
+    const pairs: [number, Player, FormationSlot][] = [];
+    for (const p of team.players) if (p.role !== 'GK') for (const s of shape.slice(1)) pairs.push([cost(p, s), p, s]);
+    pairs.sort((a, b) => a[0] - b[0]);
+    const done = new Set<Player | FormationSlot>();
+    for (const [, p, s] of pairs) {
+      if (done.has(p) || done.has(s)) continue;
+      p.slot = s;
+      done.add(p).add(s);
+    }
+  }
+
   // AI managers: at a stoppage in the second half, swap out a tired player for a fresh one
   autoSubs() {
     if (!this.secondHalf || this.demo) return;
@@ -1962,8 +1998,8 @@ export class Match {
       gk.frozen = true;
       gk.aiT = rand(1.2, 1.8);
       this.setPieceKind = 'goalkick';
-      this.gkPress = Math.random() < 0.4; // does the other side push up to press it?
-      this.gkLongAnyway = Math.random() < 0.2; // or the keeper just fancies it long
+      this.gkPress = Math.random() < team.opp.tune.goalKickPress; // does the other side push up to press it?
+      this.gkLongAnyway = Math.random() < team.tune.goalKickLong; // or the keeper just fancies it long
       return;
     }
     if (kind === 'penalty') {
@@ -2132,9 +2168,13 @@ export class Match {
       cands.sort((p, q) => dist(p) - dist(q));
       // if a human is already closest, the AI only covers
       const humanClose = t.humans.some((c) => c.player && dist(c.player) < dist(cands[0]));
-      if (!humanClose) this.chasers.add(cands[0]);
-      // a human asking for team press (R1): a teammate joins the press
-      if (t.humans.some((c) => c.pressing) && b.owner) this.chasers.add(humanClose ? cands[0] : cands[1] || cands[0]);
+      // standing off: only go to the ball once it's close, or in our half (a loose ball, always)
+      const tu = t.tune;
+      const press = tu.pressAlways || !b.owner || dist(cands[0]) < tu.pressRange * this.L || tgt.x * t.side < 0;
+      if (!humanClose && press) this.chasers.add(cands[0]);
+      // a human asking for team press (R1), or hunting the ball in their half: a teammate joins in
+      const pair = tu.pressPair && b.owner && tgt.x * t.side > 0 && dist(cands[1] || cands[0]) < this.L * 0.15;
+      if ((t.humans.some((c) => c.pressing) || pair) && b.owner) this.chasers.add(humanClose ? cands[0] : cands[1] || cands[0]);
       const second = humanClose ? cands[0] : cands[1];
       // in our half, a second man covers (goal-side of the ball, not on it)
       if (second && tgt.x * t.side < this.L * 0.1) this.covers.add(second);
@@ -2295,7 +2335,7 @@ export class Match {
           // jockey, and go in when the ball is exposed or he's running at us
           const exposed = Math.hypot(b.x - o.x, b.z - o.z) > 0.6;
           const frontOn = Math.cos(angDiff(p.facing, o.facing)) < -0.2;
-          const pTackle = (exposed ? 0.7 : 0.25) * (frontOn ? 1 : 0.5) * (0.6 + this.skill * 0.6);
+          const pTackle = (exposed ? 0.7 : 0.25) * (frontOn ? 1 : 0.5) * (0.6 + this.skill * 0.6) * t.tune.tackle;
           if (Math.random() < pTackle) {
             p.facing = Math.atan2(b.x - p.x, b.z - p.z);
             this.tackle(p, Math.random() < (frontOn ? 0.08 : 0.15));
@@ -2323,7 +2363,12 @@ export class Match {
       const tx = mx * w + sx * (1 - w), tz = mz * w + sz * (1 - w);
       return this.go(p, tx, tz, Math.hypot(tx - p.x, tz - p.z) > 4);
     }
-    this.go(p, sx, sz, Math.hypot(sx - p.x, sz - p.z) > 7);
+    this.go(p, sx, sz, Math.hypot(sx - p.x, sz - p.z) > (teamHas && this.breaking(t) && p.role !== 'DEF' ? 2 : 7));
+  }
+
+  // Just won the ball, and told to hit on the break: the team runs forward together
+  breaking(t: Team) {
+    return this.simT - t.wonAt < t.tune.breakT && this.ball.owner?.team === t;
   }
 
   // Where a player should stand: the team moves as a compact block that follows the ball
@@ -2363,15 +2408,20 @@ export class Match {
     let bt = clamp((b.x * s + L / 2) / L, 0, 1); // ball progress toward their goal (0 = our goal line)
     // facing a goal kick, the team drops into a mid-block; only the forwards stay up to press
     if (this.setPieceKind === 'goalkick' && !this.gkPress && b.owner?.frozen && b.owner.team !== p.team && p.role !== 'FWD') bt = Math.min(bt, 0.62);
-    const compact = teamHas ? 0.9 : 0.68;
-    let nx = 0.5 + (p.slot.x - 0.42) * compact + (bt - 0.5) * 0.8 + (teamHas ? 0.07 : -0.07);
+    const tu = p.team.tune;
+    const breaking = teamHas && this.breaking(p.team);
+    const compact = teamHas ? 0.9 + tu.support : 0.68 * tu.compact;
+    let nx = 0.5 + (p.slot.x - 0.42) * compact + (bt - 0.5) * 0.8 + (teamHas ? 0.07 + tu.support * 0.5 : -0.07) + tu.line;
+    if (!teamHas && p.role === 'FWD') nx += tu.holdUp; // someone to hit on the break
+    if (breaking && p.role !== 'DEF') nx += 0.06;
     if (p.role === 'DEF') {
       if (!teamHas) nx = Math.min(nx, bt - 0.05); // always goal-side of the ball
-      nx = Math.min(nx, 0.62);
+      nx = Math.min(nx, tu.defCap);
     }
-    if (p.role === 'FWD' && teamHas) nx = Math.max(nx, bt + 0.04);
+    if (p.role === 'FWD' && teamHas) nx = Math.max(nx, bt + tu.push + (breaking ? 0.06 : 0));
     nx = clamp(nx, 0.05, 0.93);
-    const spread = teamHas ? 0.84 : 0.6;
+    // width matters most with the ball; without it a narrow side still tucks in a little
+    const spread = (teamHas ? 0.84 : 0.6) * (teamHas ? tu.width : 1 + (tu.width - 1) * 0.5);
     let tz = p.slot.z * (W / 2) * spread + b.z * (teamHas ? 0.2 : 0.38);
     tz += Math.sin(this.simT * 0.5 + p.idx * 1.7) * 1.0; // let the shape breathe
 
@@ -2484,7 +2534,9 @@ export class Match {
     const dl = Math.hypot(dx, dz) || 1;
     p.wantX += (dx / dl - p.wantX) * 0.15;
     p.wantZ += (dz / dl - p.wantZ) * 0.15;
-    p.wantSprint = nd > 3.5 && toLine > 14;
+    const tu = p.team.tune;
+    const breaking = this.breaking(p.team);
+    p.wantSprint = nd > 3.5 && (toLine > 14 || breaking);
     // a defender squaring up in front: try to beat him with a skill
     if (near && nd < 2.4 && p.skillCd <= 0 && (near.x - p.x) * s > 0) {
       p.skillCd = rand(1.5, 3);
@@ -2507,9 +2559,9 @@ export class Match {
       if (plan && plan.margin > 0.2) return this.act(p, () => this.playPass(p, plan));
       return this.act(p, () => this.clear(p));
     }
-    // shoot
-    if (dGoal < 26 && Math.abs(p.z) < 18) {
-      const pShoot = dGoal < 11 ? 0.9 : dGoal < 17 ? 0.4 : 0.1;
+    // shoot (how far out, and how keen, depends on how we're told to play)
+    if (dGoal < tu.shootRange && Math.abs(p.z) < 18) {
+      const pShoot = Math.min(0.95, (dGoal < 11 ? 0.9 : dGoal < 17 ? 0.4 : 0.1) * tu.shootKeen);
       if (Math.random() < pShoot) {
         const aimZ = Math.random() < 0.5 ? rand(-0.85, -0.2) : rand(0.2, 0.85);
         return this.act(p, () => this.shoot(p, { x: 0, z: aimZ }, clamp(0.35 + dGoal / 40 + rand(0, 0.2), 0.3, 0.92)));
@@ -2523,14 +2575,14 @@ export class Match {
       const plan = this.passPlan;
       if (plan && plan.margin > 0.2) return this.act(p, () => this.playPass(p, plan));
     }
-    // a forward pass when one is clearly on
-    if (Math.random() < 0.12) {
+    // a forward pass when one is clearly on (on the break, look for it first)
+    if (Math.random() < (breaking ? 0.45 : tu.forwardPass)) {
       this.passTarget(p, null, { forwardOnly: true });
       const plan = this.passPlan;
-      if (plan && plan.margin > 0.3) return this.act(p, () => this.playPass(p, plan));
+      if (plan && plan.margin > (breaking ? 0.15 : tu.forwardMargin)) return this.act(p, () => this.playPass(p, plan));
     }
     // outside the final third, keep the ball moving with simple safe passes
-    if (toLine > 30 && Math.random() < 0.22) {
+    if (toLine > 30 && !breaking && Math.random() < tu.safePass) {
       this.passTarget(p, null);
       const plan = this.passPlan;
       if (plan && plan.margin > 0.35) return this.act(p, () => this.playPass(p, plan));

@@ -12,6 +12,8 @@ import (
 	"path"
 	"strings"
 	"syscall"
+
+	"github.com/beacon-engine/game-night/internal/store"
 )
 
 // Server serves one set of web files (the built web/dist, possibly with user overrides on top).
@@ -22,12 +24,12 @@ type Server struct {
 	files fs.FS
 	port  int
 	relay *Relay
-	saves *Saves
+	db    *store.Store // saves and stars; nil turns both off
 }
 
-// New serves files on port. Games' saves go in savesDir (saving is off if it's empty).
-func New(files fs.FS, port int, savesDir string) *Server {
-	return &Server{files: files, port: port, relay: NewRelay(), saves: NewSaves(savesDir)}
+// New serves files on port, keeping saves and stars in db (both are off if it's nil).
+func New(files fs.FS, port int, db *store.Store) *Server {
+	return &Server{files: files, port: port, relay: NewRelay(), db: db}
 }
 
 // PadURL is what phones on the same Wi-Fi open to join.
@@ -43,7 +45,8 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/games", s.games)
 	mux.HandleFunc("GET /api/info", s.info)
-	mux.Handle("/api/saves/", s.saves)
+	mux.Handle("/api/saves/", &Saves{db: s.db})
+	s.starsRoutes(mux)
 	mux.Handle("/ws", s.relay)
 	mux.Handle("/", s.static())
 	return mux

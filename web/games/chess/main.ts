@@ -2,11 +2,12 @@
 // computer's turn), pause with a draw offer or resigning, results, saved records.
 // The rules are in rules.ts, the computer player in ai.ts, the drawing in draw.ts.
 import {
-  $, backToHub, BIT, chip, escapeHtml, gameSaves, glyph, hostInfo, Input, keyCode, loadControls, manualOpen,
-  manualPadInput, manualScreen, playerKey, requireDevice, showManual, type Button, type Pad, type PadScreen,
+  $, backToHub, BIT, chip, earnStars, escapeHtml, gameSaves, glyph, hostInfo, Input, keyCode, loadControls, manualOpen,
+  manualPadInput, manualScreen, ownedItems, playerKey, requireDevice, shopItems, showManual, starsLabel,
+  type Button, type EarnFor, type Earned, type Pad, type PadScreen,
 } from '@platform';
 import { LEVELS, Thinker, wantsDraw } from './ai.ts';
-import { pieceSvg, PROMOTIONS, View, type Scene } from './draw.ts';
+import { INK_BOARD, pieceSvg, PROMOTIONS, setBoard, View, type Scene } from './draw.ts';
 import { Chess, fileOf, other, PIECE_NAME, rankOf, sq, typeOf, type Color, type Move } from './rules.ts';
 
 const device = await requireDevice(); // (a light game: runs almost anywhere)
@@ -17,15 +18,32 @@ const saves = gameSaves();
 interface PlayerRecord { name: string; games: number; wins: number; draws: number; losses: number; beat: number[] }
 const freshRecord = (name: string): PlayerRecord => ({ name, games: 0, wins: 0, draws: 0, losses: 0, beat: [0, 0, 0] });
 
-const input = new Input({ state: () => ({ record: null as PlayerRecord | null, cursor: sq(4, 1), hand: -1 }) });
-type Player = Pad<{ record: PlayerRecord | null; cursor: number; hand: number }>; // hand: the square of the piece in hand (-1: none)
+// Board themes bought with stars (shop.json). Anyone at the table who owns one can choose it.
+interface Board { id: string; name: string; light: string; dark: string }
+const BOARDS: Board[] = [{ id: '', name: 'Ink', ...INK_BOARD }, ...(await shopItems('chess'))
+  .filter((it) => typeof it.extra.light === 'string' && typeof it.extra.dark === 'string')
+  .map((it) => ({ id: it.id.slice('chess/'.length), name: it.name, light: it.extra.light as string, dark: it.extra.dark as string }))];
+const MIN_PLIES = 10; // stars only for a real game, not an instant resignation
+
+interface Seat {
+  record: PlayerRecord | null;
+  cursor: number;
+  hand: number; // the square of the piece in hand (-1: none)
+  boards: string[]; // board themes they own
+  earned: Earned | null; // stars from the last game
+}
+const input = new Input({ state: (): Seat => ({ record: null, cursor: sq(4, 1), hand: -1, boards: [], earned: null }) });
+type Player = Pad<Seat>;
 
 // --- settings, chosen in the lobby --------------------------------------------------------------
 const CLOCKS = [0, 5, 10]; // minutes each (0: no clock)
 const SIDES = ['White', 'Black', 'Random'];
-const settings = { person: false, level: 1, side: 0, clock: 0 }; // person: against another person, not the computer
+const settings = { person: false, level: 1, side: 0, clock: 0, board: '' }; // person: against another person, not the computer
 let personChosen = false; // (until someone changes it, the opponent follows how many phones have joined)
-const ROWS = ['opponent', 'level', 'side', 'clock'] as const;
+const ROWS = ['opponent', 'level', 'side', 'clock', 'board'] as const;
+// the boards someone here owns (the ink board is everyone's)
+const boards = () => BOARDS.filter((b) => !b.id || input.list.some((c) => c.boards.includes(b.id)));
+const boardOf = () => boards().find((b) => b.id === settings.board) ?? BOARDS[0];
 let row = 0;
 
 // Who plays each colour: a person, or the computer at a strength
@@ -77,6 +95,7 @@ function toLobby() {
   thinker = null;
   show('lobby');
   renderLobby();
+  for (const c of input.list) loadBoards(c); // (they may have bought one on their phone)
 }
 
 function start() {
@@ -99,6 +118,8 @@ function rematch() {
 function newGame() {
   game = new Chess();
   legal = game.moves();
+  setBoard(boardOf());
+  for (const p of people()) p.earned = null;
   lastMove = null;
   thinker = null;
   promo = null;
@@ -139,6 +160,7 @@ function finish(winner: Color | null, why: End) {
   promo = null;
   thinker = null;
   saveRecords();
+  payOut();
   callout(ENDS[why][0], winner ? `${COLOR[winner]} wins` : 'A draw', 2400);
   for (const c of ['w', 'b'] as const) {
     const s = sides[c];
@@ -201,6 +223,26 @@ function answerDraw(yes: boolean) {
 async function loadRecord(c: Player) {
   c.record = (await saves.get<PlayerRecord>(playerKey(c))) ?? freshRecord(c.label);
   if (stage === 'lobby') renderLobby();
+  loadBoards(c);
+}
+
+async function loadBoards(c: Player) {
+  c.boards = await ownedItems(c);
+  if (stage === 'lobby') renderLobby();
+}
+
+// Stars for both people at the board: for playing a real game, and more for winning it
+function payOut() {
+  if (game.history.length < MIN_PLIES) return;
+  for (const c of ['w', 'b'] as const) {
+    const s = sides[c];
+    if (!isPerson(s)) continue;
+    const why: EarnFor[] = result.winner === c ? ['played', 'won'] : ['played'];
+    earnStars(s.player, why).then((got) => {
+      s.player.earned = got;
+      if (stage === 'results') renderResults();
+    });
+  }
 }
 
 function saveRecords() {
@@ -275,7 +317,12 @@ function change(d: number) {
   if (ROWS[row] === 'opponent') { settings.person = !settings.person; personChosen = true; }
   else if (ROWS[row] === 'level') settings.level = turn(settings.level, LEVELS.length);
   else if (ROWS[row] === 'side') settings.side = turn(settings.side, SIDES.length);
-  else settings.clock = turn(settings.clock, CLOCKS.length);
+  else if (ROWS[row] === 'clock') settings.clock = turn(settings.clock, CLOCKS.length);
+  else {
+    const list = boards();
+    settings.board = list[turn(Math.max(0, list.indexOf(boardOf())), list.length)].id;
+    setBoard(boardOf());
+  }
   renderLobby();
 }
 
@@ -401,12 +448,13 @@ function renderLobby() {
     ? here.map((c) => `<div class="who">${chip(c)}<span class="caption faint">${escapeHtml(recordLine(c.record))}</span></div>`).join('')
     : '<p class="muted" style="margin:0">Join with your phone to play. On your own? Take on the computer.</p>';
   const label = {
-    opponent: 'Opponent', level: 'Computer', clock: 'Clock',
+    opponent: 'Opponent', level: 'Computer', clock: 'Clock', board: 'Board',
     side: settings.person && here.length >= 2 ? `${escapeHtml(here[0].label)} plays` : 'Play as',
   };
   const value = {
     opponent: settings.person ? 'A person' : 'Computer', level: LEVELS[settings.level].name,
     side: SIDES[settings.side], clock: CLOCKS[settings.clock] ? `${CLOCKS[settings.clock]} min` : 'None',
+    board: escapeHtml(boardOf().name),
   };
   $('settings').innerHTML = ROWS.map((r, i) => `<div class="setting ${i === row ? 'sel' : ''} ${r === 'level' && settings.person ? 'off' : ''}">
       <span>${label[r]}</span><span class="value"><span class="glyph glyph-key">◀</span><b>${value[r]}</b><span class="glyph glyph-key">▶</span></span></div>`).join('');
@@ -462,8 +510,9 @@ function renderResults() {
     const s = sides[c];
     const who = isPerson(s) ? chip(s.player) : `<span class="chip" style="--pc:var(--chalk-2)"><b>CPU</b>${LEVELS[s.level].name}</span>`;
     const line = isPerson(s) ? recordLine(s.player.record) : 'The computer';
+    const got = isPerson(s) && s.player.earned?.earned ? ` +${starsLabel(s.player.earned.earned)}` : '';
     return `<div class="standing ${c === w ? 'first' : ''}">${who}<span class="caption">${COLOR[c]}</span>
-      <span class="caption faint">${escapeHtml(line)}</span><b>${!w ? 'Draw' : c === w ? 'Win' : 'Loss'}</b></div>`;
+      <span class="caption faint">${escapeHtml(line)}${got}</span><b>${!w ? 'Draw' : c === w ? 'Win' : 'Loss'}</b></div>`;
   }).join('');
 }
 
