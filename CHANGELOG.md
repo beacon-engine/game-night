@@ -41,7 +41,8 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 - **Stock Cars**, the third playable game: 1–4 drivers on a banked oval under the lights, with up to 11
   computer drivers at three paces. Slipstreams, bump drafts, 3, 5 or 10 laps, a split screen for 2 to 4
   people, a TV camera when nobody's driving, engine sounds, and saved records (wins, best lap, the lap record).
-  The phone becomes a steering pad with gas and brake. Everything is drawn in code, nothing downloaded.
+  The phone becomes a steering pad with gas and brake. Pick from four tracks (countryside, desert at
+  dusk, a harbour at night, a city) and six cars (from Kenney's CC0 Car Kit); cars bounce, scrape and spin.
 - **Neon Trails**, the second playable game: 1–8 riders on phones or keyboards, computer riders to fill in,
   first to 3, 5 or 7 rounds, walls that close in so rounds don't drag, a demo round behind the lobby.
 - **Saved progress** for every game (`gameSaves()`): kept as files on the machine running Beacon Arcade
@@ -80,7 +81,8 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 
 ## [0.1.0] - 2026-10-19
 
-First release.
+First release (as "Game Night"; the program in that release is called `game-night`). The pad then used
+another console's button symbols; they were replaced by our own (see Unreleased).
 
 ### Added
 - `beacon-arcade`: one program for macOS, Windows, Linux and Raspberry Pi that serves the games on your
@@ -91,10 +93,10 @@ First release.
 - Football: 11-a-side 3D football, 1–8 players, with fouls, cards, set pieces, substitutions, stamina,
   day and night, four cameras, and remappable controls.
 - An optional user folder to replace built-in files (clubs, settings, controls) or add games without rebuilding.
-- Plans for 23 more games, each with a README: basketball, baseball, cricket, long tennis, table tennis,
-  pool, racing, beach volleyball, boxing, crazy golf, air hockey, dodgeball, fighters, street brawler,
-  tanks, laser tag, blast zone, sumo push, dogfight, last stand, capture the flag, rooftop brawl,
-  danfo rush and heist.
+- Plans for more games, each with a README: basketball, baseball, cricket, long tennis, table tennis, pool,
+  beach volleyball, boxing, crazy golf, puck duel, dodgeball, fighters, brawlers, tanks, laser arena,
+  bomb maze, sumo, dogfight, last stand, capture the flag, rooftop brawl, heist, and racing.
+  (Some had other names at the time; they were renamed, and one dropped, so none borrows an existing game's name.)
 
 [Unreleased]: https://github.com/beacon-engine/game-night/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/beacon-engine/game-night/releases/tag/v0.1.0

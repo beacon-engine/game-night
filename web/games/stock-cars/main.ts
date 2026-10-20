@@ -14,7 +14,7 @@ import { Track, type TrackSpec } from './track.ts';
 const device = await requireDevice(); // (simple 3D: not on the lightest screens)
 const getJson = <T>(url: string) => fetch(url, { cache: 'no-store' }).then((r) => r.json() as Promise<T>);
 const [{ tracks: TRACKS }, { cars: CARS }] = await Promise.all([
-  getJson<{ tracks: (TrackSpec & { ground?: string })[] }>('tracks.json'),
+  getJson<{ tracks: TrackSpec[] }>('tracks.json'),
   getJson<{ cars: CarType[] }>('cars.json'),
   document.fonts.load('900 100px "Big Shoulders Display"'), // (the cars' numbers are painted in it)
 ]);
@@ -93,7 +93,7 @@ function field(withPeople: boolean): CarSpec[] {
 }
 
 function newRace(withPeople: boolean, laps: number) {
-  world.setTrack(track(), trackSpec().ground);
+  world.setTrack(track());
   race = new Race(track(), field(withPeople), laps);
   world.setCars(race.cars, models);
   const slot = (c: Car) => input.list.find((p) => p.id === c.id)?.slot ?? 99;
@@ -353,7 +353,7 @@ function renderLobby() {
 // Picking cars: each person's choice turning in their part of the screen
 function showroom() {
   const list = [...input.list].sort((a, b) => a.slot - b.slot);
-  world.setTrack(track(), trackSpec().ground);
+  world.setTrack(track());
   world.showroom(list.map((c) => ({ model: models.get(CARS[c.pick].id)!, color: c.color, number: c.slot + 1 })));
   renderGarage();
 }
