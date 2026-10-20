@@ -15,6 +15,7 @@ export interface TrackSpec {
   name: string;
   about: string; // a line for the lobby
   time: 'day' | 'dusk' | 'night';
+  scenery: 'countryside' | 'desert' | 'harbour' | 'city';
   width: number; // m, from the inside edge to the outside wall
   bankStraights: number; // degrees
   half: Segment[];

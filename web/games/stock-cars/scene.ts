@@ -8,15 +8,16 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { carMesh, disposeCar, rollWheels, type CarModel } from './cars.ts';
 import { TOP, type Car } from './race.ts';
 import type { Track } from './track.ts';
+import { canvas, DISPLAY_FONT, seeded, speckle, texture } from './draw.ts';
+import { buildScenery, Land } from './scenery.ts';
 
 const STEP = 4; // m between the rings of the track's meshes
-const DISPLAY_FONT = '"Big Shoulders Display", "Arial Narrow", sans-serif';
 
 // The light of each time of day
 const TIMES = {
-  day: { sky: ['#4f8fdc', '#cfe5fb'], fog: 0xc9e0f6, hemi: [0xe6f0ff, 0x56703f, 1.9], sun: [0xfff2dc, 2.8], sunAt: [250, 420, 300], ground: '#447f3c', lamps: false, stars: false, env: 0.8 },
-  dusk: { sky: ['#27305e', '#f0a066'], fog: 0xc98a68, hemi: [0xffd0b0, 0x3a2e22, 1.4], sun: [0xffb070, 2.4], sunAt: [-600, 110, -320], ground: '#556b35', lamps: true, stars: false, env: 0.55 },
-  night: { sky: ['#04060b', '#151b2b'], fog: 0x0a0c12, hemi: [0xc4cee6, 0x1d2618, 1.6], sun: [0xfff1dc, 1.6], sunAt: [150, 400, 260], ground: '#16301f', lamps: true, stars: true, env: 0.35 },
+  day: { sky: ['#4f8fdc', '#cfe5fb'], fog: 0xc9e0f6, hemi: [0xe6f0ff, 0x56703f, 1.9], sun: [0xfff2dc, 2.8], sunAt: [250, 420, 300], dim: 1, lamps: false, stars: false, env: 0.8 },
+  dusk: { sky: ['#27305e', '#f0a066'], fog: 0xc98a68, hemi: [0xffd0b0, 0x3a2e22, 1.4], sun: [0xffb070, 2.4], sunAt: [-600, 110, -320], dim: 0.8, lamps: true, stars: false, env: 0.55 },
+  night: { sky: ['#04060b', '#151b2b'], fog: 0x0a0c12, hemi: [0xc4cee6, 0x1d2618, 1.6], sun: [0xfff1dc, 1.6], sunAt: [150, 400, 260], dim: 0.4, lamps: true, stars: true, env: 0.35 },
 } as const;
 type Time = (typeof TIMES)[keyof typeof TIMES];
 
@@ -67,7 +68,7 @@ export class World {
   }
 
   // --- the venue ---------------------------------------------------------------------------------
-  setTrack(track: Track, ground?: string) {
+  setTrack(track: Track) {
     if (this.track === track) return;
     this.track = track;
     this.venue.traverse((o) => {
@@ -81,7 +82,7 @@ export class World {
     this.scene.fog = new THREE.Fog(time.fog, 450, 3200);
     this.scene.background = new THREE.Color(time.fog);
     this.scene.environmentIntensity = time.env;
-    buildVenue((o, extra) => { this.venue.add(o); if (extra) this.extras.push(o); }, track, time, ground);
+    buildVenue((o, extra) => { this.venue.add(o); if (extra) this.extras.push(o); }, track, time);
   }
 
   // --- the cars ----------------------------------------------------------------------------------
@@ -215,7 +216,7 @@ function turntable(cam: THREE.PerspectiveCamera, g: THREE.Object3D) {
 // --- the venue, from the track ---------------------------------------------------------------------
 type Add = (o: THREE.Object3D, extra?: boolean) => void; // extra: drop it when the screen struggles
 
-function buildVenue(add: Add, t: Track, time: Time, ground: string = time.ground) {
+function buildVenue(add: Add, t: Track, time: Time) {
   const W = t.width, L = t.length;
   const lambert = (o: THREE.MeshLambertMaterialParameters) => new THREE.MeshLambertMaterial(o);
   add(new THREE.HemisphereLight(time.hemi[0], time.hemi[1], time.hemi[2]));
@@ -224,14 +225,16 @@ function buildVenue(add: Add, t: Track, time: Time, ground: string = time.ground
   add(sun);
   add(sky(time.sky[0], time.sky[1]));
 
-  // ground, the apron (flat, inside) and the banked racing surface
-  const grass = new THREE.Mesh(new THREE.PlaneGeometry(8000, 8000), lambert({ color: ground }));
-  grass.rotation.x = -Math.PI / 2;
-  grass.position.y = -0.05;
-  add(grass);
+  // the land and what's on it, then the apron (flat, inside) and the banked racing surface
+  const land = new Land(t, t.spec.scenery);
+  buildScenery(add, land, time.dim);
   const at = (d: number, up = 0) => (s: number) => { const p = t.point(s, d); return new THREE.Vector3(p.x, p.y + up, p.z); };
   add(new THREE.Mesh(strip(t, at(-W / 2 - 8), at(-W / 2), 16), lambert({ map: apronTexture() })));
-  add(new THREE.Mesh(strip(t, at(-W / 2), at(W / 2), 16), lambert({ map: asphaltTexture(W) })));
+  add(new THREE.Mesh(strip(t, at(-W / 2), at(W / 2), 24), new THREE.MeshStandardMaterial({ map: asphaltTexture(W), roughness: 0.9 })));
+  // the earth banked up behind the outside wall, so the turns don't float
+  const top = (s: number) => { const p = t.point(s, W / 2 + 0.1); return new THREE.Vector3(p.x, p.y, p.z); };
+  const foot = (s: number) => { const p = t.point(s, W / 2 + 0.1 + Math.max(1, t.point(s, W / 2).y * 1.6)); return new THREE.Vector3(p.x, -0.05, p.z); };
+  add(new THREE.Mesh(strip(t, top, foot, 8), lambert({ color: new THREE.Color(land.look.low).multiplyScalar(time.dim * 0.85), side: THREE.DoubleSide })));
 
   // the wall, and the catch fence above it
   const wall = (h: number) => (s: number) => { const p = t.point(s, W / 2 + 0.1); return new THREE.Vector3(p.x, p.y + h, p.z); };
@@ -257,7 +260,6 @@ function buildVenue(add: Add, t: Track, time: Time, ground: string = time.ground
   add(new THREE.Mesh(strip(t, off(20, 28.4), off(20, 28.8), 8, s0, s1), new THREE.MeshBasicMaterial({ color: time.lamps ? 0xfff3d6 : 0x6a6875 })));
 
   lights(add, t, time.lamps, stand);
-  trees(add, t, stand);
   infieldName(add, t);
   if (time.stars) add(stars(), true);
 }
@@ -295,19 +297,6 @@ function lights(add: Add, t: Track, on: boolean, stand: number) {
   add(new THREE.Mesh(mergeGeometries(heads), on ? new THREE.MeshBasicMaterial({ color: 0xfff3d6 }) : new THREE.MeshLambertMaterial({ color: 0x8a8f9c })));
 }
 
-function trees(add: Add, t: Track, stand: number) {
-  const n = Math.round(t.length / 9);
-  const mesh = new THREE.InstancedMesh(new THREE.ConeGeometry(4, 14, 6).translate(0, 7, 0), new THREE.MeshLambertMaterial({ color: 0x1f4a2c }), n);
-  const m = new THREE.Matrix4(), rnd = seeded(7);
-  for (let i = 0; i < n; i++) {
-    const s = rnd() * t.length, behindStand = Math.abs(t.gap(s, 0)) < stand / 2 + 30;
-    const p = t.point(s, t.width / 2 + (behindStand ? 90 : 60) + rnd() * 140);
-    const k = 0.7 + rnd() * 0.8;
-    m.makeScale(k, k * (0.8 + rnd() * 0.5), k).setPosition(p.x, 0, p.z);
-    mesh.setMatrixAt(i, m);
-  }
-  add(mesh, true);
-}
 
 // Our name painted on the infield grass, sized to fit, readable from the grandstand side
 function infieldName(add: Add, t: Track) {
@@ -433,42 +422,33 @@ function strip(t: Track, a: (s: number) => THREE.Vector3, b: (s: number) => THRE
 }
 
 // --- textures, drawn here so there's nothing to download ---------------------------------------------------
-function canvas(w: number, h: number) {
-  const c = document.createElement('canvas');
-  c.width = w;
-  c.height = h;
-  return c;
-}
 
-function texture(c: HTMLCanvasElement, repeat = true) {
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  if (repeat) t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.anisotropy = 4;
-  return t;
-}
 
-function speckle(g: CanvasRenderingContext2D, w: number, h: number, n: number, light: number, rnd: () => number) {
-  for (let i = 0; i < n; i++) {
-    const v = Math.floor(light + (rnd() - 0.5) * 40);
-    g.fillStyle = `rgb(${v},${v},${v + 4})`;
-    g.fillRect(rnd() * w, rnd() * h, 2, 2);
-  }
-}
 
-// across the track (u: inside edge to the wall), repeated along it
+// across the track (u: inside edge to the wall), along it (v): fine aggregate, rubber in the groove,
+// tyre marks, and the seams where it was laid
 function asphaltTexture(width: number) {
-  const c = canvas(256, 256), g = c.getContext('2d')!, rnd = seeded(11);
-  g.fillStyle = '#34373f';
-  g.fillRect(0, 0, 256, 256);
-  speckle(g, 256, 256, 3000, 60, rnd);
-  const u = (d: number) => ((d + width / 2) / width) * 256;
-  g.fillStyle = 'rgba(10,10,14,0.3)'; // the groove: rubber laid down at the bottom
-  g.fillRect(u(-width / 2 + 1.5), 0, u(-width / 2 + 7.5) - u(-width / 2 + 1.5), 256);
-  g.fillStyle = 'rgba(10,10,14,0.18)'; // and scuffs up by the wall
-  g.fillRect(u(width / 2 - 3), 0, u(width / 2 - 0.4) - u(width / 2 - 3), 256);
-  g.fillStyle = '#e8e6df';
-  g.fillRect(0, 0, 5, 256);
+  const c = canvas(512, 512), g = c.getContext('2d')!, rnd = seeded(11);
+  g.fillStyle = '#3a3d44';
+  g.fillRect(0, 0, 512, 512);
+  speckle(g, 512, 512, 26000, 62, rnd, 1);
+  speckle(g, 512, 512, 2500, 90, rnd, 2);
+  const u = (d: number) => ((d + width / 2) / width) * 512;
+  const band = (d0: number, d1: number, color: string) => { g.fillStyle = color; g.fillRect(u(d0), 0, u(d1) - u(d0), 512); };
+  band(-width / 2 + 1.5, -width / 2 + 8, 'rgba(12,12,16,0.32)'); // the groove: rubber laid down along the bottom
+  band(width / 2 - 3, width / 2 - 0.3, 'rgba(12,12,16,0.18)'); // scuffs up by the wall
+  g.strokeStyle = 'rgba(8,8,10,0.25)'; // tyre marks: long, slightly wandering
+  for (let i = 0; i < 26; i++) {
+    let x = u(-width / 2 + 1 + rnd() * (width - 2));
+    g.lineWidth = 1 + rnd() * 3;
+    g.beginPath(); g.moveTo(x, 0);
+    for (let y = 0; y <= 512; y += 32) { x += (rnd() - 0.5) * 6; g.lineTo(x, y); }
+    g.stroke();
+  }
+  g.fillStyle = 'rgba(255,255,255,0.05)'; // a seam across, once a tile
+  g.fillRect(0, 300, 512, 2);
+  g.fillStyle = '#e8e6df'; // the white line along the inside edge
+  g.fillRect(0, 0, 8, 512);
   return texture(c);
 }
 
@@ -559,7 +539,3 @@ function glowTexture() {
   return texture(c, false);
 }
 
-function seeded(seed: number) {
-  let s = seed;
-  return () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646;
-}

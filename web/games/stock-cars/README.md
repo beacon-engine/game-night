@@ -31,6 +31,8 @@ left and right to steer, with gas and brake pedals (`controls.json`). Menus use 
 | `race.ts` | The cars, the slipstream, contact (cars bounce off the wall and each other by weight; hard hits spin you round), laps, finishing order, and the computer drivers. No graphics, so it can be tested on its own. |
 | `cars.ts` | Loads the models and repaints each in its driver's colour, with their number on the doors. |
 | `scene.ts` | The venue in three.js, built from `track.ts` and lit for day, dusk or night; sparks; a chase camera per person (the screen splits for 2 to 4), a TV camera, and the turntables for picking cars. |
+| `scenery.ts` | The land around each track by its theme: countryside hills and forest, desert mesas, a harbour with cranes and containers, or a city. Flat by the track, rising into hills further out. |
+| `draw.ts` | Small helpers for textures drawn in code (and the noise the hills are made from). |
 | `sound.ts` | A synthesised engine per person driving, a thump for contact and a crunch for the wall. |
 | `main.ts` | Lobby, picking cars, countdown, race, results, saved records, what the phones show. |
 
