@@ -1,0 +1,10 @@
+{
+  "name": "Rally",
+  "icon": "⛰️",
+  "tagline": "Dirt, gravel and jumps, one stage at a time",
+  "players": "1–4",
+  "category": "Racing",
+  "needs": "standard",
+  "order": 46,
+  "status": "soon"
+}
