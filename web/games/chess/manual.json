@@ -1,0 +1,22 @@
+{
+  "intro": "Two armies of sixteen pieces on a board of 64 squares. Play a friend on the same screen, or take on the computer at three strengths.",
+  "inspiredBy": "Chess has been played for about 1,500 years. This is the standard game, with the standard rules.",
+  "goal": "Checkmate the other king: attack it so that it has no way out. If a player has no legal move but isn't in check, it's a stalemate, and a draw.",
+  "howToPlay": [
+    "Join with your phone. On your own, you play the computer; with two phones, you play each other.",
+    "In the lobby, choose your opponent, the computer's strength, your colour and a clock, then press {bolt} to start. White moves first.",
+    "On your turn, move your square with the arrows, then press {bolt} to pick up a piece. Dots show where it can go.",
+    "Move to one of those squares and press {bolt} to put it down. {drop} puts the piece back.",
+    "When a pawn reaches the far side, choose what it becomes with ◀▶ and press {bolt}. Usually a Queen.",
+    "To castle, pick up the King and move it two squares towards the Rook.",
+    "Press pause (❚❚) to offer a draw, resign, or leave. Your opponent accepts a draw with {bolt}."
+  ],
+  "steering": "Move your square around the board",
+  "tips": [
+    "Get your Knights and Bishops out early, and castle to keep your King safe.",
+    "Before every move, check what your opponent's last move attacks.",
+    "A piece that's attacked more times than it's defended can usually be taken.",
+    "The game is also a draw after three repeats of a position, or fifty moves each with no capture and no pawn moved.",
+    "Easy makes mistakes on purpose. Hard looks four moves ahead: watch out."
+  ]
+}

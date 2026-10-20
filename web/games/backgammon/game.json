@@ -1,0 +1,10 @@
+{
+  "name": "Backgammon",
+  "icon": "🎲",
+  "tagline": "Race your pieces home, hit theirs on the way",
+  "players": "1–2",
+  "category": "Board",
+  "needs": "light",
+  "order": 94,
+  "status": "soon"
+}
