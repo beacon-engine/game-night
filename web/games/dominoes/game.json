@@ -1,0 +1,10 @@
+{
+  "name": "Dominoes",
+  "icon": "🁫",
+  "tagline": "Match the ends, empty your hand",
+  "players": "2–4",
+  "category": "Board",
+  "needs": "light",
+  "order": 97,
+  "status": "soon"
+}

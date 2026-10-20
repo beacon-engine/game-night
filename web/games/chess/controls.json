@@ -1,0 +1,17 @@
+{
+  "_help": "Which pad button does what. The cursor moves with the d-pad (or the arrow keys / WASD). Actions: move (pick up a piece, put it down), cancel, accept and decline (a draw offer).",
+  "play": {
+    "bolt": "move",
+    "drop": "cancel"
+  },
+  "drawOffer": {
+    "bolt": "accept",
+    "drop": "decline"
+  },
+  "labels": {
+    "move": "Pick up, put down",
+    "cancel": "Cancel",
+    "accept": "Accept the draw",
+    "decline": "Play on"
+  }
+}

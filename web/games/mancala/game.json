@@ -1,0 +1,10 @@
+{
+  "name": "Mancala",
+  "icon": "🥜",
+  "tagline": "Sow the seeds, capture the most",
+  "players": "1–2",
+  "category": "Board",
+  "needs": "light",
+  "order": 98,
+  "status": "soon"
+}

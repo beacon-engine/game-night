@@ -38,7 +38,14 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   ladders, arcade high scores, and an Arcade Cup across games. Each game's README says which it uses.
 
 ### Added (games)
-- **Stock Cars**, the third playable game: 1–4 drivers on a banked oval under the lights, with up to 11
+- **Chess**, and a new **Board** category: 1–2 players, against a friend on the same screen or the computer
+  (Easy, Medium, Hard; it thinks a little each frame, so the screen never freezes). The full rules (castling,
+  en passant, promotion, the draws), the moves in standard notation, optional 5 or 10 minute clocks, draw offers
+  and resigning, and saved records (including wins against each computer strength). Move a square with the
+  phone's arrows, pick up and put down with Bolt. Our own pieces, drawn in code.
+- Plans for more board games, all with generic names: Checkers, Four in a Row, Reversi, Backgammon, Ludo,
+  Snakes and Ladders, Dominoes and Mancala (oware, or ayo as it's known in Nigeria).
+- **Stock Cars**, the third playable game: 1–4 drivers on banked ovals, with up to 11
   computer drivers at three paces. Slipstreams, bump drafts, 3, 5 or 10 laps, a split screen for 2 to 4
   people, a TV camera when nobody's driving, engine sounds, and saved records (wins, best lap, the lap record).
   The phone becomes a steering pad with gas and brake. Pick from four tracks (countryside, desert at

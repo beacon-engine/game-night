@@ -1,0 +1,10 @@
+{
+  "name": "Four in a Row",
+  "icon": "🟡",
+  "tagline": "Drop discs, line up four",
+  "players": "1–2",
+  "category": "Board",
+  "needs": "light",
+  "order": 92,
+  "status": "soon"
+}

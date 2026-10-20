@@ -11,6 +11,8 @@ Pick one and go.
 |---|---|---|---|---|
 | ⚽ | [Football](football) | 1–8 | Exhibition (League, Cup next) | **playable** |
 | ⚡ | [Neon Trails](neon-trails) | 1–8 | First to 3/5/7, saved records | **playable** |
+| 🚗 | [Stock Cars](stock-cars) | 1–4 | Exhibition, saved records (Race weekend, Championship next) | **playable** |
+| ♟️ | [Chess](chess) | 1–2 | Saved records (Ladder next) | **playable** |
 | | **Sports** | | | |
 | 🏀 | [Basketball](basketball) | 1–6 | Exhibition, League, Cup, Groups + knockout | coming soon |
 | ⚾ | [Baseball](baseball) | 1–2 (teams) | Exhibition, League, Series | coming soon |
@@ -26,8 +28,9 @@ Pick one and go.
 | | **Racing** | | | |
 | 🏍️ | [Superbikes](superbikes) | 1–4 | Exhibition, Race weekend, Championship, Career | coming soon |
 | 🏎️ | [Grand Prix](grand-prix) | 1–4 | Exhibition, Race weekend, Championship, Career | coming soon |
-| 🚗 | [Stock Cars](stock-cars) | 1–4 | Exhibition, Race weekend, Championship, Playoffs | coming soon |
 | 🏁 | [Go-Karts](go-karts) | 1–4 | Exhibition, Cup, Battle | coming soon |
+| 🏙️ | [Street Racing](street-racing) | 1–4 | Exhibition, Cup, Career | coming soon |
+| ⛰️ | [Rally](rally) | 1–4 | Stage, Rally, Rallycross | coming soon |
 | | **Action** | | | |
 | 🥋 | [Fighters](fighters) | 1–2 | Arcade ladder, Tournament, Ranked | coming soon |
 | 👊 | [Brawlers](brawler) | 1–4 | Story, Score attack | coming soon |
@@ -48,6 +51,15 @@ Pick one and go.
 | ☄️ | [Space Rocks](space-rocks) | 1–4 | Arcade, Versus | coming soon |
 | 🎰 | [Pinball](pinball) | 1–4 | Arcade, Tournament | coming soon |
 | 🐸 | [Road Hopper](road-hopper) | 1–8 | Party, Score attack | coming soon |
+| | **Board** | | | |
+| ⛀ | [Checkers](checkers) | 1–2 | Ladder | coming soon |
+| 🔴 | [Four in a Row](four-in-a-row) | 1–2 | Ladder | coming soon |
+| ⚫ | [Reversi](reversi) | 1–2 | Ladder | coming soon |
+| 🎲 | [Backgammon](backgammon) | 1–2 | Match to N points | coming soon |
+| 🟡 | [Ludo](ludo) | 2–4 | Party | coming soon |
+| 🐍 | [Snakes and Ladders](snakes-and-ladders) | 2–4 | Party | coming soon |
+| 🁫 | [Dominoes](dominoes) | 2–4 | Match to N points | coming soon |
+| 🫘 | [Mancala](mancala) | 1–2 | Ladder | coming soon |
 
 Every game also gets competitions (leagues, cups, race weekends, championships, title fights...):
 see [COMPETITIONS.md](COMPETITIONS.md) for the shared plan.
