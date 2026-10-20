@@ -90,7 +90,7 @@ export class World {
     for (const g of this.cars.values()) { this.scene.remove(g); disposeCar(g); }
     this.cars.clear();
     for (const c of cars) {
-      const g = carMesh(models.get(c.spec.car.id)!, c.spec.color, c.spec.number);
+      const g = carMesh(models.get(c.spec.car.id)!, c.spec.paint ?? c.spec.color, c.spec.number);
       this.scene.add(g);
       this.cars.set(c, g);
     }

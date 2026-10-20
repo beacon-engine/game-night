@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -14,6 +13,8 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
+
+	"github.com/beacon-engine/game-night/internal/store"
 )
 
 func TestDiscover(t *testing.T) {
@@ -68,7 +69,7 @@ func TestOverlay(t *testing.T) {
 // Slots: the first pad is P1, a second P2; a pad that reconnects gets its own slot back, and
 // a new pad takes the lowest free one.
 func TestRelaySlots(t *testing.T) {
-	ts := httptest.NewServer(New(fstest.MapFS{}, 0, "").Handler())
+	ts := httptest.NewServer(New(fstest.MapFS{}, 0, nil).Handler())
 	defer ts.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -153,11 +154,16 @@ func expect(t *testing.T, ctx context.Context, c *websocket.Conn, kv ...any) {
 	}
 }
 
-func TestSaves(t *testing.T) {
-	dir := t.TempDir()
-	ts := httptest.NewServer(New(fstest.MapFS{}, 0, dir).Handler())
-	defer ts.Close()
-	do := func(method, path, body string) (int, string) {
+// a server with a fresh database, and a way to call it
+func testServer(t *testing.T, files fstest.MapFS) func(method, path, body string) (int, string) {
+	db, err := store.Open(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { db.Close() })
+	ts := httptest.NewServer(New(files, 0, db).Handler())
+	t.Cleanup(ts.Close)
+	return func(method, path, body string) (int, string) {
 		req, _ := http.NewRequest(method, ts.URL+path, strings.NewReader(body))
 		res, err := http.DefaultClient.Do(req)
 		if err != nil {
@@ -165,8 +171,12 @@ func TestSaves(t *testing.T) {
 		}
 		defer res.Body.Close()
 		b, _ := io.ReadAll(res.Body)
-		return res.StatusCode, string(b)
+		return res.StatusCode, strings.TrimSpace(string(b))
 	}
+}
+
+func TestSaves(t *testing.T) {
+	do := testServer(t, fstest.MapFS{})
 	if code, _ := do("GET", "/api/saves/light-cycles/players/abc123", ""); code != 404 {
 		t.Fatalf("missing save: %d", code)
 	}
@@ -175,6 +185,12 @@ func TestSaves(t *testing.T) {
 	}
 	if code, body := do("GET", "/api/saves/light-cycles/players/abc123", ""); code != 200 || body != `{"wins":3}` {
 		t.Fatalf("read back: %d %s", code, body)
+	}
+	if code, _ := do("PUT", "/api/saves/light-cycles/players/abc123", `{"wins":4}`); code != 204 {
+		t.Fatalf("save over: %d", code)
+	}
+	if _, body := do("GET", "/api/saves/light-cycles/players/abc123", ""); body != `{"wins":4}` {
+		t.Fatalf("read back after saving over: %s", body)
 	}
 	for _, bad := range []string{"/api/saves/../etc/passwd", "/api/saves/light-cycles/../../x", "/api/saves/Light/x", "/api/saves/a/b/c/d/e"} {
 		if code, _ := do("PUT", bad, `{}`); code != 400 && code != 404 && code != 301 {
@@ -187,7 +203,49 @@ func TestSaves(t *testing.T) {
 	if code, _ := do("PUT", "/api/saves/light-cycles/x", `"`+strings.Repeat("a", maxSave)+`"`); code != 413 {
 		t.Fatalf("too big should be refused, got %d", code)
 	}
-	if _, err := os.Stat(filepath.Join(dir, "light-cycles", "players", "abc123.json")); err != nil {
-		t.Fatalf("file not where expected: %v", err)
+}
+
+func TestStars(t *testing.T) {
+	files := fstest.MapFS{
+		"games/chess/game.json":  {Data: []byte(`{"name":"Chess"}`)},
+		"games/chess/index.html": {Data: []byte(`<html>`)},
+		"games/chess/shop.json":  {Data: []byte(`{"items":[{"id":"glass","name":"Glass pieces","price":40,"set":"glass"},{"id":"bad id","name":"x","price":1}]}`)},
+	}
+	do := testServer(t, files)
+	if _, body := do("GET", "/api/stars/abc123", ""); body != `{"balance":0,"owned":[]}` {
+		t.Fatalf("new player: %s", body)
+	}
+	// the first stars of the day come with the daily bonus; unknown reasons and repeats earn nothing
+	code, body := do("POST", "/api/stars/abc123/earn", `{"game":"chess","for":["played","won","won","cheating"]}`)
+	if code != 200 || !strings.Contains(body, `"balance":40`) || !strings.Contains(body, `"earned":40`) {
+		t.Fatalf("earn: %d %s", code, body)
+	}
+	if _, body := do("POST", "/api/stars/abc123/earn", `{"game":"chess","for":["played"]}`); !strings.Contains(body, `"balance":45`) {
+		t.Fatalf("earn again (no bonus): %s", body)
+	}
+	if _, body := do("GET", "/api/shop", ""); !strings.Contains(body, `"id":"chess/glass"`) || strings.Contains(body, "bad id") || !strings.Contains(body, `"set":"glass"`) {
+		t.Fatalf("shop: %s", body)
+	}
+	if code, body := do("POST", "/api/stars/abc123/buy", `{"item":"chess/glass"}`); code != 200 || body != `{"balance":5,"owned":["chess/glass"]}` {
+		t.Fatalf("buy: %d %s", code, body)
+	}
+	if code, _ := do("POST", "/api/stars/abc123/buy", `{"item":"chess/glass"}`); code != 409 {
+		t.Fatalf("buying twice: %d", code)
+	}
+	if code, _ := do("POST", "/api/stars/other1/buy", `{"item":"chess/glass"}`); code != 402 {
+		t.Fatalf("buying without the stars: %d", code)
+	}
+	if code, _ := do("POST", "/api/stars/abc123/buy", `{"item":"chess/crown"}`); code != 404 {
+		t.Fatalf("buying what isn't sold: %d", code)
+	}
+	if code, _ := do("GET", "/api/stars/Not%20Valid", ""); code != 400 {
+		t.Fatalf("bad player id: %d", code)
+	}
+	// the daily cap: "won" earns 10 times a day per game
+	for i := 0; i < 12; i++ {
+		do("POST", "/api/stars/capped/earn", `{"game":"chess","for":["won"]}`)
+	}
+	if _, body := do("GET", "/api/stars/capped", ""); !strings.Contains(body, `"balance":170`) {
+		t.Fatalf("daily cap (20 bonus + 10 x 15): %s", body)
 	}
 }

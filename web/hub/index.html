@@ -99,6 +99,8 @@
     .tiles { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
     .hints { left: 0; padding: 12px 20px; }
   }
+  #players .player { display: inline-flex; align-items: center; gap: 8px; }
+  #players .stars-count { font-size: 13px; }
 </style>
 </head>
 <body>
@@ -124,6 +126,7 @@
         <div class="caption">Scan to join · same Wi-Fi</div>
         <div class="url" id="url">…</div>
         <div class="chips" id="players"></div>
+        <div class="caption faint" style="margin-top:8px">Play to earn stars. Tap them on your phone for the shop.</div>
       </div>
     </section>
   </aside>

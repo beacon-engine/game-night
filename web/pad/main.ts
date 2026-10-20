@@ -1,6 +1,9 @@
 // The phone controller. The same pad for every game: a floating stick on the left, the four
 // face buttons and two shoulder buttons on the right. The game decides what they say.
-import { $, BIT, CLOSE_REPLACED, FACE_BITS, socketUrl, type Button, type PadLayout, type PadScreen, type PadToServer, type ServerToPad } from '@platform';
+import {
+  $, BIT, buyItem, CLOSE_REPLACED, escapeHtml, FACE_BITS, shopItems, socketUrl, starsLabel, starsOf,
+  type Button, type PadLayout, type PadScreen, type PadToServer, type ServerToPad, type ShopItem,
+} from '@platform';
 
 const STICK_R = 60; // px from the centre to full tilt
 const STEER_R = 90; // the steering slider (racing) is wider and only goes sideways
@@ -39,10 +42,15 @@ function connect() {
         setDisplay(m.display);
         lastSent = '';
         flush();
+        starsOf(id).then((info) => info && setBalance(info.balance, info.owned));
         break;
       case 'display': setDisplay(m.on); break;
       case 'screen': show(m); break;
       case 'buzz': navigator.vibrate?.(m.ms || 40); break;
+      case 'stars':
+        setBalance(m.balance);
+        if (m.earned > 0) earned(m.earned);
+        break;
     }
   };
   ws.onclose = (e) => {
@@ -184,6 +192,88 @@ for (const [el, bit] of pressables) {
   el.addEventListener('pointerup', up);
   el.addEventListener('pointercancel', up);
 }
+
+// --- Stars and the shop ---------------------------------------------------------------------
+// Stars are earned in the games (the server tells us); the shop is here on the phone, so buying
+// never holds up the game on the TV.
+let balance = 0;
+let owned: string[] = [];
+let shop: ShopItem[] = [];
+let sure = ''; // the item whose Buy was tapped once: tap again to buy
+
+function setBalance(n: number, mine?: string[]) {
+  balance = n;
+  if (mine) owned = mine;
+  $('stars').innerHTML = starsLabel(n);
+  $('ov-shop').innerHTML = `Shop ${starsLabel(n)}`;
+  $('ov-shop').hidden = false;
+  $('shop-balance').innerHTML = starsLabel(n);
+}
+
+let earnedTimer = 0;
+function earned(n: number) {
+  $('earned').innerHTML = `+${starsLabel(n)}`;
+  $('earned').classList.add('show');
+  navigator.vibrate?.([30, 60, 30]);
+  clearTimeout(earnedTimer);
+  earnedTimer = window.setTimeout(() => $('earned').classList.remove('show'), 3000);
+}
+
+async function openShop() {
+  // let go of everything first, so nothing stays held in the game
+  buttons = 0;
+  for (const el of document.querySelectorAll('.down')) el.classList.remove('down');
+  releaseStick();
+  sure = '';
+  $('shop').classList.add('open');
+  $('shop-list').innerHTML = '<p class="muted">Opening the shop…</p>';
+  const [items, info] = await Promise.all([shopItems(), id ? starsOf(id) : null]);
+  shop = items;
+  if (info) setBalance(info.balance, info.owned);
+  renderShop();
+}
+
+function renderShop(msg = '') {
+  const games = [...new Set(shop.map((it) => it.gameName))];
+  $('shop-list').innerHTML = `<p class="caption faint" id="shop-msg">${escapeHtml(msg) || 'Earn stars by playing. They buy looks, never an advantage.'}</p>` +
+    (shop.length ? games.map((g) => `<h3>${escapeHtml(g)}</h3><div class="items">${shop.filter((it) => it.gameName === g).map(item).join('')}</div>`).join('')
+      : '<p class="muted">Nothing on sale yet.</p>');
+}
+
+function item(it: ShopItem) {
+  const mine = owned.includes(it.id);
+  const colors = (it.extra.colors as string[] | undefined) ?? (typeof it.extra.color === 'string' ? [it.extra.color] : []);
+  const sw = colors.length > 1 ? `linear-gradient(135deg, ${colors.join(', ')})` : colors[0] ?? '';
+  const label = mine ? 'Yours' : sure === it.id ? 'Buy?' : starsLabel(it.price);
+  return `<div class="item ${mine ? 'owned' : ''}">
+      <span class="swatch" style="${sw ? `--sw:${escapeHtml(sw)}` : ''}"></span>
+      <span><b>${escapeHtml(it.name)}</b>${it.extra.about ? `<small>${escapeHtml(it.extra.about)}</small>` : ''}</span>
+      <button class="btn buy ${sure === it.id ? 'sure' : ''}" data-item="${escapeHtml(it.id)}" ${mine ? 'disabled' : ''}>${label}</button>
+    </div>`;
+}
+
+$('shop-list').addEventListener('click', async (e) => {
+  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.buy');
+  const it = shop.find((x) => x.id === btn?.dataset.item);
+  if (!it || !id || owned.includes(it.id)) return;
+  if (balance < it.price) {
+    sure = '';
+    return renderShop(`${it.name} needs ${it.price - balance} more stars. Keep playing!`);
+  }
+  if (sure !== it.id) {
+    sure = it.id;
+    return renderShop(`Tap again to buy ${it.name}`);
+  }
+  sure = '';
+  const res = await buyItem(id, it.id);
+  if (typeof res === 'string') return renderShop(res);
+  setBalance(res.balance, res.owned);
+  navigator.vibrate?.(40);
+  renderShop(`${it.name} is yours. Pick it in ${it.gameName}.`);
+});
+$('stars').addEventListener('click', openShop);
+$('ov-shop').addEventListener('click', (e) => { e.stopPropagation(); openShop(); }); // (also while waiting for the game)
+$('shop-close').addEventListener('click', () => $('shop').classList.remove('open'));
 
 // --- Bar ----------------------------------------------------------------------------------
 $('name').addEventListener('click', () => {

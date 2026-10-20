@@ -20,6 +20,11 @@ const SHAPES: Record<number, { body: string; detail?: string }> = {
 const LIGHT = '#3a3f4e', DARK = '#20242f', EDGE = '#262a36', CHALK_2 = '#a6a4ae', CHALK_3 = '#6a6875', BAD = '#ff4d5a';
 const LOOK = { w: { fill: '#f3f0e8', edge: '#07080b' }, b: { fill: '#0e1016', edge: CHALK_2 } };
 
+// The squares' colours: the ink board, or a theme bought with stars (shop.json)
+export const INK_BOARD = { light: LIGHT, dark: DARK };
+let board = INK_BOARD;
+export const setBoard = (b: { light: string; dark: string }) => { board = b; };
+
 // A piece as inline svg (for the captured pieces in the HUD)
 export const pieceSvg = (type: number, c: Color) => {
   const { body, detail } = SHAPES[type], { fill, edge } = LOOK[c];
@@ -105,7 +110,7 @@ export class View {
     };
 
     // squares, coordinates, a hairline round the edge
-    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) fill(sq(c, r), (c + r) % 2 ? LIGHT : DARK);
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) fill(sq(c, r), (c + r) % 2 ? board.light : board.dark);
     g.strokeStyle = EDGE;
     g.lineWidth = Math.max(1, this.dpr);
     g.strokeRect(this.ox - 0.5, this.oy - 0.5, s * 8 + 1, s * 8 + 1);

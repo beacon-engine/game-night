@@ -1,7 +1,7 @@
 // Game select: every folder in games/ with a game.json shows up here (see web/games/README.md).
 import {
   $, BIT, canRun, chip, deviceProfile, escapeHtml, glyph, hostInfo, Input, key, keyCode, listGames, manualOpen,
-  manualPadInput, manualScreen, showManual, thisDevice, type GameInfo,
+  manualPadInput, manualScreen, showManual, starsLabel, starsOf, thisDevice, type GameInfo,
 } from '@platform';
 
 const [all, device] = await Promise.all([listGames(), deviceProfile()]);
@@ -73,9 +73,17 @@ function select(i: number, scroll = false) {
   if (scroll) document.querySelector('.tile.sel')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
+// Everyone here, with their stars (fetched when they join; the shop is on their phone)
+const balances = new Map<string, number>();
 function renderPlayers() {
   const pads = input.list;
-  $('players').innerHTML = pads.length ? pads.map(chip).join('') : '<em>No one has joined yet</em>';
+  $('players').innerHTML = pads.length
+    ? pads.map((c) => `<span class="player">${chip(c)}${balances.has(c.id) ? starsLabel(balances.get(c.id)!) : ''}</span>`).join('')
+    : '<em>No one has joined yet</em>';
+  for (const c of pads) if (!balances.has(c.id)) {
+    balances.set(c.id, 0);
+    starsOf(c).then((info) => { balances.set(c.id, info?.balance ?? 0); renderPlayers(); });
+  }
 }
 
 let bannerTimer = 0;

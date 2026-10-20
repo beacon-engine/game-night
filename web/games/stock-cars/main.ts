@@ -2,8 +2,9 @@
 // race, results, saved records. The tracks and cars are data (tracks.json, cars.json); the racing is
 // in race.ts, the track's shape in track.ts, the models in cars.ts, the 3D world in scene.ts.
 import {
-  $, backToHub, BIT, chip, escapeHtml, gameSaves, glyph, hostInfo, Input, keyCode, loadControls, manualOpen,
-  manualPadInput, manualScreen, PerformanceGuard, playerKey, requireDevice, showManual, type Pad, type PadScreen,
+  $, backToHub, BIT, chip, earnStars, escapeHtml, gameSaves, glyph, hostInfo, Input, keyCode, loadControls, manualOpen,
+  manualPadInput, manualScreen, ownedItems, PerformanceGuard, playerKey, requireDevice, shopItems, showManual, starsLabel,
+  type EarnFor, type Earned, type Pad, type PadScreen,
 } from '@platform';
 import { loadCars, type CarType } from './cars.ts';
 import { Race, TICK, type Car, type CarSpec, type Hit } from './race.ts';
@@ -19,17 +20,31 @@ const [{ tracks: TRACKS }, { cars: CARS }] = await Promise.all([
   document.fonts.load('900 100px "Big Shoulders Display"'), // (the cars' numbers are painted in it)
 ]);
 const models = await loadCars(CARS);
+// Paint jobs bought with stars (shop.json); everyone also has their own player colour
+interface Paint { id: string; name: string; color: string }
+const PAINTS: Paint[] = (await shopItems('stock-cars')).filter((it) => typeof it.extra.color === 'string')
+  .map((it) => ({ id: it.id.slice('stock-cars/'.length), name: it.name, color: it.extra.color as string }));
 const controls = await loadControls(['drive'] as const, ['throttle', 'brake', 'lookBack'] as const);
 const saves = gameSaves();
 
 // What we remember about each driver, and the fastest lap at each track
-interface PlayerRecord { name: string; races: number; wins: number; podiums: number; bestLap: number; car?: string }
+interface PlayerRecord { name: string; races: number; wins: number; podiums: number; bestLap: number; car?: string; paint?: string }
 interface LapRecord { time: number; name: string; car?: string }
 const freshRecord = (name: string): PlayerRecord => ({ name, races: 0, wins: 0, podiums: 0, bestLap: 0 });
 const lapRecords = new Map<string, LapRecord | null>();
 
-const input = new Input({ state: () => ({ record: null as PlayerRecord | null, pick: 0, ready: false }) });
-type Player = Pad<{ record: PlayerRecord | null; pick: number; ready: boolean }>;
+interface Driver {
+  record: PlayerRecord | null;
+  pick: number; // the car (cars.json)
+  ready: boolean;
+  paints: Paint[]; // the paint jobs they own
+  paint: number; // 0 = their own colour, then paints[paint - 1]
+  lapRecord: boolean; // set the track's lap record this race
+  earned: Earned | null; // stars from the last race
+}
+const input = new Input({ state: (): Driver => ({ record: null, pick: 0, ready: false, paints: [], paint: 0, lapRecord: false, earned: null }) });
+type Player = Pad<Driver>;
+const paintOf = (c: Player) => c.paints[c.paint - 1] ?? { id: '', name: 'Your colour', color: c.color };
 
 // --- settings, chosen in the lobby --------------------------------------------------------------
 const LAPS = [3, 5, 10];
@@ -78,7 +93,7 @@ const carOf = (type: CarType): CarSpec['car'] => ({ ...type, width: models.get(t
 
 function field(withPeople: boolean): CarSpec[] {
   const people: CarSpec[] = (withPeople ? input.list : []).map((c) => ({
-    id: c.id, name: c.label, color: c.color, number: c.slot + 1, ai: false, skill: 1, car: carOf(CARS[c.pick]),
+    id: c.id, name: c.label, color: c.color, paint: paintOf(c).color, number: c.slot + 1, ai: false, skill: 1, car: carOf(CARS[c.pick]),
   }));
   const taken = new Set(people.map((p) => p.color.toLowerCase()));
   const liveries = LIVERIES.filter((c) => !taken.has(c));
@@ -117,14 +132,21 @@ function toLobby() {
 function start() {
   if (!input.list.length) return startRace();
   stage = 'garage';
-  for (const c of input.list) c.ready = false;
+  for (const c of input.list) {
+    c.ready = false;
+    loadPaints(c); // (they may have just bought one on their phone)
+  }
   showroom();
   show('hud');
 }
 
 function startRace() {
   drivers.clear();
-  for (const c of input.list) drivers.set(c.id, c);
+  for (const c of input.list) {
+    drivers.set(c.id, c);
+    c.lapRecord = false;
+    c.earned = null;
+  }
   newRace(true, settings.laps);
   stage = 'grid';
   stageT = 0;
@@ -137,6 +159,7 @@ function startRace() {
 function endRace() {
   stage = 'results';
   saveRecords();
+  payOut();
   renderResults();
   show('results');
   engines.silence();
@@ -161,6 +184,8 @@ function onLap(car: Car) {
     lapRecords.set(trackSpec().id, next);
     saves.set(`lap-record-${trackSpec().id}`, next);
     callout(fmt(car.lastLap), `New lap record · ${car.spec.name}`);
+    const who = playerOf(car);
+    if (who) who.lapRecord = true;
     buzz(car, 150);
   }
 }
@@ -187,6 +212,32 @@ async function loadRecord(c: Player) {
   const last = CARS.findIndex((t) => t.id === c.record?.car); // (the car they drove last time)
   if (last >= 0) c.pick = last;
   if (stage === 'lobby') renderLobby();
+  loadPaints(c);
+}
+
+async function loadPaints(c: Player) {
+  const owned = await ownedItems(c);
+  const was = paintOf(c).id || c.record?.paint;
+  c.paints = PAINTS.filter((p) => owned.includes(p.id));
+  c.paint = c.paints.findIndex((p) => p.id === was) + 1; // (back to their own colour if it's not theirs)
+  if (stage === 'garage') showroom();
+}
+
+// Stars for everyone who started: for finishing, a win or a podium (against someone), a lap record
+function payOut() {
+  const order = race.standings(), against = race.cars.length > 1;
+  for (const c of drivers.values()) {
+    const car = race.cars.find((x) => x.id === c.id);
+    if (!car) continue;
+    const pos = order.indexOf(car) + 1, why: EarnFor[] = ['played'];
+    if (against && pos === 1) why.push('won');
+    else if (against && pos <= 3) why.push('podium');
+    if (c.lapRecord) why.push('record');
+    earnStars(c, why).then((got) => {
+      c.earned = got;
+      if (stage === 'results') renderResults();
+    });
+  }
 }
 
 async function loadLapRecord() {
@@ -210,6 +261,7 @@ function saveRecords() {
     if (pos <= 3) r.podiums++;
     if (car.bestLap && (!r.bestLap || car.bestLap < r.bestLap)) r.bestLap = car.bestLap;
     r.car = car.stats.id;
+    r.paint = paintOf(c).id || undefined;
     c.record = r;
     saves.set(playerKey(c), r);
   }
@@ -246,6 +298,10 @@ function menuInput(c: Player) {
   }
   if (stage === 'garage' && fx && !c.ready) {
     c.pick = (c.pick + fx + CARS.length) % CARS.length;
+    showroom();
+  }
+  if (stage === 'garage' && fy && !c.ready && c.paints.length) {
+    c.paint = (c.paint - fy + c.paints.length + 1) % (c.paints.length + 1); // (▲ = the previous one)
     showroom();
   }
   for (const ev of c.drain()) {
@@ -318,7 +374,7 @@ function padScreen(c: Player): PadScreen {
     case 'lobby': return { ...base, labels: { bolt: 'Start', drop: 'Games', star: 'How to play' }, hint: '▲▼ choose · ◀▶ change' };
     case 'garage': return c.ready
       ? { ...base, labels: { drop: 'Change car' }, hint: 'Ready. Waiting for the others' }
-      : { ...base, labels: { bolt: 'Ready', drop: 'Back' }, hint: `◀▶ pick your car: ${CARS[c.pick].name}` };
+      : { ...base, labels: { bolt: 'Ready', drop: 'Back' }, hint: c.paints.length ? `◀▶ car: ${CARS[c.pick].name} · ▲▼ paint` : `◀▶ pick your car: ${CARS[c.pick].name}` };
     case 'results': return { ...base, labels: { bolt: 'Race again', drop: 'Lobby' }, hint: 'Race over' };
     case 'paused': return { ...base, labels: { bolt: 'Resume', drop: 'Quit' }, hint: 'Paused' };
     default: {
@@ -354,7 +410,7 @@ function renderLobby() {
 function showroom() {
   const list = [...input.list].sort((a, b) => a.slot - b.slot);
   world.setTrack(track());
-  world.showroom(list.map((c) => ({ model: models.get(CARS[c.pick].id)!, color: c.color, number: c.slot + 1 })));
+  world.showroom(list.map((c) => ({ model: models.get(CARS[c.pick].id)!, color: paintOf(c).color, number: c.slot + 1 })));
   renderGarage();
 }
 
@@ -367,6 +423,8 @@ function renderGarage() {
       <div class="card panel">${chip(c)}
         <div class="carname"><span class="glyph glyph-key">◀</span><h2>${escapeHtml(t.name)}</h2><span class="glyph glyph-key">▶</span></div>
         <p class="muted">${escapeHtml(t.about)}</p>
+        <div class="paint"><i style="background:${paintOf(c).color}"></i>${escapeHtml(paintOf(c).name)}${c.paints.length
+          ? ` <span class="faint">· ▲▼ ${c.paints.length + 1} paints</span>` : ' <span class="faint">· more in the shop on your phone</span>'}</div>
         ${bar('Top speed', t.top * 1.1)}${bar('Pick-up', t.accel)}${bar('Grip', t.grip)}${bar('Weight', t.weight * 0.85)}
         <div class="ready ${c.ready ? 'on' : ''}">${c.ready ? 'Ready' : `${glyph('bolt')} when you're happy`}</div>
       </div></div>`;
@@ -430,7 +488,7 @@ function renderResults() {
     const who = human ? chip(human) : `<span class="chip" style="--pc:${c.spec.color}"><b>${c.spec.number}</b>${escapeHtml(c.spec.name)}</span>`;
     const time = i === 0 ? (c.finish !== null ? fmt(c.finish) : '') : gapText(c, win, i);
     return `<div class="standing ${i === 0 ? 'first' : ''}"><span class="num">${i + 1}</span>${who}
-      <span class="caption">${escapeHtml(c.stats.name)}${human ? ` · ${escapeHtml(recordLine(human.record))}` : ''}</span>
+      <span class="caption">${escapeHtml(c.stats.name)}${human ? ` · ${escapeHtml(recordLine(human.record))}` : ''}${human?.earned?.earned ? ` · +${starsLabel(human.earned.earned)}` : ''}</span>
       <span class="time">${time}</span><span class="best">${c.bestLap ? `best ${fmt(c.bestLap)}` : ''}</span></div>`;
   }).join('');
 }

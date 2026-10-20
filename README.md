@@ -25,6 +25,14 @@ memory gets the 2D games, a laptop gets everything.
 2. On each phone (same Wi-Fi), scan the QR code or open the `/pad/` address shown on screen. Turn the phone sideways.
 3. Everyone uses the same pad in every game. The buttons a game isn't using right now are dimmed.
 
+### Stars and the shop
+
+Every game you finish earns **stars**: for playing, more for winning, coming in the top three or setting
+a record, and a bonus for your first game of the day. Tap your stars at the top of your phone to open the
+**shop** and spend them on looks: paint jobs in Stock Cars, board themes in Chess, with more to come.
+Stars never buy an advantage, so a friend playing for the first time can still win. Stars, like saved
+progress, belong to your phone and are kept on the machine running Beacon Arcade.
+
 No phones? Two keyboard players work too: `WASD` + `F G H T` + Left Shift, or the arrows + `, / . ;` + Right Shift.
 
 ```
@@ -46,7 +54,25 @@ make android    # the Android TV app in dist/ (needs a JDK and the Android SDK)
 
 ## Football: 11-a-side 3D football (in progress)
 
-In the lobby: stick ◀ ▶ changes your club, Leaf swaps side, Bolt kicks off, Drop goes back to the games.
+In the lobby each player has a team sheet for their side: ▲▼ moves down it, ◀ ▶ changes the line you're on
+(club, shape, who starts in goal, and the team instructions below). Leaf swaps side, Bolt kicks off, Drop goes back to the games.
+
+### Tactics
+- **Shape**: from `formations.json`. 11-a-side: 4-4-2, 4-3-3, 4-2-3-1, 3-5-2, 5-3-2; 7-a-side: 2-3-1, 3-2-1, 2-2-2;
+  5-a-side: 1-2-1, 2-1-1, 2-2. Changing it mid-match moves each player to the nearest free place in the new shape.
+- **With the ball**: *Keep the ball* (short, safe passes, shots from closer in, the team stays close together),
+  *Mix it up* (the default), *Get it forward* (more forward and long passes, forwards run beyond the ball, shots from further out),
+  *Hit on the break* (sits a little deeper with the forwards left up; for a few seconds after winning the ball everyone sprints forward and looks for the forward pass first).
+- **Back line**: *Sit deep* / *Normal* / *Push up*: how high the whole team stands and how far up the defenders ever go.
+- **Closing down**: *Stand off* (only goes to the ball when it's close or in our half, keeps the team tighter, tackles less),
+  *Normal*, *Hunt the ball* (a second man joins the press in their half, tackles more, pushes up on their goal kicks).
+- **Width**: *Stay narrow* / *Normal* / *Stretch wide*: how far apart players stand across the pitch (mostly with the ball).
+- **In goal**: every squad has at least two keepers (a club in `teams.json` with only one gets a made-up stand-in).
+  Pick the starter in the lobby; during a match a keeper can only be substituted for a keeper.
+
+All of this works mid-match too: pause, choose Tactics (▲▼ choose, ◀ ▶ or Bolt change, Drop back).
+Each player's shape, instructions and keeper (per club) are saved with their phone (keyboard players: per key layout)
+and come back when they are the only player on a side.
 
 ### Controls (on the phone pad)
 Defaults below; every button can be remapped in `games/football/controls.json` (per situation:
@@ -61,7 +87,7 @@ Defaults below; every button can be remapped in `games/football/controls.json` (
 | L1 | Step-over | Switch player | |
 | R1 | Drag-back | Hold: a teammate presses too | |
 | Stick past its ring | Sprint | Sprint | |
-| ❚❚ (top bar) | Pause menu: stick ▲▼ choose, Bolt select, Drop back (resume, subs, controls, camera, name tags, sound, restart, quit) | | |
+| ❚❚ (top bar) | Pause menu: stick ▲▼ choose, Bolt select, Drop back (resume, subs, tactics, controls, camera, name tags, sound, restart, quit) | | |
 
 Keyboard: WASD + F (Bolt) H (Drop) G (Leaf) T (Star) Y (lofted Star), Q/E step-over/drag-back, L-Shift sprint;
 or arrows + `,` (Bolt) `/` (Drop) `.` (Leaf) `;` (Star) `'` (lofted Star), K/L, R-Shift.
@@ -97,10 +123,12 @@ On a free kick, corner or penalty you're the taker: aim with the stick, then PAS
 
 Beacon Arcade reads an optional folder before its built-in files: `~/Library/Application Support/beacon-arcade/`
 on macOS, `%AppData%\beacon-arcade\` on Windows, `~/.config/beacon-arcade/` on Linux (or pass `-dir`).
-Anything you put there replaces the built-in file with the same path. For football:
+Your saved progress and stars are kept in `beacon-arcade.db` in that folder (one SQLite file: copy it
+to back everything up). Anything else you put there replaces the built-in file with the same path. For football:
 
 - `games/football/teams.json`: clubs, kits, players and their ratings
-- `games/football/formations.json`: team shapes for 5-, 7- and 11-a-side
+- `games/football/formations.json`: team shapes for 5-, 7- and 11-a-side: per size, a list of `{ name, note, slots }`
+  (the first is the default; each shape's first slot is the keeper). The older form, one list of slots per size, still works.
 - `games/football/settings.json`: match length, `playersPerSide` (5, 7 or 11; use a smaller `pitch` for 5/7),
   pitch and goal size, `camera`, `nameTags`, `timeOfDay`, `maxFps`, `renderScale` (lower = faster on weak laptops), `aiSkill`
 - `games/football/controls.json`: which button does what
@@ -144,7 +172,8 @@ Send everyone back to the game select page with `backToHub()`.
 
 ```
 main.go                 the beacon-arcade command
-internal/server/        HTTP server, game discovery, the phone <-> game relay (WebSocket)
+internal/server/        HTTP server, game discovery, the phone <-> game relay (WebSocket), saves, stars, the shop
+internal/store/         the database (SQLite, pure Go: the same build runs on Android)
 web/
   build.ts              bundles each app with esbuild into web/dist (embedded in the binary)
   platform/             shared by every game: the pad, input, controls, wire protocol

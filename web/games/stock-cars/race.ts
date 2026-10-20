@@ -24,7 +24,8 @@ export interface CarStats { top: number; accel: number; grip: number; weight: nu
 export interface CarSpec {
   id: string;
   name: string;
-  color: string;
+  color: string; // the player's colour (the tower, the results)
+  paint?: string; // the car's paint, when it isn't that colour
   number: number;
   ai: boolean;
   skill: number; // the computer drivers' pace, as a share of the car's best (people drive at 1)

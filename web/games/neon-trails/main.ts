@@ -1,8 +1,9 @@
 // Neon Trails: the game flow. Lobby (with a demo round behind it), rounds, results, saved records.
 // The rules are in arena.ts, the drawing in draw.ts.
 import {
-  $, backToHub, BIT, chip, escapeHtml, gameSaves, glyph, hostInfo, Input, keyCode, loadControls, manualOpen,
-  manualPadInput, manualScreen, PerformanceGuard, playerColor, playerKey, requireDevice, showManual, type Pad, type PadScreen,
+  $, backToHub, BIT, chip, earnStars, escapeHtml, gameSaves, glyph, hostInfo, Input, keyCode, loadControls, manualOpen,
+  manualPadInput, manualScreen, PerformanceGuard, playerColor, playerKey, requireDevice, showManual, starsLabel,
+  type EarnFor, type Earned, type Pad, type PadScreen,
 } from '@platform';
 import { Arena, TICK, type Dir, type Rider, type RiderSpec } from './arena.ts';
 import { View } from './draw.ts';
@@ -15,8 +16,8 @@ const saves = gameSaves();
 interface PlayerRecord { name: string; matches: number; wins: number; rounds: number; roundWins: number; streak: number; bestStreak: number }
 const freshRecord = (name: string): PlayerRecord => ({ name, matches: 0, wins: 0, rounds: 0, roundWins: 0, streak: 0, bestStreak: 0 });
 
-const input = new Input({ state: () => ({ record: null as PlayerRecord | null }) });
-type Player = Pad<{ record: PlayerRecord | null }>;
+const input = new Input({ state: () => ({ record: null as PlayerRecord | null, earned: null as Earned | null }) });
+type Player = Pad<{ record: PlayerRecord | null; earned: Earned | null }>;
 
 // --- settings, chosen in the lobby --------------------------------------------------------------
 const TARGETS = [3, 5, 7];
@@ -118,6 +119,7 @@ function endRound() {
 function endMatch(champion: string) {
   stage = 'results';
   saveRecords(champion);
+  payOut(champion);
   renderResults(champion);
   show('results');
 }
@@ -131,6 +133,18 @@ function togglePause() {
 async function loadRecord(c: Player) {
   c.record = (await saves.get<PlayerRecord>(playerKey(c))) ?? freshRecord(c.label);
   if (stage === 'lobby') renderLobby();
+}
+
+// Stars for everyone who rode the match, more for the champion
+function payOut(champion: string) {
+  for (const c of players.values()) {
+    c.earned = null;
+    const why: EarnFor[] = c.id === champion ? ['played', 'won'] : ['played'];
+    earnStars(c, why).then((got) => {
+      c.earned = got;
+      if (stage === 'results') renderResults(champion);
+    });
+  }
 }
 
 // everyone who rode in the match, including anyone whose phone dropped before the end
@@ -269,7 +283,7 @@ function renderResults(champion: string) {
     const n = names.get(id)!, human = players.get(id);
     return `<div class="standing ${id === champion ? 'first' : ''}"><span class="num">${i + 1}</span>
       ${human ? chip(human) : `<span class="chip" style="--pc:${n.color}"><b>CPU</b>${escapeHtml(n.name)}</span>`}
-      <span class="caption">${human ? escapeHtml(recordLine(human.record)) : ''}</span><b class="num">${s}</b></div>`;
+      <span class="caption">${human ? escapeHtml(recordLine(human.record)) : ''}${human?.earned?.earned ? ` · +${starsLabel(human.earned.earned)}` : ''}</span><b class="num">${s}</b></div>`;
   }).join('');
 }
 

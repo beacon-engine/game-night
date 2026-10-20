@@ -35,6 +35,7 @@ export type DisplayToServer = { t: 'hello'; role: 'display' } | (DisplayToPad & 
 export type ServerToPad =
   | { t: 'welcome'; id: string; slot: number; display: boolean }
   | { t: 'display'; on: boolean }
+  | { t: 'stars'; balance: number; earned: number } // from the server: stars earned or spent
   | DisplayToPad;
 
 // Pad messages reach the display tagged with the pad's id. A pad keeps its slot (P1, P2...)

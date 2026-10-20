@@ -34,7 +34,15 @@ export interface FormationSlot {
   z: number;
 }
 
-export type Formations = Record<string, FormationSlot[]>;
+// a named team shape; the first slot is the keeper
+export interface Shape {
+  name: string;
+  note?: string;
+  slots: FormationSlot[];
+}
+
+// per side size ("5", "7", "11"): a list of shapes, or (the older form) one list of slots
+export type Formations = Record<string, Shape[] | FormationSlot[]>;
 
 export type CameraMode = 'full' | 'broadcast' | 'wide' | 'close';
 export type TagMode = 'all' | 'active' | 'none';

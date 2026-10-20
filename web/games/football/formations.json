@@ -1,124 +1,530 @@
 {
- "_comment": "x: 0 = own goal line, 1 = opponent goal line. z: -1..1 across the pitch. First slot must be the GK.",
+ "_comment": "Team shapes per side size; the first is the default. x: 0 = own goal line, 1 = opponent goal line. z: -1..1 across the pitch. The first slot of every shape must be the GK. (An older file with one plain list of slots per size still works.)",
  "5": [
   {
-   "role": "GK",
-   "x": 0.02,
-   "z": 0
+   "name": "1-2-1",
+   "note": "A diamond: one at the back, two either side, one up front.",
+   "slots": [
+    {
+     "role": "GK",
+     "x": 0.02,
+     "z": 0
+    },
+    {
+     "role": "DEF",
+     "x": 0.24,
+     "z": 0
+    },
+    {
+     "role": "MID",
+     "x": 0.45,
+     "z": -0.6
+    },
+    {
+     "role": "MID",
+     "x": 0.45,
+     "z": 0.6
+    },
+    {
+     "role": "FWD",
+     "x": 0.68,
+     "z": 0
+    }
+   ]
   },
   {
-   "role": "DEF",
-   "x": 0.24,
-   "z": 0
+   "name": "2-1-1",
+   "note": "Two at the back, one in the middle, one up front. Safer.",
+   "slots": [
+    {
+     "role": "GK",
+     "x": 0.02,
+     "z": 0
+    },
+    {
+     "role": "DEF",
+     "x": 0.22,
+     "z": -0.5
+    },
+    {
+     "role": "DEF",
+     "x": 0.22,
+     "z": 0.5
+    },
+    {
+     "role": "MID",
+     "x": 0.44,
+     "z": 0
+    },
+    {
+     "role": "FWD",
+     "x": 0.68,
+     "z": 0
+    }
+   ]
   },
   {
-   "role": "MID",
-   "x": 0.45,
-   "z": -0.6
-  },
-  {
-   "role": "MID",
-   "x": 0.45,
-   "z": 0.6
-  },
-  {
-   "role": "FWD",
-   "x": 0.68,
-   "z": 0
+   "name": "2-2",
+   "note": "Two back, two up. Simple, and quick on the break.",
+   "slots": [
+    {
+     "role": "GK",
+     "x": 0.02,
+     "z": 0
+    },
+    {
+     "role": "DEF",
+     "x": 0.24,
+     "z": -0.5
+    },
+    {
+     "role": "DEF",
+     "x": 0.24,
+     "z": 0.5
+    },
+    {
+     "role": "FWD",
+     "x": 0.6,
+     "z": -0.45
+    },
+    {
+     "role": "FWD",
+     "x": 0.6,
+     "z": 0.45
+    }
+   ]
   }
  ],
  "7": [
   {
-   "role": "GK",
-   "x": 0.02,
-   "z": 0
+   "name": "2-3-1",
+   "note": "Two at the back, three across the middle, one up front.",
+   "slots": [
+    {
+     "role": "GK",
+     "x": 0.02,
+     "z": 0
+    },
+    {
+     "role": "DEF",
+     "x": 0.22,
+     "z": -0.45
+    },
+    {
+     "role": "DEF",
+     "x": 0.22,
+     "z": 0.45
+    },
+    {
+     "role": "MID",
+     "x": 0.45,
+     "z": -0.75
+    },
+    {
+     "role": "MID",
+     "x": 0.42,
+     "z": 0
+    },
+    {
+     "role": "MID",
+     "x": 0.45,
+     "z": 0.75
+    },
+    {
+     "role": "FWD",
+     "x": 0.7,
+     "z": 0
+    }
+   ]
   },
   {
-   "role": "DEF",
-   "x": 0.22,
-   "z": -0.45
+   "name": "3-2-1",
+   "note": "Three at the back. Harder to get through.",
+   "slots": [
+    {
+     "role": "GK",
+     "x": 0.02,
+     "z": 0
+    },
+    {
+     "role": "DEF",
+     "x": 0.2,
+     "z": -0.6
+    },
+    {
+     "role": "DEF",
+     "x": 0.18,
+     "z": 0
+    },
+    {
+     "role": "DEF",
+     "x": 0.2,
+     "z": 0.6
+    },
+    {
+     "role": "MID",
+     "x": 0.43,
+     "z": -0.4
+    },
+    {
+     "role": "MID",
+     "x": 0.43,
+     "z": 0.4
+    },
+    {
+     "role": "FWD",
+     "x": 0.68,
+     "z": 0
+    }
+   ]
   },
   {
-   "role": "DEF",
-   "x": 0.22,
-   "z": 0.45
-  },
-  {
-   "role": "MID",
-   "x": 0.45,
-   "z": -0.75
-  },
-  {
-   "role": "MID",
-   "x": 0.42,
-   "z": 0
-  },
-  {
-   "role": "MID",
-   "x": 0.45,
-   "z": 0.75
-  },
-  {
-   "role": "FWD",
-   "x": 0.7,
-   "z": 0
+   "name": "2-2-2",
+   "note": "Two strikers up front to chase goals.",
+   "slots": [
+    {
+     "role": "GK",
+     "x": 0.02,
+     "z": 0
+    },
+    {
+     "role": "DEF",
+     "x": 0.22,
+     "z": -0.45
+    },
+    {
+     "role": "DEF",
+     "x": 0.22,
+     "z": 0.45
+    },
+    {
+     "role": "MID",
+     "x": 0.42,
+     "z": -0.55
+    },
+    {
+     "role": "MID",
+     "x": 0.42,
+     "z": 0.55
+    },
+    {
+     "role": "FWD",
+     "x": 0.66,
+     "z": -0.25
+    },
+    {
+     "role": "FWD",
+     "x": 0.66,
+     "z": 0.25
+    }
+   ]
   }
  ],
  "11": [
   {
-   "role": "GK",
-   "x": 0.02,
-   "z": 0
+   "name": "4-4-2",
+   "note": "Two up front, four across the middle. Solid and simple.",
+   "slots": [
+    {
+     "role": "GK",
+     "x": 0.02,
+     "z": 0
+    },
+    {
+     "role": "DEF",
+     "x": 0.2,
+     "z": -0.72
+    },
+    {
+     "role": "DEF",
+     "x": 0.17,
+     "z": -0.26
+    },
+    {
+     "role": "DEF",
+     "x": 0.17,
+     "z": 0.26
+    },
+    {
+     "role": "DEF",
+     "x": 0.2,
+     "z": 0.72
+    },
+    {
+     "role": "MID",
+     "x": 0.42,
+     "z": -0.74
+    },
+    {
+     "role": "MID",
+     "x": 0.38,
+     "z": -0.24
+    },
+    {
+     "role": "MID",
+     "x": 0.38,
+     "z": 0.24
+    },
+    {
+     "role": "MID",
+     "x": 0.42,
+     "z": 0.74
+    },
+    {
+     "role": "FWD",
+     "x": 0.64,
+     "z": -0.18
+    },
+    {
+     "role": "FWD",
+     "x": 0.64,
+     "z": 0.18
+    }
+   ]
   },
   {
-   "role": "DEF",
-   "x": 0.2,
-   "z": -0.72
+   "name": "4-3-3",
+   "note": "Three forwards: the two wide ones stay out on the wings.",
+   "slots": [
+    {
+     "role": "GK",
+     "x": 0.02,
+     "z": 0
+    },
+    {
+     "role": "DEF",
+     "x": 0.2,
+     "z": -0.72
+    },
+    {
+     "role": "DEF",
+     "x": 0.17,
+     "z": -0.26
+    },
+    {
+     "role": "DEF",
+     "x": 0.17,
+     "z": 0.26
+    },
+    {
+     "role": "DEF",
+     "x": 0.2,
+     "z": 0.72
+    },
+    {
+     "role": "MID",
+     "x": 0.35,
+     "z": 0
+    },
+    {
+     "role": "MID",
+     "x": 0.42,
+     "z": -0.38
+    },
+    {
+     "role": "MID",
+     "x": 0.42,
+     "z": 0.38
+    },
+    {
+     "role": "FWD",
+     "x": 0.6,
+     "z": -0.7
+    },
+    {
+     "role": "FWD",
+     "x": 0.65,
+     "z": 0
+    },
+    {
+     "role": "FWD",
+     "x": 0.6,
+     "z": 0.7
+    }
+   ]
   },
   {
-   "role": "DEF",
-   "x": 0.17,
-   "z": -0.26
+   "name": "4-2-3-1",
+   "note": "One striker with three behind him and two sitting in front of the defence.",
+   "slots": [
+    {
+     "role": "GK",
+     "x": 0.02,
+     "z": 0
+    },
+    {
+     "role": "DEF",
+     "x": 0.2,
+     "z": -0.72
+    },
+    {
+     "role": "DEF",
+     "x": 0.17,
+     "z": -0.26
+    },
+    {
+     "role": "DEF",
+     "x": 0.17,
+     "z": 0.26
+    },
+    {
+     "role": "DEF",
+     "x": 0.2,
+     "z": 0.72
+    },
+    {
+     "role": "MID",
+     "x": 0.34,
+     "z": -0.22
+    },
+    {
+     "role": "MID",
+     "x": 0.34,
+     "z": 0.22
+    },
+    {
+     "role": "MID",
+     "x": 0.5,
+     "z": -0.68
+    },
+    {
+     "role": "MID",
+     "x": 0.52,
+     "z": 0
+    },
+    {
+     "role": "MID",
+     "x": 0.5,
+     "z": 0.68
+    },
+    {
+     "role": "FWD",
+     "x": 0.66,
+     "z": 0
+    }
+   ]
   },
   {
-   "role": "DEF",
-   "x": 0.17,
-   "z": 0.26
+   "name": "3-5-2",
+   "note": "Three at the back; the wide midfielders run the whole flank. Two strikers.",
+   "slots": [
+    {
+     "role": "GK",
+     "x": 0.02,
+     "z": 0
+    },
+    {
+     "role": "DEF",
+     "x": 0.17,
+     "z": -0.45
+    },
+    {
+     "role": "DEF",
+     "x": 0.15,
+     "z": 0
+    },
+    {
+     "role": "DEF",
+     "x": 0.17,
+     "z": 0.45
+    },
+    {
+     "role": "MID",
+     "x": 0.38,
+     "z": -0.82
+    },
+    {
+     "role": "MID",
+     "x": 0.35,
+     "z": 0
+    },
+    {
+     "role": "MID",
+     "x": 0.43,
+     "z": -0.3
+    },
+    {
+     "role": "MID",
+     "x": 0.43,
+     "z": 0.3
+    },
+    {
+     "role": "MID",
+     "x": 0.38,
+     "z": 0.82
+    },
+    {
+     "role": "FWD",
+     "x": 0.64,
+     "z": -0.18
+    },
+    {
+     "role": "FWD",
+     "x": 0.64,
+     "z": 0.18
+    }
+   ]
   },
   {
-   "role": "DEF",
-   "x": 0.2,
-   "z": 0.72
-  },
-  {
-   "role": "MID",
-   "x": 0.42,
-   "z": -0.74
-  },
-  {
-   "role": "MID",
-   "x": 0.38,
-   "z": -0.24
-  },
-  {
-   "role": "MID",
-   "x": 0.38,
-   "z": 0.24
-  },
-  {
-   "role": "MID",
-   "x": 0.42,
-   "z": 0.74
-  },
-  {
-   "role": "FWD",
-   "x": 0.64,
-   "z": -0.18
-  },
-  {
-   "role": "FWD",
-   "x": 0.64,
-   "z": 0.18
+   "name": "5-3-2",
+   "note": "Five at the back: hard to break down. Two strikers to hit on the break.",
+   "slots": [
+    {
+     "role": "GK",
+     "x": 0.02,
+     "z": 0
+    },
+    {
+     "role": "DEF",
+     "x": 0.24,
+     "z": -0.8
+    },
+    {
+     "role": "DEF",
+     "x": 0.16,
+     "z": -0.4
+    },
+    {
+     "role": "DEF",
+     "x": 0.14,
+     "z": 0
+    },
+    {
+     "role": "DEF",
+     "x": 0.16,
+     "z": 0.4
+    },
+    {
+     "role": "DEF",
+     "x": 0.24,
+     "z": 0.8
+    },
+    {
+     "role": "MID",
+     "x": 0.38,
+     "z": 0
+    },
+    {
+     "role": "MID",
+     "x": 0.42,
+     "z": -0.42
+    },
+    {
+     "role": "MID",
+     "x": 0.42,
+     "z": 0.42
+    },
+    {
+     "role": "FWD",
+     "x": 0.64,
+     "z": -0.18
+    },
+    {
+     "role": "FWD",
+     "x": 0.64,
+     "z": 0.18
+    }
+   ]
   }
  ]
 }
