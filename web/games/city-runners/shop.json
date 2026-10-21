@@ -1,0 +1,13 @@
+{
+  "_comment": "Outfits and trails bought with stars. kind: outfit (the suit's colour) or trail (the ribbon of light behind you; 'rainbow' is every colour). Looks only: everyone runs the same.",
+  "items": [
+    { "id": "suit-white", "name": "White Suit", "price": 40, "kind": "outfit", "color": "#eef1f6", "about": "Bright, clean, easy to spot" },
+    { "id": "suit-black", "name": "Night Suit", "price": 40, "kind": "outfit", "color": "#1c1f2a", "about": "Nearly black, for the late shift" },
+    { "id": "suit-orange", "name": "Hi-Vis Orange", "price": 60, "kind": "outfit", "color": "#ff7a1a", "about": "Nobody will lose you in the crowd" },
+    { "id": "suit-chrome", "name": "Chrome", "price": 120, "kind": "outfit", "color": "#c7ccd6", "about": "Silver all over" },
+    { "id": "trail-ember", "name": "Ember Trail", "price": 50, "kind": "trail", "color": "#ff5a1f", "about": "Hot orange light behind you" },
+    { "id": "trail-ice", "name": "Ice Trail", "price": 50, "kind": "trail", "color": "#7fe7ff", "about": "Cold blue light behind you" },
+    { "id": "trail-violet", "name": "Violet Trail", "price": 70, "kind": "trail", "color": "#9b6bff", "about": "Purple light behind you" },
+    { "id": "trail-rainbow", "name": "Rainbow Trail", "price": 150, "kind": "trail", "color": "rainbow", "about": "Every colour at once" }
+  ]
+}

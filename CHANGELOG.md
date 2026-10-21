@@ -5,6 +5,14 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 
 ## [Unreleased]
 
+### Added (games)
+- **City Runners**, an endless runner for 1–4 at once on one screen: over city rooftops and an elevated rail line,
+  dusk turning to night. Change lanes, jump and slide with the phone's arrows; jump the gaps, slide under the signs,
+  run along the trains, and cross the widest gaps on a beam or a zip line. Coins and power-ups (magnet, jump boots,
+  shield, double) go to whoever gets there first. Stumble twice, or fall behind, and the security drone has you: the
+  last one running wins. Computer runners to race, "today's course" (the same all day), saved records and best
+  distances, and suits and light trails in the shop.
+
 ## [0.2.0] - 2026-10-21
 
 Stock Cars, Neon Trails and Chess are playable, players earn stars, and the program is now Beacon Arcade.

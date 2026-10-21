@@ -13,6 +13,7 @@ Pick one and go.
 | ⚡ | [Neon Trails](neon-trails) | 1–8 | First to 3/5/7, saved records | **playable** |
 | 🚗 | [Stock Cars](stock-cars) | 1–4 | Exhibition, saved records (Race weekend, Championship next) | **playable** |
 | ♟️ | [Chess](chess) | 1–2 | Saved records (Ladder next) | **playable** |
+| 🏃 | [City Runners](city-runners) | 1–4 | Last one running, saved best distances | **playable** |
 | | **Sports** | | | |
 | 🏀 | [Basketball](basketball) | 1–6 | Exhibition, League, Cup, Groups + knockout | coming soon |
 | ⚾ | [Baseball](baseball) | 1–2 (teams) | Exhibition, League, Series | coming soon |
