@@ -40,6 +40,14 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   and lights, their lights come on at dusk and at night, and each sits on a shadow of its own shape.
 
 ### Fixed
+- The screen no longer dims and sleeps mid-game, on the TV page or on the phones (where the browser
+  allows it; the TV app already kept its screen on).
+- Stock Cars: the turns were bumpy. The banked surface was drawn flat across, so cars sank into it and
+  rose out of it as they moved across the track; and a car sliding out to the wall bounced off it over
+  and over instead of grinding along it.
+- Stock Cars: the front wheels turn with the steering.
+- Stock Cars: a knock from another car could throw a car right across the track. Hits are softer, and
+  no hit throws a car sideways faster than 6 m/s.
 - Two games finishing at the same moment could each pay the first-game-of-the-day bonus and go past the
   daily limits on stars. Payouts now happen one at a time.
 - Going back to the game select page with the browser's Back button left a black screen until the page

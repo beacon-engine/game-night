@@ -4,7 +4,7 @@
 // Plain three.js with cheap materials, so it runs on modest screens.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { carLights, carMesh, disposeCar, rollWheels, type CarModel } from './cars.ts';
+import { carLights, carMesh, disposeCar, rollWheels, steerWheels, type CarModel } from './cars.ts';
 import { TOP, type Car } from './race.ts';
 import type { Track } from './track.ts';
 import { canvas, DISPLAY_FONT, seeded, speckle, texture } from './draw.ts';
@@ -142,6 +142,7 @@ export class World {
       const before = g.position.clone();
       place(t, g, c.dist, c.d, c.yaw);
       rollWheels(g, Math.min(10, before.distanceTo(g.position)));
+      steerWheels(g, c.spinning > 0 ? 0 : c.steer);
       if (c.scraping) {
         const p = t.point(c.dist, c.d + c.scraping * c.stats.width * 0.5);
         this.sparks.emit(new THREE.Vector3(p.x, p.y + 0.4, p.z), 2);
@@ -238,7 +239,10 @@ function buildVenue(add: Add, t: Track, time: Time) {
   buildScenery(add, land, time.dim);
   const at = (d: number, up = 0) => (s: number) => { const p = t.point(s, d); return new THREE.Vector3(p.x, p.y + up, p.z); };
   if (!t.road) add(new THREE.Mesh(strip(t, at(-W / 2 - 8), at(-W / 2), 16), lambert({ map: apronTexture() })));
-  add(new THREE.Mesh(strip(t, at(-W / 2), at(W / 2), 24), new THREE.MeshStandardMaterial({ map: asphaltTexture(W, t.road), roughness: 0.9 })));
+  // (in strips across, so it follows an oval's banking as it steepens up the track)
+  const across = t.road ? 1 : 8, lanes = Array.from({ length: across }, (_, i) =>
+    strip(t, at(-W / 2 + (W * i) / across), at(-W / 2 + (W * (i + 1)) / across), 24, 0, t.length, i / across, (i + 1) / across));
+  add(new THREE.Mesh(mergeGeometries(lanes), new THREE.MeshStandardMaterial({ map: asphaltTexture(W, t.road), roughness: 0.9 })));
   // the earth banked up behind the outside wall, so the turns don't float
   const top = (s: number) => { const p = t.point(s, W / 2 + 0.1); return new THREE.Vector3(p.x, p.y, p.z); };
   const foot = (s: number) => { const p = t.point(s, W / 2 + 0.1 + Math.max(1, t.point(s, W / 2).y * 1.6)); return new THREE.Vector3(p.x, -0.05, p.z); };
@@ -455,13 +459,14 @@ function place(t: Track, o: THREE.Object3D, s: number, d: number, yaw: number) {
   o.position.set(p.x, p.y, p.z);
 }
 
-// A ribbon along the lap (or part of it) between two edges: inner edge first, so it faces up / inwards
-function strip(t: Track, a: (s: number) => THREE.Vector3, b: (s: number) => THREE.Vector3, tile: number, s0 = 0, s1 = t.length) {
+// A ribbon along the lap (or part of it) between two edges: inner edge first, so it faces up / inwards.
+// u0..u1: the part of the texture across it.
+function strip(t: Track, a: (s: number) => THREE.Vector3, b: (s: number) => THREE.Vector3, tile: number, s0 = 0, s1 = t.length, u0 = 0, u1 = 1) {
   const n = Math.max(1, Math.ceil((s1 - s0) / STEP)), pos: number[] = [], uv: number[] = [], index: number[] = [];
   for (let i = 0; i <= n; i++) {
     const s = s0 + ((s1 - s0) * i) / n, p = a(s), q = b(s), v = (s - s0) / tile;
     pos.push(p.x, p.y, p.z, q.x, q.y, q.z);
-    uv.push(0, v, 1, v);
+    uv.push(u0, v, u1, v);
     if (i < n) { const k = i * 2; index.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
   }
   const g = new THREE.BufferGeometry();

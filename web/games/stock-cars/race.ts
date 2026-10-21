@@ -16,7 +16,8 @@ const TOW = 0.07; // up to 7% more top speed in another car's slipstream
 const TOW_RANGE = 45; // m
 const SHOVE = 0.015; // a car right behind pushes the one in front along a little
 const BOUNCE = 0.5; // how much of a hit comes back off the wall
-const BOUNCE_CARS = 0.75; // ...and off another car, side to side
+const BOUNCE_CARS = 0.4; // ...and off another car, side to side
+const KNOCK_MAX = 6; // m/s: the most a hit can throw a car sideways
 const BOUNCE_BUMP = 0.45; // ...and nose to tail
 const KNOCK_FADE = 2.5; // how quickly a knock sideways dies away (the driver can't just steer it out)
 const SCRAPE = 9; // m/s² lost grinding along a wall
@@ -150,7 +151,7 @@ export class Race {
     const reach = 3 + 0.12 * c.v;
     c.vd += (steer * reach - c.vd) * Math.min(1, (spinning ? 1 : 8) * TICK);
     c.v = Math.max(0, c.v - Math.abs(c.vd) * 0.03 * TICK);
-    c.knock *= Math.max(0, 1 - KNOCK_FADE * TICK);
+    c.knock = clamp(c.knock, -KNOCK_MAX, KNOCK_MAX) * Math.max(0, 1 - KNOCK_FADE * TICK);
     c.d += c.drift * TICK;
 
     // the spin: a spin-out goes round and round; a knock just twitches the car, then it straightens up
@@ -203,13 +204,14 @@ export class Race {
     }
   }
 
+  // Steering or being knocked into the wall hits it; sliding out into it in a turn grinds along it
   private wall(c: Car, ev: RaceEvents, side: number, edge: number) {
-    const hit = c.drift * side; // how fast it's going into the wall
+    const hit = (c.vd + c.knock) * side; // how fast it's going into the wall
     c.d = edge * side;
-    if (hit > 1) {
-      c.knock = -side * (hit * BOUNCE + 1);
+    if (c.slide * side > 0) c.slide = 0;
+    if (hit > 1.5) {
+      c.knock = -side * Math.min(KNOCK_MAX, hit * BOUNCE + 0.5);
       c.vd = 0;
-      if (c.slide * side > 0) c.slide = 0;
       c.v = Math.max(0, c.v - Math.min(c.v * 0.45, hit * 2.2));
       c.spinRate -= side * hit * 0.09; // the nose kicks away from the wall
       if (hit > SPIN_WALL) this.spinOut(c, -side, ev);
@@ -255,7 +257,7 @@ export class Race {
             strength = closing;
             // hit off-centre: the front car is knocked sideways and turned, the back one the other way;
             // hard enough, the front car is turned round
-            const off = front.d - back.d, push = Math.sign(off) * closing * Math.min(1, Math.abs(off) / 1.2) * 0.35;
+            const off = front.d - back.d, push = Math.sign(off) * closing * Math.min(1, Math.abs(off) / 1.2) * 0.2;
             front.knock += push / front.stats.weight;
             back.knock -= (push * 0.5) / back.stats.weight;
             if (closing > SPIN_HIT && Math.abs(off) > 0.7) this.spinOut(front, Math.sign(off), ev);

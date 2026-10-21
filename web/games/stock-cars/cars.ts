@@ -48,10 +48,13 @@ export function carMesh(m: CarModel, color: string, number: number) {
   const model = m.scene.clone(true);
   model.scale.setScalar(m.scale);
   model.rotation.y = Math.PI / 2;
-  const wheels: { node: THREE.Object3D; sign: number }[] = [];
+  const wheels: { node: THREE.Object3D; sign: number; front: boolean; turn: number }[] = [];
   model.traverse((o) => {
     const wheel = /^wheel/.test(o.name) || /^wheel/.test(o.parent?.name ?? '');
-    if (/^wheel/.test(o.name)) wheels.push({ node: o, sign: new THREE.Vector3(1, 0, 0).applyQuaternion(o.quaternion).x >= 0 ? 1 : -1 });
+    if (/^wheel/.test(o.name)) {
+      o.rotation.reorder('YXZ'); // (steer about the upright, then roll about the axle)
+      wheels.push({ node: o, sign: new THREE.Vector3(1, 0, 0).applyQuaternion(o.quaternion).x >= 0 ? 1 : -1, front: /front/.test(o.name), turn: o.rotation.y });
+    }
     if (o instanceof THREE.Mesh) {
       const base = (o.material as THREE.MeshStandardMaterial).map!;
       o.material = finish(m, wheel ? base : painted(base, m.paint, color), wheel);
@@ -94,6 +97,14 @@ export function carLights(g: THREE.Object3D, level: number) {
 export function rollWheels(g: THREE.Object3D, metres: number) {
   const a = metres / (g.userData.wheelRadius as number);
   for (const w of g.userData.wheels as { node: THREE.Object3D; sign: number }[]) w.node.rotation.x += a * w.sign;
+}
+
+// Turn the front wheels with the steering: -1 (left) .. 1 (right)
+const LOCK = 0.45; // rad at full lock
+export function steerWheels(g: THREE.Object3D, steer: number) {
+  for (const w of g.userData.wheels as { node: THREE.Object3D; front: boolean; turn: number }[]) {
+    if (w.front) w.node.rotation.y = w.turn - steer * LOCK;
+  }
 }
 
 // Free what this car made for itself. (The models' geometry, and the painted palettes, are shared.)
