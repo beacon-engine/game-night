@@ -2,7 +2,7 @@
 // and the security drone that comes for anyone who stumbles twice or falls off the back. No graphics.
 // Runners don't bump into each other (they run through one another), but coins and power-ups are
 // first come, first served.
-import { ALL, CAR_TOP, Course, LANE_W, POWERS, ZIP_Y, type Piece, type Power } from './course.ts';
+import { ALL, CAR_TOP, Course, LANE_W, POWERS, ZIP_Y, type Piece, type PieceKind, type Power, type Tech } from './course.ts';
 import type { Look } from './people.ts';
 
 export const TICK = 1 / 60;
@@ -18,6 +18,11 @@ const STUMBLE_SLOW = 0.62; // speed for a moment after a stumble
 const DRONE_TIME = 7; // seconds the drone stays after a stumble: stumble again and it has you
 const LEFT_BEHIND = 24; // m behind the leader: off the back of the screen, and the drone has you
 export const POWER_TIME: Record<Power, number> = { magnet: 10, boots: 10, shield: 0, double: 12 };
+// The ways across a crossing: how fast each carries you, compared with running
+export const TECH_PACE: Record<Tech, number> = { zip: 1.3, balance: 0.72, ropes: 1.25 };
+const ROPE_LOW = 0.6, ROPE_RISE = 2; // a rope carries you up as it swings: feet from 0.6 m to 2.6 m
+const ROPE_GOOD = 0.6; // jump after this much of the swing for a good throw to the next rope
+
 
 // What a runner is good at (runners.json), compared with an all-rounder at 1
 export interface Stats {
@@ -47,7 +52,8 @@ export class Runner {
   vy = 0;
   grounded = true;
   slide = 0; // seconds of slide left
-  zip: Piece | null = null; // hanging from a zip line
+  hang: Piece | null = null; // hanging from a zip line or a rope
+  balancing = false; // walking a thin rail
   slow = 0; // seconds of stumble slowdown left
   drone = 0; // seconds the drone stays on you
   safe = 0; // seconds of not being hit again (after a stumble, or a shield)
@@ -59,6 +65,7 @@ export class Runner {
   stride = 0; // for the legs
   // the computer runner's plan
   think = 0;
+  likes: PieceKind = 'zip'; // its way across a crossing
   constructor(readonly spec: RunnerSpec) {}
   get id() { return this.spec.id; }
   get height() { return this.slide > 0 ? LOW : TALL; }
@@ -87,6 +94,7 @@ export class Run {
     // everyone starts side by side across the lanes (and on top of each other beyond three)
     this.runners = specs.map((spec, i) => {
       const r = new Runner(spec);
+      r.likes = (['zip', 'balance', 'rope'] as const)[i % 3]; // (computer runners each have a favourite)
       r.lane = [0, -1, 1][i % 3];
       r.x = r.lane * LANE_W;
       r.s = -Math.floor(i / 3) * 1.5;
@@ -117,21 +125,24 @@ export class Run {
     const lane = Math.max(-1, Math.min(1, r.lane + dir));
     if (lane === r.lane) return;
     r.lane = lane;
-    if (r.zip) { r.zip = null; r.vy = 0; } // let go of the zip line
+    if (r.hang) { r.hang = null; r.vy = 0; } // let go
   }
 
   jump(r: Runner) {
-    if (r.out || (!r.grounded && !r.zip)) return;
-    r.vy = (r.powers.boots > 0 ? BOOTS_JUMP : JUMP) * Math.sqrt(r.spec.stats.spring); // (height goes with the square)
+    if (r.out || (!r.grounded && !r.hang)) return;
+    const spring = Math.sqrt(r.spec.stats.spring); // (height goes with the square)
+    // off a rope: late in the swing throws you on to the next one; early doesn't
+    if (r.hang?.kind === 'rope') r.vy = (ropeAt(r) >= ROPE_GOOD ? 7 : 4) * spring;
+    else r.vy = (r.powers.boots > 0 ? BOOTS_JUMP : JUMP) * spring;
     r.grounded = false;
-    r.zip = null;
+    r.hang = null;
     r.slide = 0;
     this.ev.jumped.push(r);
   }
 
   duck(r: Runner) {
     if (r.out) return;
-    if (r.zip) { r.zip = null; r.vy = 0; return; } // drop off the zip line
+    if (r.hang) { r.hang = null; r.vy = 0; return; } // let go
     r.slide = SLIDE;
     if (!r.grounded) r.vy = Math.min(r.vy, -DIVE);
   }
@@ -160,7 +171,8 @@ export class Run {
   }
 
   private runner(r: Runner) {
-    const c = this.course, v = this.speed * (r.slow > 0 ? STUMBLE_SLOW : 1);
+    const c = this.course, tech = r.hang ? TECH_PACE[r.hang.kind === 'zip' ? 'zip' : 'ropes'] : r.balancing ? TECH_PACE.balance : 1;
+    const v = this.speed * (r.slow > 0 ? STUMBLE_SLOW : 1) * tech;
     for (const k of POWERS) if (k !== 'shield' && r.powers[k] > 0) r.powers[k] = Math.max(0, r.powers[k] - TICK);
     r.slow = Math.max(0, r.slow - TICK);
     r.drone = Math.max(0, r.drone - TICK);
@@ -172,12 +184,16 @@ export class Run {
     r.x += (r.lane * LANE_W - r.x) * Math.min(1, LANE_RATE * r.spec.stats.agility * TICK);
     r.score += v * TICK * (r.powers.double > 0 ? 2 : 1);
 
-    // up and down: hanging from a zip line, or flying and landing
-    if (r.zip && r.s > r.zip.s1) r.zip = null;
-    if (r.zip) { r.y = ZIP_Y - 2.1; r.vy = 0; r.grounded = false; }
+    // up and down: hanging from a zip line or a rope, or flying and landing
+    if (r.hang && r.s > r.hang.s1) {
+      if (r.hang.kind === 'rope') r.vy = -6; // (held on to the end of the swing: you slip off, too low for the next one)
+      r.hang = null;
+    }
+    r.balancing = false;
+    if (r.hang) { r.y = r.hang.kind === 'zip' ? ZIP_Y - 2.1 : ROPE_LOW + ROPE_RISE * ropeAt(r) ** 2; r.vy = 0; r.grounded = false; }
     else {
       const was = r.grounded;
-      const floor = this.floor(r);
+      const { y: floor, on } = this.under(r);
       r.vy -= GRAVITY * TICK;
       r.y += r.vy * TICK;
       if (r.y <= floor && r.y > floor - 0.6 && r.vy <= 0) {
@@ -190,9 +206,10 @@ export class Run {
       } else {
         r.grounded = r.y <= floor + 0.01 && r.vy <= 0;
       }
-      // grab a zip line on the way past
-      const zip = this.zipHere(r);
-      if (zip && !r.grounded && r.y + TALL + 0.5 >= ZIP_Y) { r.zip = zip; this.ev.landed.push(r); }
+      r.balancing = r.grounded && on === 'balance';
+      // grab a zip line or a rope on the way past (a zip line high enough to reach; a rope at the start of its swing)
+      const h = r.grounded ? null : this.hangHere(r);
+      if (h && (h.kind === 'zip' ? r.y + TALL + 0.5 >= ZIP_Y : r.y >= h.y0 && r.y < 4.5)) { r.hang = h; this.ev.landed.push(r); }
     }
     if (r.y < -5) {
       if (r.powers.shield) { r.powers.shield = 0; r.vy = BOOTS_JUMP * 1.15; r.y = -1; this.ev.shielded.push(r); r.safe = 1; }
@@ -216,24 +233,32 @@ export class Run {
   }
 
   // The highest thing under a runner's feet (or -Infinity over a gap)
-  floor(r: Runner) {
+  floor(r: Runner) { return this.under(r).y; }
+
+  // ...and what it is: a beam, a thin rail, a car's roof, a ramp (or null: the roof or the deck)
+  private under(r: Runner) {
     const c = this.course, g = c.groundAt(r.s), lane = Math.round(r.x / LANE_W);
-    let y = g.kind === 'gap' ? -Infinity : 0;
+    let y = g.kind === 'gap' ? -Infinity : 0, on: PieceKind | null = null;
     const check = (p: Piece, off: number) => {
       if (p.lane !== lane || p.s0 - off > r.s + HALF || p.s1 - off < r.s - HALF) return;
-      if (p.kind === 'beam' || (p.kind === 'car' && r.y >= CAR_TOP - 0.6)) y = Math.max(y, p.y1);
-      else if (p.kind === 'ramp') y = Math.max(y, ((r.s - p.s0) / (p.s1 - p.s0)) * CAR_TOP);
+      let h = -Infinity;
+      if (p.kind === 'beam' || p.kind === 'balance' || (p.kind === 'car' && r.y >= CAR_TOP - 0.6)) h = p.y1;
+      else if (p.kind === 'ramp') h = ((r.s - p.s0) / (p.s1 - p.s0)) * CAR_TOP;
+      if (h >= y) { y = h; on = p.kind; }
     };
     for (let i = c.firstNear(r.s); i < c.pieces.length && c.pieces[i].s0 <= r.s + HALF; i++) check(c.pieces[i], 0);
     for (const p of c.movers) check(p, c.offset(p, this.t));
-    return y;
+    return { y, on };
   }
 
-  private zipHere(r: Runner) {
+  // A zip line or rope here to grab: a zip line anywhere along it, a rope only as its swing begins
+  private hangHere(r: Runner) {
     const c = this.course, lane = Math.round(r.x / LANE_W);
     for (let i = c.firstNear(r.s); i < c.pieces.length && c.pieces[i].s0 <= r.s; i++) {
       const p = c.pieces[i];
-      if (p.kind === 'zip' && p.lane === lane && p.s1 > r.s + 1) return p;
+      if (p.lane !== lane) continue;
+      if (p.kind === 'zip' && p.s1 > r.s + 1) return p;
+      if (p.kind === 'rope' && r.s < p.s0 + 1.5) return p;
     }
     return null;
   }
@@ -252,7 +277,7 @@ export class Run {
       else { r.powers[p.power!] = p.power === 'shield' ? 1 : POWER_TIME[p.power!]; this.ev.power.push({ r, power: p.power! }); }
       return;
     }
-    if (p.kind === 'ramp' || p.kind === 'beam' || p.kind === 'zip') return;
+    if (p.kind === 'ramp' || p.kind === 'beam' || p.kind === 'zip' || p.kind === 'balance' || p.kind === 'rope' || p.kind === 'sign') return;
     // overlap, in all three directions?
     const w = p.lane === ALL ? 4.5 : p.kind === 'car' ? 1.05 : 1;
     const px = p.lane === ALL ? 0 : p.lane * LANE_W;
@@ -288,7 +313,7 @@ export class Run {
     if (r.out) return;
     r.out = why;
     r.outAt = this.t;
-    r.zip = null;
+    r.hang = null;
     this.ev.out.push(r);
   }
 
@@ -299,14 +324,20 @@ export class Run {
   private drive(r: Runner) {
     r.think -= TICK;
     const c = this.course, v = this.speed, look = v * 1.1 + 8;
-    if (c.groundAt(r.s).kind === 'gap') return; // (on a beam: stay on it)
-    // a wide gap coming: the beam's or the zip line's lane is the only way across
+    // on a rope: throw yourself on late in the swing (not always quite right)
+    if (r.hang?.kind === 'rope') { if (ropeAt(r) > 0.68 + (Math.random() - 0.5) * 0.04) this.jump(r); return; }
+    if (c.groundAt(r.s).kind === 'gap') return; // (on a beam or a rail: stay on it)
+    // a wide gap coming: get in the lane of a way across (at a crossing, the one this runner likes)
     let want: number | null = null;
     const g = c.grounds.find((x) => x.wide && x.s0 > r.s && x.s0 < r.s + v * 1.8);
     if (g) {
-      const way = c.pieces.find((p) => (p.kind === 'beam' || p.kind === 'zip') && p.s1 > g.s0 && p.s0 < g.s1);
+      const kinds: PieceKind[] = g.crossing ? [r.likes] : ['beam', 'zip'];
+      const way = c.pieces.find((p) => kinds.includes(p.kind) && p.s1 > g.s0 && p.s0 < g.s1 + 1);
       if (way) want = way.lane;
-      if (way?.kind === 'zip' && way.lane === r.lane && r.grounded && r.s > g.s0 - v * 0.35) this.jump(r);
+      if (way?.lane === r.lane && r.grounded) {
+        if (way.kind === 'zip' && r.s > g.s0 - v * 0.35) this.jump(r);
+        if (way.kind === 'rope' && r.s > g.s0 - 1.6) this.jump(r);
+      }
     }
     const here = this.danger(r, r.lane, look);
     if (r.think <= 0) {
@@ -368,3 +399,6 @@ export class Run {
 }
 
 interface Danger { what: 'wall' | 'low' | 'bar' | 'gap'; ds: number }
+
+// How far through its rope's swing a runner is, 0..1
+export const ropeAt = (r: Runner) => (r.hang ? Math.min(1, Math.max(0, (r.s - r.hang.s0) / (r.hang.s1 - r.hang.s0))) : 0);

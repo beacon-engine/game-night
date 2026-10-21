@@ -6,7 +6,7 @@ import {
   manualPadInput, manualScreen, ownedItems, PerformanceGuard, playerColor, playerKey, requireDevice, shopItems, showManual,
   starsLabel, type EarnFor, type Earned, type Pad, type PadScreen,
 } from '@platform';
-import { Course, ROUTES, todaySeed, type Power } from './course.ts';
+import { Course, ROUTES, todaySeed, type Power, type Tech } from './course.ts';
 import { loadPeople, type Look } from './people.ts';
 import { POWER_TIME, Run, TICK, type Out, type Runner, type RunnerSpec, type Stats } from './run.ts';
 import { POWER_COLOR, World } from './scene.ts';
@@ -355,7 +355,11 @@ function padScreen(c: Player): PadScreen {
       const r = run.runners.find((x) => x.id === c.id);
       if (!r) return { ...base, labels: {}, hint: 'You run next time' };
       if (r.out) return { ...base, labels: {}, hint: `Out at ${Math.floor(r.s)} m · ${plural(r.coins, 'coin', 'coins')}` };
-      const hint = stage === 'countdown' ? 'Find your tag on the screen' : `${Math.floor(r.s)} m · ◀▶ lanes · ▲ jump · ▼ slide`;
+      const ahead = run.course.crossingAhead(r.s, run.speed * 4); // (about four seconds' warning)
+      const hint = stage === 'countdown' ? 'Find your tag on the screen'
+        : r.hang?.kind === 'rope' ? 'Swing! ▲ late in the swing to reach the next rope'
+        : ahead ? `Crossing: ${ahead.map((t) => (t ? TECH_NAME[t] : '·')).join(' | ')}`
+        : `${Math.floor(r.s)} m · ◀▶ lanes · ▲ jump · ▼ slide`;
       return { ...base, labels: controls.labels('run'), hint };
     }
   }
@@ -407,7 +411,8 @@ function buildTags() {
       <span class="m"></span><span class="coins"></span><span class="pw"></span><span class="warn"></span></div>`).join('');
 }
 
-const POWER_NAME: Record<Power, string> = { magnet: 'Magnet', boots: 'Boots', shield: 'Shield', double: '×2' };
+const TECH_NAME: Record<Tech, string> = { zip: 'Zip (fast)', balance: 'Rail (safe)', ropes: 'Ropes' };
+const POWER_NAME: Record<Power, string> ={ magnet: 'Magnet', boots: 'Boots', shield: 'Shield', double: '×2' };
 
 function updateHud() {
   run.runners.forEach((r, i) => {

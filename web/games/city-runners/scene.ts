@@ -5,7 +5,7 @@
 // from what's in view, so it runs on a TV.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { ALL, CAR_TOP, LANE_W, ZIP_Y, type Ground, type Piece, type PieceKind, type Power, type Route } from './course.ts';
+import { ALL, CAR_TOP, LANE_W, ROPE_TOP, ZIP_Y, type Ground, type Piece, type PieceKind, type Power, type Route } from './course.ts';
 import { Person } from './people.ts';
 import { SLIDE, type Run, type Runner } from './run.ts';
 import { canvas, DISPLAY_FONT, seeded, texture } from './draw.ts';
@@ -369,7 +369,8 @@ function placed(geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: nu
 }
 
 // --- the things on the course: one instanced mesh per kind, refilled from what's in view -----------------
-type Slot = 'low' | 'pipe' | 'sign' | 'block' | 'car' | 'carFront' | 'ramp' | 'beam' | 'cable' | 'post' | 'coin' | 'power';
+type Slot = 'low' | 'pipe' | 'sign' | 'block' | 'car' | 'carFront' | 'ramp' | 'beam' | 'cable' | 'post' | 'coin' | 'power'
+  | 'thin' | 'rope' | 'signZip' | 'signBalance' | 'signRopes';
 
 class Bits {
   group = new THREE.Group();
@@ -411,6 +412,11 @@ class Bits {
       coin: make(new THREE.CylinderGeometry(0.32, 0.32, 0.08, 14).rotateX(Math.PI / 2),
         new THREE.MeshLambertMaterial({ color: 0xffc83a, emissive: 0x6a4300 }), 256),
       power: make(new THREE.IcosahedronGeometry(0.42, 0), new THREE.MeshLambertMaterial({ emissive: 0x333333 }), 16),
+      thin: make(unit(), new THREE.MeshLambertMaterial({ color: 0xd8dde6, emissive: 0x30343c }), 8),
+      rope: make(new THREE.CylinderGeometry(0.035, 0.035, 1, 5).translate(0, -0.5, 0), lambert({ color: 0x9a6a3a }), 16), // (hangs down from its top)
+      signZip: make(new THREE.BoxGeometry(1, 1, 0.08), lambert({ map: tex.zip, emissiveMap: tex.zip, emissive: 0xffffff, emissiveIntensity: 0.6 }), 4),
+      signBalance: make(new THREE.BoxGeometry(1, 1, 0.08), lambert({ map: tex.balance, emissiveMap: tex.balance, emissive: 0xffffff, emissiveIntensity: 0.6 }), 4),
+      signRopes: make(new THREE.BoxGeometry(1, 1, 0.08), lambert({ map: tex.ropes, emissiveMap: tex.ropes, emissive: 0xffffff, emissiveIntensity: 0.6 }), 4),
     };
     const glow = new THREE.SpriteMaterial({ map: tex.glow, color: 0xfff2c0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
     for (let i = 0; i < 16; i++) {
@@ -429,13 +435,13 @@ class Bits {
       const p = c.pieces[i];
       if (p.s0 > camS + AHEAD) break;
       if (p.s1 < camS - BEHIND || p.taken) continue;
-      this.piece(p, 0, now);
+      this.piece(p, 0, now, run);
     }
     let lamp = 0;
     for (const p of c.movers) {
       const off = c.offset(p, t);
       if (p.s1 - off < camS - BEHIND || p.s0 - off > camS + AHEAD) continue;
-      this.piece(p, off, now);
+      this.piece(p, off, now, run);
       if (p.look === 1 && lamp < this.lamps.length - 1) {
         for (const side of [-1, 1]) {
           const l = this.lamps[lamp++];
@@ -464,7 +470,7 @@ class Bits {
     this.counts[slot] = n + 1;
   }
 
-  private piece(p: Piece, off: number, now: number) {
+  private piece(p: Piece, off: number, now: number, run: Run) {
     const x = p.lane === ALL ? 0 : p.lane * LANE_W, len = p.s1 - p.s0, z = -(p.s0 - off + len / 2);
     switch (p.kind as PieceKind) {
       case 'low': return this.put('low', x, p.y0, z, 2, p.y1 - p.y0, len);
@@ -489,6 +495,21 @@ class Bits {
         this.put('cable', x, ZIP_Y, z, 1, 1, len);
         for (const end of [p.s0, p.s1]) this.put('post', x + 1.2, 0, -end, 1, ZIP_Y + 0.3, 1);
         return;
+      case 'balance': return this.put('thin', x, -0.12, z, 0.12, 0.12, len);
+      case 'rope': {
+        // from the cable above the middle of its swing down to whoever's on it, or hanging and swaying
+        const top = -(p.s0 + len / 2), r = run.runners.find((q) => q.hang === p);
+        const dy = r ? r.y + 2 - ROPE_TOP : 1.3 - ROPE_TOP, dz = r ? -r.s - top : Math.sin(now * 0.0015 + p.s0) * 0.8;
+        this.put('rope', x, ROPE_TOP, top, 1, Math.hypot(dy, dz), 1, 0, Math.atan2(-dz, -dy));
+        this.put('cable', x, ROPE_TOP, top, 1, 1, len + 6);
+        return;
+      }
+      case 'sign': {
+        const slot = p.tech === 'zip' ? 'signZip' : p.tech === 'balance' ? 'signBalance' : 'signRopes';
+        this.put(slot, x, 2.2, -p.s0, 2, 1, 1);
+        this.put('post', x, 0, -p.s0 - 0.06, 1, 1.7, 1);
+        return;
+      }
       case 'coin': return this.put('coin', x, (p.y0 + p.y1) / 2, z, 1, 1, 1, now * 0.004 + p.s0 * 0.3);
       case 'power': {
         const n = this.counts.power;
@@ -551,7 +572,25 @@ function bitTextures() {
   lg.fillStyle = grad;
   lg.fillRect(0, 0, 64, 64);
   const tex = (c: HTMLCanvasElement, repeat = true) => texture(c, repeat);
-  return { stripes: tex(stripes), vent: tex(vent), sign: tex(sign, false), car: tex(car), front: tex(front, false), frontGlow: tex(frontGlow, false), glow: tex(glow, false) };
+  // what each way across a crossing is like, on a sign at its lane
+  const tech = (title: string, line: string, color: string) => {
+    const c = canvas(256, 128), g = c.getContext('2d')!;
+    g.fillStyle = '#0d0f15';
+    g.fillRect(0, 0, 256, 128);
+    g.fillStyle = color;
+    g.fillRect(0, 0, 256, 10);
+    g.fillStyle = '#fff3d6';
+    g.textAlign = 'center';
+    g.font = `900 52px ${DISPLAY_FONT}`;
+    g.fillText(title, 128, 66);
+    g.fillStyle = color;
+    g.font = `700 26px ${DISPLAY_FONT}`;
+    g.fillText(line, 128, 106);
+    return texture(c, false);
+  };
+  return {
+    zip: tech('ZIP LINE', 'FAST · JUMP TO GRAB', '#d7ff3b'), balance: tech('THIN RAIL', 'SAFE · SLOW', '#3fb7ff'), ropes: tech('ROPES', 'SWING · JUMP LATE', '#ff8a3d'),
+    stripes: tex(stripes), vent: tex(vent), sign: tex(sign, false), car: tex(car), front: tex(front, false), frontGlow: tex(frontGlow, false), glow: tex(glow, false) };
 }
 
 // --- a runner: a person (people.ts), their trail, their shadow, their shield -----------------------------
@@ -586,15 +625,15 @@ class Figure {
     // what they're doing: the one-off moves (a jump's take-off, a landing, a stumble, a roll) play out
     if (still) p.play('idle');
     else if (r.out) { if (!this.wasOut) p.play(r.out === 'fell' ? 'air' : 'down', 0.1); }
-    else if (r.zip) p.play('air');
+    else if (r.hang) p.play('air');
     else if (r.slide > 0) { if (p.doing !== 'roll') p.play('roll', 0.08, SLIDE); }
     else if (r.slow > this.wasSlow + 0.1) p.play('hit', 0.08, 0.45);
     else if (!r.grounded) {
       if (this.wasGrounded && r.vy > 0) p.play('jumpUp', 0.06, 0.22);
       else if (p.doing !== 'jumpUp' || p.done) p.play('air', 0.15);
     } else if (!this.wasGrounded) p.play('land', 0.05, 0.2);
-    else if (!((p.doing === 'land' || p.doing === 'hit' || p.doing === 'roll') && !p.done)) p.play('run', 0.15);
-    this.wasGrounded = r.grounded || !!r.zip;
+    else if (!((p.doing === 'land' || p.doing === 'hit' || p.doing === 'roll') && !p.done)) p.play(r.balancing ? 'jog' : 'run', 0.2);
+    this.wasGrounded = r.grounded || !!r.hang;
     this.wasSlow = r.slow;
     this.wasOut = !!r.out;
     p.pace = Math.min(1.5, Math.max(0.9, run.speed / 15));
