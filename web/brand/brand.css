@@ -57,6 +57,7 @@
   --drop: #4c8dff;
   --leaf: #2ee59d;
   --star: #ff5ecf;
+  --coin: #ffd76a; /* the stars players earn (not the Star button) */
 
   --good: #2ee59d;
   --warn: #ffc23d;
@@ -221,6 +222,10 @@ body {
 }
 .chip b { align-self: stretch; display: flex; align-items: center; padding: 0 8px; background: var(--pc, var(--chalk)); color: var(--ink-0); font-weight: 700; font-size: 12px; letter-spacing: 0.04em; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* a star balance: the coin and a number */
+.stars-count { display: inline-flex; align-items: center; gap: 5px; color: var(--coin); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stars-count svg { width: 1.1em; height: 1.1em; flex: none; }
 
 .tag {
   display: inline-flex;

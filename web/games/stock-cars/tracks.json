@@ -1,0 +1,45 @@
+{
+  "_help": "The tracks to choose from in the lobby. 'half' is the first half of a lap, from the start/finish line to the middle of the back straight: straights (metres) and left turns (degrees, radius in metres, banking in degrees). It must turn 180° in all; the second half is its mirror image, and the straight back to the middle is added for you. 'width' is the racing surface in metres; 'time' is day, dusk or night; 'scenery' is countryside, desert, harbour or city.",
+  "tracks": [
+    {
+      "id": "beacon-speedway",
+      "scenery": "countryside",
+      "name": "Beacon Speedway",
+      "about": "The classic, out in the hills: two long straights, two fast banked turns. 1.5 km.",
+      "time": "day",
+      "width": 20,
+      "bankStraights": 5,
+      "half": [{ "straight": 190 }, { "turn": 180, "radius": 110, "bank": 24 }]
+    },
+    {
+      "id": "red-mesa",
+      "scenery": "desert",
+      "name": "Red Mesa Tri-Oval",
+      "about": "Out in the desert at sunset. A kink in the front stretch, so it's never quite straight.",
+      "time": "dusk",
+      "width": 22,
+      "bankStraights": 7,
+      "half": [{ "turn": 24, "radius": 380 }, { "straight": 150 }, { "turn": 156, "radius": 120, "bank": 26 }]
+    },
+    {
+      "id": "harbour",
+      "scenery": "harbour",
+      "name": "Harbour Short Track",
+      "about": "Down by the docks, under the lights. Tight and steep: bumping is how you pass. 0.7 km.",
+      "time": "night",
+      "width": 17,
+      "bankStraights": 6,
+      "half": [{ "straight": 80 }, { "turn": 180, "radius": 62, "bank": 28 }]
+    },
+    {
+      "id": "grand-oval",
+      "scenery": "city",
+      "name": "Grand Oval",
+      "about": "The big one, on the edge of the city: 2.7 km, flat out, three wide in the draft.",
+      "time": "day",
+      "width": 26,
+      "bankStraights": 4,
+      "half": [{ "straight": 300 }, { "turn": 180, "radius": 240, "bank": 31 }]
+    }
+  ]
+}

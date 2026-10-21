@@ -35,6 +35,7 @@ export type DisplayToServer = { t: 'hello'; role: 'display' } | (DisplayToPad & 
 export type ServerToPad =
   | { t: 'welcome'; id: string; slot: number; display: boolean }
   | { t: 'display'; on: boolean }
+  | { t: 'stars'; balance: number; earned: number } // from the server: stars earned or spent
   | DisplayToPad;
 
 // Pad messages reach the display tagged with the pad's id. A pad keeps its slot (P1, P2...)
@@ -46,7 +47,8 @@ export type ServerToDisplay =
   | { t: 'pause'; id: string }
   | { t: 'name'; id: string; name: string };
 
-// Close code for a display that another screen took over: it should stay closed, not reconnect
+// Close code for a display that another screen took over, or a pad opened again in another tab:
+// it should stay closed, not reconnect (and take over back)
 export const CLOSE_REPLACED = 4000;
 
 export const socketUrl = () => `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;

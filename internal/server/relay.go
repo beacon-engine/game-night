@@ -118,7 +118,8 @@ func (r *Relay) helloPad(c *client, id, name string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if old := r.pads[id]; old != nil && old.client != c {
-		go old.conn.Close(websocket.StatusNormalClosure, "reconnected")
+		// the same phone opened the pad again (another tab): the old one stops, rather than reconnecting and taking over again
+		go old.conn.Close(StatusReplaced, "this pad was opened somewhere else")
 	}
 	p := &pad{client: c, name: name, slot: r.slotFor(id)}
 	r.pads[id] = p
@@ -164,6 +165,15 @@ func (r *Relay) fromPad(id string, m envelope, data []byte) {
 		}
 	}
 	r.display.send(tagged)
+}
+
+// Tell sends a message from the server itself to one pad, if it's connected (e.g. stars earned).
+func (r *Relay) Tell(id string, v any) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if p := r.pads[id]; p != nil {
+		p.sendJSON(v)
+	}
 }
 
 func (r *Relay) disconnect(c *client, role, padID string) {
@@ -244,7 +254,7 @@ func (c *client) heartbeat(ctx context.Context) {
 
 const heartbeat = 4 * time.Second
 
-// Close code sent to a display when another one takes over (see protocol.ts)
+// Close code sent to a display, or a pad, when another one takes its place (see protocol.ts)
 const StatusReplaced websocket.StatusCode = 4000
 
 func newID() string {

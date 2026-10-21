@@ -1,0 +1,10 @@
+{
+  "name": "Reversi",
+  "icon": "⚫",
+  "tagline": "Trap their discs, flip them to yours",
+  "players": "1–2",
+  "category": "Board",
+  "needs": "light",
+  "order": 93,
+  "status": "soon"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Checkers",
+  "icon": "⛀",
+  "tagline": "Jump, crown, clear the board",
+  "players": "1–2",
+  "category": "Board",
+  "needs": "light",
+  "order": 91,
+  "status": "soon"
+}

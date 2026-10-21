@@ -1,0 +1,10 @@
+{
+  "name": "Ludo",
+  "icon": "🎲",
+  "tagline": "Roll a six, race round, send them home",
+  "players": "2–4",
+  "category": "Board",
+  "needs": "light",
+  "order": 95,
+  "status": "soon"
+}

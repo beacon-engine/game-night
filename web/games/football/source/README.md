@@ -2,7 +2,7 @@
 
 The original downloads the football assets in [`../models/`](../models) were made from. They're here so
 anyone can rework them (more hairstyles, the female body, other animations); the game itself only loads
-`models/`. Nothing in this folder is shipped in `game-night`.
+`models/`. Nothing in this folder is shipped in `beacon-arcade`.
 
 | Folder | What | From | License |
 |---|---|---|---|

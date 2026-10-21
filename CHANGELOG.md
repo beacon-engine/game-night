@@ -5,7 +5,34 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 
 ## [Unreleased]
 
+### Added
+- **Stars and a shop.** Finishing a game earns stars (more for a win, a podium, a record or a title, and a
+  bonus for the first game of the day; capped per day so replaying one quick game all night doesn't flood
+  the shop). Each phone shows its stars; tapping them opens the shop, where they buy looks, never an
+  advantage: paint jobs in Stock Cars (pick them in the garage with ▲▼), board themes in Chess. Games
+  sell items with a `shop.json` and pay out with `earnStars()`.
+- **Football tactics.** Five shapes for 11-a-side (4-4-2, 4-3-3, 4-2-3-1, 3-5-2, 5-3-2) and more for 7- and
+  5-a-side; team instructions (with the ball, back line, closing down, width) that change how the
+  computer-controlled teammates play; a choice of keeper. Set them on the team sheet in the lobby or from
+  the pause menu. Each player's plan is saved.
+
 ### Changed
+- Saved progress moved from JSON files to one database, `beacon-arcade.db` (SQLite, pure Go, so it runs
+  the same on Android TV). Saves from older versions are brought in automatically on the first run.
+- **Game Night is now Beacon Arcade** (the old name is already used by other game services). The program
+  is `beacon-arcade`, and the user folder is `beacon-arcade` (an existing `game-night` folder is moved
+  over, saved progress and all).
+- The pad's four buttons are our own icons: **Bolt** (bottom), **Drop** (right), **Leaf** (left), **Star** (top),
+  in amber, blue, green and pink. The logo is the four in their diamond. In `controls.json` the
+  buttons are `bolt`, `drop`, `leaf`, `star`; manuals can draw one with `{bolt}`.
+- Games renamed or reworked so none copies an existing game's name or look (see "Originality" in
+  `web/games/README.md`); Danfo Rush is dropped.
+- Football is marked **In progress**: playable, but still being worked on.
+
+### Fixed
+- A phone with the pad open in two tabs no longer flips between them every second (so nothing it
+  pressed counted). The older tab stops and offers to take over.
+
 - New look everywhere, defined once in `web/brand/` (colours, type, components; rules in its README):
   a dark night palette with one volt accent and the pad's four button colours, Big Shoulders Display and
   Inter (bundled, works offline), line icons instead of emoji, and a selection frame.
@@ -21,9 +48,21 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   Space Rocks, Pinball, Road Hopper. Racing is now its own category.
 - A shared plan for competitions in every game (`web/games/COMPETITIONS.md`): leagues, cups, groups,
   race weekends with qualifying, championships with points tables, playoffs, title fights and careers,
-  ladders, arcade high scores, and a Arcade Cup across games. Each game's README says which it uses.
+  ladders, arcade high scores, and an Arcade Cup across games. Each game's README says which it uses.
 
 ### Added (games)
+- **Chess**, and a new **Board** category: 1–2 players, against a friend on the same screen or the computer
+  (Easy, Medium, Hard; it thinks a little each frame, so the screen never freezes). The full rules (castling,
+  en passant, promotion, the draws), the moves in standard notation, optional 5 or 10 minute clocks, draw offers
+  and resigning, and saved records (including wins against each computer strength). Move a square with the
+  phone's arrows, pick up and put down with Bolt. Our own pieces, drawn in code.
+- Plans for more board games, all with generic names: Checkers, Four in a Row, Reversi, Backgammon, Ludo,
+  Snakes and Ladders, Dominoes and Mancala (oware, or ayo as it's known in Nigeria).
+- **Stock Cars**, the third playable game: 1–4 drivers on banked ovals, with up to 11
+  computer drivers at three paces. Slipstreams, bump drafts, 3, 5 or 10 laps, a split screen for 2 to 4
+  people, a TV camera when nobody's driving, engine sounds, and saved records (wins, best lap, the lap record).
+  The phone becomes a steering pad with gas and brake. Pick from four tracks (countryside, desert at
+  dusk, a harbour at night, a city) and six cars (from Kenney's CC0 Car Kit); cars bounce, scrape and spin.
 - **Neon Trails**, the second playable game: 1–8 riders on phones or keyboards, computer riders to fill in,
   first to 3, 5 or 7 rounds, walls that close in so rounds don't drag, a demo round behind the lobby.
 - **Saved progress** for every game (`gameSaves()`): kept as files on the machine running Beacon Arcade
@@ -62,7 +101,8 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 
 ## [0.1.0] - 2026-10-19
 
-First release.
+First release (as "Game Night"; the program in that release is called `game-night`). The pad then used
+another console's button symbols; they were replaced by our own (see Unreleased).
 
 ### Added
 - `beacon-arcade`: one program for macOS, Windows, Linux and Raspberry Pi that serves the games on your
@@ -73,10 +113,10 @@ First release.
 - Football: 11-a-side 3D football, 1–8 players, with fouls, cards, set pieces, substitutions, stamina,
   day and night, four cameras, and remappable controls.
 - An optional user folder to replace built-in files (clubs, settings, controls) or add games without rebuilding.
-- Plans for 23 more games, each with a README: basketball, baseball, cricket, long tennis, table tennis,
-  pool, racing, beach volleyball, boxing, crazy golf, air hockey, dodgeball, fighters, street brawler,
-  tanks, laser tag, blast zone, sumo push, dogfight, last stand, capture the flag, rooftop brawl,
-  danfo rush and heist.
+- Plans for more games, each with a README: basketball, baseball, cricket, long tennis, table tennis, pool,
+  beach volleyball, boxing, crazy golf, puck duel, dodgeball, fighters, brawlers, tanks, laser arena,
+  bomb maze, sumo, dogfight, last stand, capture the flag, rooftop brawl, heist, and racing.
+  (Some had other names at the time; they were renamed, and one dropped, so none borrows an existing game's name.)
 
 [Unreleased]: https://github.com/beacon-engine/game-night/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/beacon-engine/game-night/releases/tag/v0.1.0

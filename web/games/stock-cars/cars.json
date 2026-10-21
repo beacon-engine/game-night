@@ -1,0 +1,11 @@
+{
+  "_help": "The cars to choose from. 'model' is a file in models/ (without .glb); 'length' is how long it is on the track, in metres (its width follows from the model). The rest are compared with the Stocker: 'top' speed, 'accel' (how quickly it gets there), 'grip' (how fast it can take a turn before sliding up) and 'weight' (who gets pushed around in a bump).",
+  "cars": [
+    { "id": "stocker", "name": "Stocker", "model": "sedan-sports", "about": "The all-rounder, built for ovals.", "length": 4.9, "top": 1, "accel": 1, "grip": 1, "weight": 1 },
+    { "id": "hot-hatch", "name": "Hot Hatch", "model": "hatchback-sports", "about": "Quick off the line and nimble, but light in a shoving match.", "length": 4.4, "top": 0.975, "accel": 1.15, "grip": 1.05, "weight": 0.85 },
+    { "id": "prototype", "name": "Prototype", "model": "race-future", "about": "The fastest in a straight line. Slides when the turns get tight.", "length": 4.8, "top": 1.03, "accel": 0.97, "grip": 0.95, "weight": 0.9 },
+    { "id": "open-wheeler", "name": "Open Wheeler", "model": "race", "about": "Sticks to the bottom of the turns. Don't trade paint with it.", "length": 4.8, "top": 1, "accel": 1.06, "grip": 1.1, "weight": 0.7 },
+    { "id": "pickup", "name": "Pickup", "model": "truck", "about": "Slow to get going, but nobody moves it out of the way.", "length": 5.3, "top": 0.98, "accel": 0.9, "grip": 0.97, "weight": 1.4 },
+    { "id": "big-suv", "name": "Big SUV", "model": "suv", "about": "Heavy and planted. Wins every bump.", "length": 5, "top": 0.965, "accel": 0.95, "grip": 0.95, "weight": 1.3 }
+  ]
+}

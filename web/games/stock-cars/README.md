@@ -1,54 +1,80 @@
 # Stock Cars
 
-Oval racing: drafting, bump-and-run, last-lap moves · 1–4 players · Racing · **coming soon**
+Oval racing: slipstreams, bump drafts, last-lap passes · 1–4 players · Racing · **playable**
 
-Heavy cars, high banks, three wide. The draft is everything: line up behind someone and you both go faster. Bump-drafting, cautions, restarts and a lot of last-lap drama.
+Heavy cars, banked ovals, a pack that never spreads out. The draft is everything: line up behind someone
+and you go faster (and give them a shove). Pull out late to pass, and stay off the wall.
 
-## Controls (a first plan)
+Pick a track in the lobby (`tracks.json`) and, after Start, everyone picks a car on their phone
+(`cars.json`): the Stocker, Hot Hatch, Prototype, Open Wheeler, Pickup or Big SUV, each with its own
+speed, pick-up, grip and weight.
 
-Every game uses the same phone pad: a stick (pushed past its ring = sprint), Bolt, Drop, Leaf, Star, L1, R1, and a swipe
-across a button. This is what each does here; it goes into `controls.json` once the game exists, and the
-phone dims the buttons a situation doesn't use.
+## Controls
+
+Every game uses the same phone pad. Here, while racing, the phone shows the racing pad: slide your thumb
+left and right to steer, with gas and brake pedals (`controls.json`). Menus use the d-pad.
 
 | Button | Driving |
 |---|---|
-| Bolt | Throttle |
-| Drop | Brake |
-| Leaf | Pit road (under caution) |
-| R1 | Spotter: who is beside me |
-| Stick | Steer |
+| Steering slider, stick, or arrows / A D | Steer (right = up the track, toward the wall) |
+| Bolt (or up / W) | Gas (hold) |
+| Drop (or down / S) | Brake (hold) |
+| R1 | Look back (hold) |
+
+## How it works
+
+| File | |
+|---|---|
+| `tracks.json` | The tracks: half a lap of straights and left turns (the other half is its mirror image, so it always closes), width, banking, time of day. Add one and it's in the lobby. |
+| `cars.json` | The cars: which model, how long, and top speed, pick-up, grip and weight compared with the Stocker. |
+| `track.ts` | A track as numbers, from its description. Everything is measured along it (`s`) and across it (`d`). |
+| `race.ts` | The cars, the slipstream, contact (cars bounce off the wall and each other by weight; hard hits spin you round), laps, finishing order, and the computer drivers. No graphics, so it can be tested on its own. |
+| `cars.ts` | Loads the models and repaints each in its driver's colour, with their number on the doors. |
+| `scene.ts` | The venue in three.js, built from `track.ts` and lit for day, dusk or night; sparks; a chase camera per person (the screen splits for 2 to 4), a TV camera, and the turntables for picking cars. |
+| `scenery.ts` | The land around each track by its theme: countryside hills and forest, desert mesas, a harbour with cranes and containers, or a city. Flat by the track, rising into hills further out. |
+| `draw.ts` | Small helpers for textures drawn in code (and the noise the hills are made from). |
+| `sound.ts` | A synthesised engine per person driving, a thump for contact and a crunch for the wall. |
+| `main.ts` | Lobby, picking cars, countdown, race, results, saved records, what the phones show. |
+
+Handling, in short: gas settles you at your top speed (more in a slipstream); the banking holds the turns up
+to a point, and beyond it you slide up toward the wall and scrub speed; steering moves you across the track,
+faster the faster you go; the outside wall costs a lot of speed.
+
+Saved: each driver's races, wins, podiums, best lap and last car, and each track's lap record.
+
+The cars are from [Kenney's Car Kit](https://kenney.nl/assets/car-kit) (CC0), kept with their licence in
+[`source/`](source/README.md). Everything else (track, scenery, textures) is drawn in code.
 
 ## Competition
 
-**Exhibition** · **Race weekend** · **Championship** · **Playoffs**
+**Exhibition** (now) · **Race weekend** · **Championship** · **Playoffs**
 
 Weekend: single-car qualifying, then a race in stages with stage points. Season: points for every finishing position plus stage points; the top drivers enter elimination playoff rounds, and the last four race for the title in the final round.
 
 The formats (and how standings, brackets and seasons work in every game) are in
 [COMPETITIONS.md](../COMPETITIONS.md).
 
-## First playable
+## Originality
 
-What it needs before `index.html` goes in and it shows up as playable on the game select page:
+Oval stock car racing is a sport, not anyone's game. Our own name, cars, liveries, numbers, drivers and
+track; no real series, teams, sponsors, manufacturers or circuits. See [Originality](../README.md#originality).
 
-- [ ] One oval with banking
-- [ ] Drafting (pack speed)
-- [ ] Contact that bumps, not wrecks, unless it's hard
-- [ ] Cautions and restarts; checkered flag
-- [ ] Phones show what each button does (`input.show`); Drop in the lobby goes back to the games (`backToHub`)
-- [ ] A manual (`manual.json`): what it is, how you win, how to play, tips
-- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
-- [ ] Two keyboard players can play it too (they come free with `Input`)
+## First playable: done
 
-## Later
+- [x] One banked oval
+- [x] Drafting (the slipstream, and a shove for the car in front)
+- [x] Contact that bumps, not wrecks; the wall costs speed
+- [x] Countdown, laps, final lap, chequered flag, results
+- [x] Phones show what each button does (`input.show`); Drop in the lobby goes back to the games (`backToHub`)
+- [x] A manual (`manual.json`): what it is, how you win, how to play, tips
+- [x] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
+- [x] Two keyboard players can play it too (they come free with `Input`)
 
-- Short tracks, superspeedways and a road course
-- Stage racing
-- Damage and pit repairs
+## Next
+
+- Cautions and restarts (a yellow flag after a big hit, the pack bunches up behind a pace car)
+- Qualifying, then Race weekend and Championship (with COMPETITIONS.md)
+- Pit stops: tyres wear, fresh ones are faster
+- Short tracks, a superspeedway and a road course
 - Overtime finish
-
-## Notes
-
-3D, chase and roof cameras. Pack racing with 20+ AI cars needs cheap AI: follow lanes, react to the car ahead.
-
-See [Building a game](../README.md) for how a game folder works and how to run it while you work on it.
+- A spotter: "car outside" on your phone

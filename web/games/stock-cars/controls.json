@@ -1,0 +1,13 @@
+{
+  "_help": "Which pad button does what while driving. Steering is the phone's slider (or the stick, or the arrow keys / A and D). Actions: throttle, brake, lookBack.",
+  "drive": {
+    "bolt": "throttle",
+    "drop": "brake",
+    "r1": "lookBack"
+  },
+  "labels": {
+    "throttle": "Gas",
+    "brake": "Brake",
+    "lookBack": "Look back"
+  }
+}

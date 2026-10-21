@@ -1,13 +1,14 @@
 import * as THREE from 'three';
 import {
-  $, backToHub, BIT, chip, escapeHtml, glyph, hostInfo, Input, keyCode, manualOpen, manualPadInput, manualScreen,
-  PerformanceGuard, requireDevice, showManual, type Button, type PadScreen,
+  $, backToHub, BIT, chip, earnStars, escapeHtml, gameSaves, glyph, hostInfo, Input, keyCode, manualOpen, manualPadInput, manualScreen,
+  PerformanceGuard, playerKey, requireDevice, showManual, starsLabel, type Button, type EarnFor, type PadScreen,
 } from '@platform';
 import { loadFootballControls, type Context } from './actions.ts';
 import { Sfx } from './audio.ts';
-import { Match, newHuman, type Human, type MatchEvent, type Player, type Team } from './match.ts';
+import { Match, newHuman, type Human, type MatchEvent, type Player, type Team, type TeamSetup } from './match.ts';
 import { loadPlayerAssets, makeLabel } from './player.ts';
 import { buildStadium } from './stadium.ts';
+import { cleanTactics, cycleTactic, DEFAULT_TACTICS, shapesFor, TACTIC_KEYS, tacticName, TACTICS, type Tactic, type Tactics } from './tactics.ts';
 import type { CameraMode, Club, Formations, PlayerData, Settings, TagMode, TimeOfDay } from './types.ts';
 
 // a heavy game: check this screen can take it before loading anything big (see game.json "needs")
@@ -20,7 +21,19 @@ const [settings, formations, clubs, controls] = await Promise.all([
   load<Club[]>('teams.json'),
   loadFootballControls(), // which button does what: controls.json
 ]);
-const formation = formations[String(settings.playersPerSide)] || formations['5'];
+const shapes = shapesFor(formations, settings.playersPerSide); // the first is the default
+const SIZE = String(settings.playersPerSide);
+const keepersOf = (club: Club) => club.players.filter((p) => p.pos === 'GK');
+// every squad needs a keeper on the bench: a club in teams.json with only one gets a stand-in
+for (const club of clubs) {
+  for (const name of ['Reserve', 'Stand-in']) {
+    if (keepersOf(club).length >= 2) break;
+    const used = new Set(club.players.map((p) => p.number));
+    let number = 13;
+    while (used.has(number)) number++;
+    club.players.push({ name, number, pos: 'GK', pace: 52, passing: 55, shooting: 30, tackling: 35, dribbling: 38, keeping: 64, stamina: 60 });
+  }
+}
 // the brand fonts are drawn into textures (names, numbers, ad boards), so they must be loaded first
 await Promise.all(['800 34px "Big Shoulders Display"', '600 16px Inter'].map((f) => document.fonts.load(f)));
 await loadPlayerAssets(); // motion-captured player model (must be ready before any match)
@@ -56,9 +69,16 @@ for (const type of ['pointerdown', 'keydown'] as const) {
 
 // -------------------------------------------------------------- state ----
 type Mode = 'lobby' | 'match' | 'paused' | 'fulltime';
-type MenuView = 'main' | 'subs' | 'controls' | 'confirm';
+type MenuView = 'main' | 'subs' | 'tactics' | 'controls' | 'confirm';
 interface Menu { cursor: number; view: MenuView; by: Human | null; confirm: 0 | 1; action?: 'restart' | 'quit' }
 interface Subs { c: Human; team: Team; stage: 'off' | 'on'; cursor: number; off: Player | null }
+interface TacticsView { c: Me; team: 0 | 1; row: number } // changing tactics from the pause menu
+
+// How a side lines up: an index into `shapes`, its instructions, and who starts in goal
+interface Plan { shape: number; tactics: Tactics; keeper: string }
+const freshPlan = (club: Club): Plan => ({ shape: 0, tactics: DEFAULT_TACTICS, keeper: keepersOf(club)[0]?.name ?? '' });
+// What a player's saves remember: their shape per side size, instructions, and keeper per club
+interface Saved { shapes: Record<string, string>; tactics: Tactics; keepers: Record<string, string> }
 
 const app = {
   mode: 'lobby' as Mode,
@@ -68,8 +88,13 @@ const app = {
   fulltimeT: 0,
   menu: null as Menu | null,
   subs: null as Subs | null,
+  tac: null as TacticsView | null,
+  plans: [freshPlan(clubs[0]), freshPlan(clubs[1])] as [Plan, Plan],
 };
-const input = new Input({ state: newHuman });
+// row: where their cursor is in the lobby's team sheet; saved: what they chose last time
+const input = new Input({ state: () => ({ ...newHuman(), row: 0, saved: null as Saved | null, loaded: false }) });
+type Me = (typeof input.list)[number];
+const saves = gameSaves();
 const placed = new WeakSet<Human>(); // put on a team since they (re)joined
 const frontEnd = () => app.mode === 'lobby'; // menus, with a demo match behind
 Object.assign(window, { football: { app, input, renderer } }); // handy for poking at the game from the console
@@ -83,6 +108,14 @@ input.onJoin = (c) => {
     placed.add(c);
   }
   if (app.mode === 'match') app.match.addHuman(c);
+  if (!c.loaded) {
+    c.loaded = true;
+    saves.get<Saved>(playerKey(c, 'tactics')).then((s) => {
+      if (!s || c.saved) return; // (they already changed something while it loaded)
+      c.saved = s;
+      adopt(c);
+    });
+  }
   refreshLobby();
 };
 input.onLeave = (c) => {
@@ -95,8 +128,10 @@ input.onPause = (c) => togglePause(c);
 
 function newMatch(demo: boolean) {
   app.match?.dispose();
+  const setup = (p: Plan): TeamSetup => ({ shape: shapes[p.shape].slots, tactics: p.tactics, keeper: p.keeper });
   app.match = new Match({
-    scene, settings, formation, controls, demo, onEvent,
+    scene, settings, controls, demo, onEvent,
+    setups: [setup(app.plans[0]), setup(app.plans[1])],
     clubs: [clubs[app.home], clubs[app.away]],
     humans: demo ? [] : input.list,
   });
@@ -133,9 +168,98 @@ function cycleClub(team: number, d: number) {
   let i = app[key];
   do i = (i + d + clubs.length) % clubs.length; while (i === other);
   app[key] = i;
+  app.plans[team].keeper = keeperFor(team as 0 | 1);
   newMatch(true);
   refreshLobby();
 }
+
+// ------------------------------------------------------------ tactics ----
+// The team sheet: the lobby shows every row; mid-match the keeper changes through Substitutions
+type Row = 'club' | 'shape' | 'keeper' | Tactic;
+const LOBBY_ROWS: Row[] = ['club', 'shape', 'keeper', ...TACTIC_KEYS];
+const MATCH_ROWS: Row[] = ['shape', ...TACTIC_KEYS];
+const ROW_LABEL: Record<Row, string> = {
+  club: 'Club', shape: 'Shape', keeper: 'In goal',
+  ...(Object.fromEntries(TACTIC_KEYS.map((k) => [k, TACTICS[k].label])) as Record<Tactic, string>),
+};
+const clubOf = (team: number) => clubs[team === 0 ? app.home : app.away];
+
+function rowValue(team: 0 | 1, row: Row) {
+  const plan = app.plans[team];
+  if (row === 'club') return clubOf(team).name;
+  if (row === 'shape') return shapes[plan.shape].name;
+  if (row === 'keeper') {
+    const gk = keepersOf(clubOf(team)).find((k) => k.name === plan.keeper);
+    return gk ? `${gk.name} (keeping ${gk.keeping ?? '-'})` : '—';
+  }
+  return tacticName(row, plan.tactics);
+}
+
+// Change one row of a side's plan: in the lobby (the match behind the menu follows it), or mid-match
+function changePlan(team: 0 | 1, row: Row, d: number, by: Me | null) {
+  const plan = app.plans[team];
+  const t = app.match.teams[team];
+  if (row === 'club') return cycleClub(team, d);
+  if (row === 'shape') {
+    plan.shape = (plan.shape + d + shapes.length) % shapes.length;
+    app.match.setShape(t, shapes[plan.shape].slots);
+  } else if (row === 'keeper') {
+    const ks = keepersOf(clubOf(team));
+    if (ks.length < 2 || app.mode !== 'lobby') return;
+    const i = ks.findIndex((k) => k.name === plan.keeper);
+    plan.keeper = ks[(i + d + ks.length) % ks.length].name;
+    newMatch(true);
+  } else {
+    plan.tactics = cycleTactic(plan.tactics, row, d);
+    t.instruct(plan.tactics);
+  }
+  if (by) remember(by);
+  if (app.mode === 'lobby') refreshLobby();
+  else renderPause();
+}
+
+// The keeper a side starts with: one of its players' saved choice for this club, or the first
+function keeperFor(team: 0 | 1) {
+  const club = clubOf(team);
+  const ks = keepersOf(club);
+  for (const c of input.list) {
+    const name = c.team === team ? c.saved?.keepers?.[club.short] : undefined;
+    if (ks.some((k) => k.name === name)) return name!;
+  }
+  return ks[0]?.name ?? '';
+}
+
+// A player alone on a side brings their saved plan with them
+function adopt(c: Me) {
+  const s = c.saved;
+  if (!s || app.mode !== 'lobby' || input.list.some((o) => o !== c && o.team === c.team)) return;
+  const plan = app.plans[c.team];
+  const i = shapes.findIndex((f) => f.name === s.shapes?.[SIZE]);
+  if (i >= 0) plan.shape = i;
+  plan.tactics = cleanTactics(s.tactics);
+  plan.keeper = keeperFor(c.team);
+  newMatch(true);
+  refreshLobby();
+}
+
+const saveTimers = new Map<Me, ReturnType<typeof setTimeout>>();
+function remember(c: Me) {
+  const plan = app.plans[c.team];
+  const prev = c.saved;
+  const saved: Saved = {
+    shapes: { ...prev?.shapes, [SIZE]: shapes[plan.shape].name },
+    tactics: plan.tactics,
+    keepers: { ...prev?.keepers, [clubOf(c.team).short]: plan.keeper },
+  };
+  c.saved = saved;
+  // (saved once they stop flicking through the options)
+  clearTimeout(saveTimers.get(c));
+  saveTimers.set(c, setTimeout(() => saves.set(playerKey(c, 'tactics'), saved), 800));
+}
+
+const cursorTag = (c: Me) => `<span class="ptag" style="background:${c.color}">${c.tag}</span>`;
+const valueHtml = (team: 0 | 1, row: Row, sel: boolean) =>
+  sel ? `<span class="arr">◀</span>${escapeHtml(rowValue(team, row))}<span class="arr">▶</span>` : escapeHtml(rowValue(team, row));
 
 // ------------------------------------------------------------- events ----
 function onEvent(e: MatchEvent) {
@@ -187,9 +311,24 @@ function onEvent(e: MatchEvent) {
       const [h, a] = app.match.teams;
       const res = h.score === a.score ? 'DRAW' : `${(h.score > a.score ? h : a).club.name} WIN`;
       banner('FULL TIME', `${h.club.short} ${h.score} - ${a.score} ${a.club.short} · ${res}`, false, 0);
+      payOut(h, a);
       break;
     }
   }
+}
+
+// Stars for everyone who played the match, more for the winners; shown under the full-time score
+function payOut(...teams: Team[]) {
+  const paid: string[] = [];
+  teams.forEach((t, i) => {
+    const why: EarnFor[] = t.score > teams[1 - i].score ? ['played', 'won'] : ['played'];
+    for (const c of t.humans) earnStars(c, why).then((got) => {
+      if (!got?.earned || app.mode !== 'fulltime') return;
+      paid.push(`${chip(c)} +${starsLabel(got.earned)}`);
+      $('banner').querySelector('.stars')?.remove();
+      $('banner').insertAdjacentHTML('beforeend', `<div class="sub stars">${paid.join(' ')}</div>`);
+    });
+  });
 }
 
 let bannerTimer = 0;
@@ -301,9 +440,19 @@ function refreshLobby() {
   $('lnameA').textContent = a.name;
   $('lkitH').style.background = kitSwatch(h);
   $('lkitA').style.background = kitSwatch(a);
-  for (const [team, id] of [[0, 'humansH'], [1, 'humansA']] as const) {
+  for (const [team, id] of [[0, 'H'], [1, 'A']] as const) {
     const hs = input.list.filter((c) => c.team === team);
-    $(id).innerHTML = hs.length ? hs.map(chip).join('') : '<em>Computer</em>';
+    $(`humans${id}`).innerHTML = hs.length ? hs.map(chip).join('') : '<em>Computer</em>';
+    const at = (row: Row) => hs.filter((c) => LOBBY_ROWS[c.row] === row);
+    $(`cur${id}`).innerHTML = at('club').map(cursorTag).join('');
+    $(`club${id}`).classList.toggle('sel', at('club').length > 0);
+    const note = at('shape').length ? shapes[app.plans[team].shape].note : '';
+    $(`plan${id}`).innerHTML = LOBBY_ROWS.slice(1).map((row) => `<div class="prow ${at(row).length ? 'sel' : ''}" data-team="${team}" data-row="${row}">
+        <span class="caption">${ROW_LABEL[row]}${at(row).map(cursorTag).join('')}</span><b>${valueHtml(team, row, at(row).length > 0)}</b></div>`).join('') +
+      (note ? `<div class="pnote">${escapeHtml(note)}</div>` : '');
+    for (const el of $(`plan${id}`).querySelectorAll<HTMLElement>('.prow')) {
+      el.addEventListener('click', () => changePlan(team, el.dataset.row as Row, 1, null));
+    }
   }
 }
 
@@ -312,12 +461,15 @@ function howTo() { showManual('', 'Football'); }
 function lobbyInput() {
   for (const c of input.list) {
     if (manualPadInput(c)) continue;
+    // ▲▼ walks down the team sheet, ◀ ▶ changes the row you're on
+    const fy = c.flickY();
+    if (fy) { c.row = (c.row + fy + LOBBY_ROWS.length) % LOBBY_ROWS.length; refreshLobby(); }
     const f = c.flickX();
-    if (f) cycleClub(c.team, f);
+    if (f) changePlan(c.team, LOBBY_ROWS[c.row], f, c);
     for (const ev of c.drain()) {
       if (!ev.down) continue;
       if (ev.bit === BIT.bolt) startMatch();
-      else if (ev.bit === BIT.leaf) { c.team = c.team ? 0 : 1; refreshLobby(); }
+      else if (ev.bit === BIT.leaf) { c.team = c.team ? 0 : 1; refreshLobby(); adopt(c); }
       else if (ev.bit === BIT.drop) return backToHub();
       else if (ev.bit === BIT.star) howTo();
     }
@@ -342,6 +494,7 @@ addEventListener('keydown', (e) => {
 const MENU = [
   { id: 'resume', label: 'Resume' },
   { id: 'subs', label: 'Substitutions' },
+  { id: 'tactics', label: 'Tactics' },
   { id: 'controls', label: 'Controls' },
   { id: 'camera', label: 'Camera', value: () => CAMERAS[camMode].label },
   { id: 'tags', label: 'Name tags', value: () => tagMode },
@@ -354,12 +507,14 @@ function togglePause(by: Human | null) {
   if (app.mode === 'match') {
     app.mode = 'paused';
     app.subs = null;
+    app.tac = null;
     app.menu = { cursor: 0, view: 'main', by, confirm: 0 };
     $('pause').classList.remove('hidden');
     renderPause();
   } else if (app.mode === 'paused') {
     app.mode = 'match';
     app.subs = null;
+    app.tac = null;
     app.menu = null;
     $('pause').classList.add('hidden');
   }
@@ -380,6 +535,7 @@ function menuBack() {
   if (M.view === 'main') return togglePause(null);
   M.view = 'main';
   app.subs = null;
+  app.tac = null;
   renderPause();
 }
 
@@ -395,11 +551,12 @@ function menuSelect(c: Human | null) {
   const item = MENU[M.cursor];
   switch (item.id) {
     case 'resume': return togglePause(null);
-    case 'subs': {
-      const who = c && placed.has(c) ? c : input.list[0];
+    case 'subs': case 'tactics': {
+      const who = c && placed.has(c) ? (c as Me) : input.list[0];
       if (!who) { banner('NO PLAYERS', 'Join with a pad to make changes', true, 1200); break; }
-      M.view = 'subs';
-      openSubs(who);
+      M.view = item.id;
+      if (item.id === 'subs') openSubs(who);
+      else app.tac = { c: who, team: who.team, row: 0 };
       break;
     }
     case 'controls': M.view = 'controls'; break;
@@ -453,17 +610,30 @@ function renderPause() {
   $('pMenu').innerHTML = MENU.map((it, i) => `<div class="mi ${i === M.cursor ? 'sel' : ''}" data-i="${i}">
       <span>${it.label}</span>${'value' in it ? `<em>${escapeHtml(it.value())}</em>` : ''}</div>`).join('');
   for (const el of $('pMenu').children as HTMLCollectionOf<HTMLElement>) {
-    el.addEventListener('click', () => { M.cursor = Number(el.dataset.i); M.view = 'main'; app.subs = null; menuSelect(input.list[0] || null); });
+    el.addEventListener('click', () => { M.cursor = Number(el.dataset.i); M.view = 'main'; app.subs = app.tac = null; menuSelect(input.list[0] || null); });
   }
   const side = $('pSide');
   side.className = 'pside panel';
   if (M.view === 'controls') side.innerHTML = `<h3 class="h3">Controls</h3>${controlsTable()}`;
   else if (M.view === 'confirm') side.innerHTML = `<h3 class="h3">${M.action === 'quit' ? 'Quit to the lobby?' : 'Restart the match?'}</h3>
       <p>The score so far will be lost.</p><div class="confirm"><div class="mi ${M.confirm === 0 ? 'sel' : ''}">No</div><div class="mi ${M.confirm === 1 ? 'sel' : ''}">Yes</div></div>`;
+  else if (M.view === 'tactics' && app.tac) side.innerHTML = tacticsPane(app.tac);
   else if (M.view === 'subs') side.innerHTML = '';
   else side.className = 'pside panel hidden';
   renderSubs();
-  $('pHelp').innerHTML = `<span>${glyph('dpad')} Choose</span><span>${glyph('bolt')} Select</span><span>${glyph('drop')} ${M.view === 'main' ? 'Resume' : 'Back'}</span>`;
+  $('pHelp').innerHTML = M.view === 'tactics'
+    ? `<span>${glyph('dpad')} ▲▼ choose · ◀ ▶ change</span><span>${glyph('bolt')} Next option</span><span>${glyph('drop')} Back</span>`
+    : `<span>${glyph('dpad')} Choose</span><span>${glyph('bolt')} Select</span><span>${glyph('drop')} ${M.view === 'main' ? 'Resume' : 'Back'}</span>`;
+}
+
+function tacticsPane(T: TacticsView) {
+  const team = app.match.teams[T.team];
+  const gk = team.players.find((p) => p.role === 'GK');
+  const rows = MATCH_ROWS.map((row, i) => `<div class="mi tac ${i === T.row ? 'sel' : ''}"><span>${ROW_LABEL[row]}</span><em>${valueHtml(T.team, row, i === T.row)}</em></div>`).join('');
+  const note = MATCH_ROWS[T.row] === 'shape' ? shapes[app.plans[T.team].shape].note : '';
+  return `<h3 class="h3">Tactics · ${escapeHtml(team.club.name)}</h3>${rows}
+    <p class="tnote">${note ? escapeHtml(note) : '&nbsp;'}</p>
+    <p class="faint">In goal: ${escapeHtml(gk?.name ?? '—')}. To change keeper, use Substitutions (a keeper only comes off for a keeper).</p>`;
 }
 
 // --------------------------------------------------------- substitutions --
@@ -501,7 +671,9 @@ function renderSubs() {
   const bar = (v: number) => `<span class="sbar"><i style="width:${Math.round(v * 100)}%;background:${energyColor(v)}"></i></span>`;
   const on = S.team.players.map((p, i) => `<div class="srow ${S.stage === 'off' && i === S.cursor ? 'sel' : ''} ${p === S.off ? 'off' : ''}">
       <b>${p.number}</b> ${escapeHtml(p.name)} <em>${p.role}</em> ${bar(p.energy)}</div>`).join('');
-  const bench = S.team.bench.map((d, i) => `<div class="srow ${S.stage === 'on' && i === S.cursor ? 'sel' : ''}">
+  // a keeper only swaps for a keeper: grey out who can't come on for the man going off
+  const fits = (d: PlayerData) => !S.off || (S.off.role === 'GK') === (d.pos === 'GK');
+  const bench = S.team.bench.map((d, i) => `<div class="srow ${S.stage === 'on' && i === S.cursor ? 'sel' : ''} ${S.stage === 'on' && !fits(d) ? 'no' : ''}">
       <b>${d.number}</b> ${escapeHtml(d.name)} <em>${d.pos}</em> <small>PAC ${d.pace} DRI ${d.dribbling} STA ${d.stamina ?? '-'}</small></div>`).join('') || '<div class="srow"><em>No one left</em></div>';
   el.innerHTML = `<div class="shead"><span class="h3">${escapeHtml(S.team.club.name)}</span><span class="caption">${S.team.subsLeft} changes left</span></div>
     <div class="scols"><div><h4 class="caption">On the pitch ${S.stage === 'off' ? '· <span class="hl-volt">who comes off?</span>' : ''}</h4>${on}</div>
@@ -511,18 +683,30 @@ function renderSubs() {
 function pauseInput() {
   for (const c of input.list) {
     const f = c.flickY();
-    const S = app.subs;
+    const S = app.subs, T = app.tac;
     if (S) {
       if (f && S.c === c) {
         const n = S.stage === 'off' ? S.team.players.length : S.team.bench.length;
         S.cursor = (S.cursor + f + n) % Math.max(1, n);
         renderPause();
       }
+    } else if (T) {
+      if (T.c === c) {
+        if (f) { T.row = (T.row + f + MATCH_ROWS.length) % MATCH_ROWS.length; renderPause(); }
+        const fx = c.flickX();
+        if (fx) changePlan(T.team, MATCH_ROWS[T.row], fx, c);
+      }
     } else if (f) menuMove(f);
     else if (app.menu?.view === 'confirm' && c.flickX()) menuMove(1);
     for (const ev of c.drain()) {
       if (!ev.down || app.mode !== 'paused') continue;
       if (app.subs) { if (app.subs.c === c) subsInput(app.subs, ev.bit); continue; }
+      if (app.tac) {
+        if (app.tac.c !== c) continue;
+        if (ev.bit === BIT.bolt) changePlan(app.tac.team, MATCH_ROWS[app.tac.row], 1, c);
+        else if (ev.bit === BIT.drop) menuBack();
+        continue;
+      }
       if (ev.bit === BIT.bolt) menuSelect(c);
       else if (ev.bit === BIT.drop) menuBack();
     }
@@ -531,20 +715,29 @@ function pauseInput() {
 
 // ----------------------------------------------------------- pad sync ----
 // What each phone shows: menus, or what the buttons do right now in the match
-function padScreen(c: Human): PadScreen {
+function padScreen(c: Me): PadScreen {
   const club = clubs[c.team === 0 ? app.home : app.away];
   // menus use the d-pad; the match uses the stick
   const screen = { layout: 'dpad' as const, label: c.tag, color: c.color, title: club.name, accent: club.kit.shirt };
   if (app.mode === 'lobby') {
     if (manualOpen()) return manualScreen(screen);
-    return { ...screen, labels: { bolt: 'Kick off', drop: 'Games', leaf: 'Swap side', star: 'How to play' }, hint: '◀ ▶ changes your club' };
-  }
-  if (app.mode === 'paused') {
-    const mine = !app.subs || app.subs.c === c;
+    const row = LOBBY_ROWS[c.row];
     return {
       ...screen,
-      labels: mine ? { bolt: 'Select', drop: app.menu?.view === 'main' ? 'Resume' : 'Back' } : {},
-      hint: app.subs ? (mine ? 'Substitutions: ▲▼ to choose' : 'Substitutions…') : 'Paused: ▲▼ to choose',
+      labels: { bolt: 'Kick off', drop: 'Games', leaf: 'Swap side', star: 'How to play' },
+      hint: `◀ ▶ ${ROW_LABEL[row]}: ${rowValue(c.team, row)} · ▲▼ choose`,
+    };
+  }
+  if (app.mode === 'paused') {
+    const T = app.tac;
+    const mine = (!app.subs || app.subs.c === c) && (!T || T.c === c);
+    const hint = app.subs ? (mine ? 'Substitutions: ▲▼ to choose' : 'Substitutions…')
+      : T ? (mine ? `◀ ▶ ${ROW_LABEL[MATCH_ROWS[T.row]]}: ${rowValue(T.team, MATCH_ROWS[T.row])} · ▲▼ choose` : 'Tactics…')
+      : 'Paused: ▲▼ to choose';
+    return {
+      ...screen,
+      labels: mine ? { bolt: T ? 'Change' : 'Select', drop: app.menu?.view === 'main' ? 'Resume' : 'Back' } : {},
+      hint,
     };
   }
   if (app.mode === 'fulltime') {
@@ -592,7 +785,7 @@ function marker(c: Human) {
 let t = 0;
 function updateMarkers() {
   const m = app.match;
-  const active = new Set(!frontEnd() ? input.list.filter((c) => c.player) : []);
+  const active = new Set<Human>(!frontEnd() ? input.list.filter((c) => c.player) : []);
   for (const [c, mk] of markers) mk.group.visible = active.has(c);
   for (const c of active) {
     const mk = marker(c);

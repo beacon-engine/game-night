@@ -29,7 +29,10 @@
   #dot.on { background: var(--good); }
   #me { background: var(--me); color: var(--ink-0); border-radius: var(--r-1); padding: 4px 8px; font: 700 13px/1 var(--font-ui); letter-spacing: .04em; }
   #title { font: 700 20px/1 var(--font-display); text-transform: uppercase; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #name { margin-left: auto; height: 32px; }
+  #stars { margin-left: auto; height: 32px; gap: 6px; }
+  #stars:empty { display: none; }
+  #name { height: 32px; }
+  #stars:empty + #name { margin-left: auto; }
   #pause { height: 32px; width: 44px; padding: 0; letter-spacing: 0; }
   #hint { position: fixed; top: 60px; left: 0; right: 0; text-align: center; pointer-events: none; }
 
@@ -99,12 +102,39 @@
   /* --- overlays -------------------------------------------------------------------------- */
   #overlay, #rotate {
     position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
-    background: var(--ink-0); z-index: 5; text-align: center; padding: 24px;
+    background: var(--ink-0); z-index: 4; text-align: center; padding: 24px;
   }
   #ov-text { font: 800 34px/1 var(--font-display); text-transform: uppercase; }
+  #ov-shop { margin-top: 10px; gap: 8px; }
   #ov-text small { display: block; margin-top: 10px; font: 500 15px/1.4 var(--font-ui); text-transform: none; color: var(--chalk-2); }
   #rotate { display: none; z-index: 6; font: 800 30px/1.1 var(--font-display); text-transform: uppercase; }
   @media (orientation: portrait) { #rotate { display: flex; } }
+
+  /* --- stars: "+15" when a game pays out, and the shop ------------------------------------ */
+  #earned { position: fixed; top: 58px; left: 50%; transform: translate(-50%, -8px); z-index: 3; padding: 8px 14px; border-radius: var(--r-2);
+    background: var(--ink-2); border: 1px solid var(--coin); font: 800 20px/1 var(--font-display); text-transform: uppercase;
+    opacity: 0; pointer-events: none; transition: opacity var(--t) var(--ease), transform var(--t) var(--ease); }
+  #earned.show { opacity: 1; transform: translate(-50%, 0); }
+  #shop { position: fixed; inset: 0; z-index: 5; display: none; flex-direction: column; background: var(--ink-0); }
+  #shop.open { display: flex; }
+  #shop header { display: flex; align-items: center; gap: 14px; height: 52px; flex: none;
+    padding: 0 max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left)); border-bottom: 1px solid var(--line); background: var(--ink-1); }
+  #shop header h2 { margin: 0; font: 800 22px/1 var(--font-display); text-transform: uppercase; }
+  #shop header .stars-count { font-size: 18px; }
+  #shop-close { margin-left: auto; height: 34px; }
+  #shop-list { flex: 1; overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    padding: 12px max(14px, env(safe-area-inset-right)) 24px max(14px, env(safe-area-inset-left)); user-select: none; }
+  #shop-list h3 { margin: 14px 0 8px; font: 600 11px/1 var(--font-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--chalk-2); }
+  #shop-list .items { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+  .item { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px;
+    background: var(--ink-1); border: 1px solid var(--line); border-radius: var(--r-2); }
+  .item .swatch { width: 40px; height: 40px; border-radius: var(--r-1); background: var(--sw, var(--ink-3)); border: 1px solid var(--line-strong); }
+  .item b { display: block; font: 700 15px/1.2 var(--font-ui); }
+  .item small { display: block; margin-top: 3px; font: 500 12px/1.3 var(--font-ui); color: var(--chalk-2); }
+  .item .buy { height: 34px; min-width: 76px; }
+  .item .buy.sure { background: var(--coin); color: var(--ink-0); border-color: var(--coin); }
+  .item.owned .buy { opacity: .6; }
+  #shop-msg { min-height: 1.2em; margin: 4px 0 0; }
 </style>
 </head>
 <body data-layout="stick">
@@ -112,6 +142,7 @@
     <div id="dot"></div>
     <div id="me">P?</div>
     <div id="title">Connecting…</div>
+    <button class="btn" id="stars" aria-label="Your stars: open the shop"></button>
     <button class="btn" id="name">Set name</button>
     <button class="btn" id="pause" aria-label="Pause">❚❚</button>
   </div>
@@ -147,10 +178,20 @@
     <div class="pb" id="bS" data-button="leaf"><span class="sym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19.5C5 11 10 5 20 4c-.6 9.8-6.6 15.5-15 15.5z"/><path d="M5 19.5 13 11.5"/></svg></span><span class="lbl"></span></div>
   </div>
 
+  <div id="earned"></div>
+  <div id="shop">
+    <header>
+      <h2>Shop</h2><span id="shop-balance"></span>
+      <button class="btn" id="shop-close">Done</button>
+    </header>
+    <div id="shop-list"></div>
+  </div>
+
   <div id="overlay" class="grid-bg">
     <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 16.9l-5.4 2.9 1-6.1-4.4-4.3 6.1-.8z"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19.5C5 11 10 5 20 4c-.6 9.8-6.6 15.5-15 15.5z"/><path d="M5 19.5 13 11.5"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span>
     <div id="ov-text">Connecting…</div>
     <span class="caption faint">Tap to go full screen</span>
+    <button class="btn" id="ov-shop" hidden>Shop</button>
   </div>
   <div id="rotate" class="grid-bg"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 16.9l-5.4 2.9 1-6.1-4.4-4.3 6.1-.8z"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19.5C5 11 10 5 20 4c-.6 9.8-6.6 15.5-15 15.5z"/><path d="M5 19.5 13 11.5"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span>Turn your phone sideways</div>
 

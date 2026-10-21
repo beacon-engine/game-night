@@ -8,5 +8,6 @@ export * from './pad.ts';
 export * from './protocol.ts';
 export * from './device.ts';
 export * from './saves.ts';
+export * from './stars.ts';
 export * from './manual.ts';
 export * from './icons.ts';

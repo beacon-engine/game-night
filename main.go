@@ -22,6 +22,7 @@ import (
 	"strconv"
 
 	"github.com/beacon-engine/game-night/internal/server"
+	"github.com/beacon-engine/game-night/internal/store"
 	"github.com/beacon-engine/game-night/web"
 )
 
@@ -56,11 +57,8 @@ func main() {
 	if *webDir == "" && !web.Embedded {
 		log.Fatal("this build has no web files built in: pass -web DIR")
 	}
-	savesDir := ""
-	if *userDir != "" {
-		savesDir = filepath.Join(*userDir, "saves")
-	}
-	srv := server.New(files(*webDir, *userDir), *port, savesDir)
+	db := openStore(*userDir)
+	srv := server.New(files(*webDir, *userDir), *port, db)
 	srv.Version = version
 	srv.Host = *host
 	ln, err := srv.Listen()
@@ -73,13 +71,33 @@ func main() {
 	url := fmt.Sprintf("http://localhost:%d", *port)
 	fmt.Printf("\n  BEACON ARCADE %s is running\n  Game screen : %s\n  Phones      : %s   (same Wi-Fi)\n", version, url, srv.PadURL())
 	if *userDir != "" {
-		fmt.Printf("  Your folder : %s\n                (games you add go in games/, saved progress is kept in saves/)\n", *userDir)
+		fmt.Printf("  Your folder : %s\n                (games you add go in games/; progress and stars are kept in beacon-arcade.db)\n", *userDir)
 	}
 	fmt.Println()
 	if !*noOpen {
 		openBrowser(url)
 	}
 	log.Fatal(srv.Serve(ln))
+}
+
+// Saves and stars live in <dir>/beacon-arcade.db. Without a folder, or if the file can't be
+// opened, the games still run; they just don't remember anything.
+func openStore(userDir string) *store.Store {
+	if userDir == "" {
+		return nil
+	}
+	db, err := store.Open(filepath.Join(userDir, "beacon-arcade.db"))
+	if err != nil {
+		log.Printf("Saving is off: %v", err)
+		return nil
+	}
+	// before 0.2, saves were files in saves/
+	if n, err := db.ImportFiles(filepath.Join(userDir, "saves")); err != nil {
+		log.Printf("Couldn't bring in the old saves: %v", err)
+	} else if n > 0 {
+		log.Printf("Moved %d saves into beacon-arcade.db", n)
+	}
+	return db
 }
 
 // The built-in games, with the user's folder on top: a game dropped in <dir>/games/<id>/ shows

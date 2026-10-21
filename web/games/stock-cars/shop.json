@@ -1,0 +1,13 @@
+{
+  "_comment": "Paint jobs bought with stars. color: the car's body colour. Looks only: every paint drives the same.",
+  "items": [
+    { "id": "ice-white", "name": "Ice White", "price": 40, "color": "#eef3f7", "about": "Clean and bright" },
+    { "id": "midnight", "name": "Midnight", "price": 40, "color": "#1b2233", "about": "Dark blue, nearly black" },
+    { "id": "candy-red", "name": "Candy Red", "price": 60, "color": "#d0142c", "about": "Deep, glossy red" },
+    { "id": "sunset", "name": "Sunset Orange", "price": 60, "color": "#ff6a1f", "about": "Hard to miss in the mirrors" },
+    { "id": "lime", "name": "Electric Lime", "price": 80, "color": "#a6f21b", "about": "Loud, on purpose" },
+    { "id": "violet", "name": "Violet", "price": 80, "color": "#7a3cff", "about": "Purple with a cool edge" },
+    { "id": "teal", "name": "Harbour Teal", "price": 100, "color": "#0fa3a3", "about": "Sea green-blue" },
+    { "id": "gold", "name": "Gold", "price": 150, "color": "#d9a520", "about": "For champions, or people who want to look like one" }
+  ]
+}
