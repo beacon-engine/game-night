@@ -15,6 +15,15 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   shield, double) go to whoever gets there first. Stumble twice, or fall behind, and the security drone has you: the
   last one running wins. Computer runners to race, "today's course" (the same all day), saved records and best
   distances, and suits and light trails in the shop.
+- **Rally**, the fourth playable racing game (marked In progress): 1–4 drivers and up to 5 computer drivers,
+  everyone on the stage at once, 1 to 5 laps. Two stages built from a seed: Forest Ridge (gravel through
+  the pines, with a water splash) and Red Canyon (dirt between the rocks at sunset). Real car physics: each
+  car is a body on four sprung wheels, so it slides on loose ground, flies off crests (further the faster you
+  take them), pitches nose-down in the air, lands on its springs and can roll if it lands badly. Cars hit each
+  other and the trees and rocks. A handbrake for the hairpins, the gas and brake to level the car in the air,
+  a button to get back on the road, and a co-driver calling the bends and jumps on the screen and the phone.
+  Five cars (Kenney's Car Kit, shared with Stock Cars), dust and spray, saved records (stage records, biggest
+  air) and paint jobs in the shop.
 
 ### Added
 - **Stock Cars: a road course.** Ridgeway, 2.3 km in the hills, turning both ways: the esses, a loop to the
