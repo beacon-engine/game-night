@@ -24,6 +24,16 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   a button to get back on the road, and a co-driver calling the bends and jumps on the screen and the phone.
   Five cars (Kenney's Car Kit, shared with Stock Cars), dust and spray, saved records (stage records, biggest
   air) and paint jobs in the shop.
+- **Grand Prix**, the fifth playable racing game (marked In progress): 1–4 drivers and up to 11 computer
+  drivers in single-seaters on two road circuits that turn both ways: Valley Ring (fast and flowing, 2.8 km)
+  and Harbour Streets (right-angle corners between the walls at sunset, 2.0 km); 5, 10 or 15 laps. Every
+  car has health, tyres and fuel, shown beside each name and on your own screen. Hits take health by how
+  hard they are; a hard one can start a fire (box now, or it burns out) and a big one, worst into a barrier
+  at speed, ends your race. Tyres wear and grip less, a damaged car is slower, and a full tank lasts 7
+  laps. Press L1 to box: the pit lane runs alongside the main straight, and the crew refuels, changes tyres,
+  mends damage and puts out fires, taking longer the more they do. The computer drivers plan their own
+  stops, retirements show as DNF, and your phone says when to come in. Lap records, wins and liveries in
+  the shop.
 
 ### Added
 - **Stock Cars: a road course.** Ridgeway, 2.3 km in the hills, turning both ways: the esses, a loop to the
