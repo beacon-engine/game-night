@@ -30,7 +30,7 @@ Pick one and go.
 | 🏎️ | [Grand Prix](grand-prix) | 1–4 | Exhibition, Race weekend, Championship, Career | coming soon |
 | 🏁 | [Go-Karts](go-karts) | 1–4 | Exhibition, Cup, Battle | coming soon |
 | 🏙️ | [Street Racing](street-racing) | 1–4 | Exhibition, Cup, Career | coming soon |
-| ⛰️ | [Rally](rally) | 1–4 | Stage, Rally, Rallycross | coming soon |
+| ⛰️ | [Rally](rally) | 1–4 | Race (rallycross), stage records (Stage, Rally next) | **playable** (in progress) |
 | | **Action** | | | |
 | 🥋 | [Fighters](fighters) | 1–2 | Arcade ladder, Tournament, Ranked | coming soon |
 | 👊 | [Brawlers](brawler) | 1–4 | Story, Score attack | coming soon |

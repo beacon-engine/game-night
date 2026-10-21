@@ -1,0 +1,33 @@
+{
+  "_help": "The stages to choose from in the lobby. Each is made from its 'seed' (the same stage every time): a loop about 'size' metres across over land that rises and falls by 'hills' metres, a road 'width' metres wide, with that many 'jumps' (crests that launch you) and 'dips', and a ford if 'ford' is true. 'look' is forest or canyon; 'time' is day or dusk.",
+  "stages": [
+    {
+      "id": "forest-ridge",
+      "name": "Forest Ridge",
+      "about": "Gravel through the pines: fast crests, a water splash, and trees close to the road.",
+      "seed": 11,
+      "look": "forest",
+      "time": "day",
+      "size": 860,
+      "hills": 26,
+      "width": 9,
+      "jumps": 3,
+      "dips": 2,
+      "ford": true
+    },
+    {
+      "id": "red-canyon",
+      "name": "Red Canyon",
+      "about": "Dusty dirt between the rocks at sunset. Bigger hills, more jumps.",
+      "seed": 29,
+      "look": "canyon",
+      "time": "dusk",
+      "size": 760,
+      "hills": 34,
+      "width": 10,
+      "jumps": 4,
+      "dips": 2,
+      "ford": false
+    }
+  ]
+}
