@@ -1,0 +1,12 @@
+{
+  "_comment": "Liveries bought with stars. color: the car's body colour. Looks only: every livery drives the same.",
+  "items": [
+    { "id": "pearl", "name": "Pearl", "price": 40, "color": "#f2f0ea", "about": "Clean white with a soft shine" },
+    { "id": "racing-green", "name": "Racing Green", "price": 60, "color": "#0e5a3a", "about": "Deep, old-school green" },
+    { "id": "scarlet", "name": "Scarlet", "price": 60, "color": "#d0142c", "about": "Bright, glossy red" },
+    { "id": "papaya", "name": "Papaya", "price": 80, "color": "#ff7a1a", "about": "Impossible to miss" },
+    { "id": "ice-blue", "name": "Ice Blue", "price": 80, "color": "#6fc8ff", "about": "Cool and light" },
+    { "id": "carbon", "name": "Carbon", "price": 100, "color": "#1c1f26", "about": "Dark and stealthy" },
+    { "id": "champagne", "name": "Champagne", "price": 150, "color": "#d9c08a", "about": "For the podium" }
+  ]
+}

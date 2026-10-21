@@ -28,7 +28,7 @@ Pick one and go.
 | 🤾 | [Dodgeball](dodgeball) | 2–8 | Exhibition, League, Cup | coming soon |
 | | **Racing** | | | |
 | 🏍️ | [Superbikes](superbikes) | 1–4 | Exhibition, Race weekend, Championship, Career | coming soon |
-| 🏎️ | [Grand Prix](grand-prix) | 1–4 | Exhibition, Race weekend, Championship, Career | coming soon |
+| 🏎️ | [Grand Prix](grand-prix) | 1–4 | Race with pit stops (Race weekend, Championship next) | **playable** (in progress) |
 | 🏁 | [Go-Karts](go-karts) | 1–4 | Exhibition, Cup, Battle | coming soon |
 | 🏙️ | [Street Racing](street-racing) | 1–4 | Exhibition, Cup, Career | coming soon |
 | ⛰️ | [Rally](rally) | 1–4 | Race (rallycross), stage records (Stage, Rally next) | **playable** (in progress) |

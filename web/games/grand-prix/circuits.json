@@ -1,0 +1,38 @@
+{
+  "_help": "The circuits to choose from in the lobby: road courses, the whole lap as straights (metres) and turns (degrees, left positive, right negative; radius in metres; optional banking in degrees), the same as Stock Cars' road courses. It must turn 360° and end where it started. The first and last straights are the main straight either side of the start/finish line, where the pit lane runs: keep both at 200 m or more. 'width' is the track wall to wall in metres; 'time' is day, dusk or night; 'scenery' is countryside, desert, harbour or city.",
+  "circuits": [
+    {
+      "id": "valley-ring",
+      "scenery": "countryside",
+      "name": "Valley Ring",
+      "about": "Fast and flowing through the hills: sweepers both ways, a long back straight and a hairpin. 2.8 km.",
+      "time": "day",
+      "width": 18,
+      "bankStraights": 0,
+      "lap": [
+        { "straight": 220 }, { "turn": 90, "radius": 70 }, { "straight": 250 },
+        { "turn": -60, "radius": 120 }, { "turn": 60, "radius": 100 }, { "straight": 180 },
+        { "turn": 120, "radius": 60 }, { "straight": 744.6 }, { "turn": -45, "radius": 150 },
+        { "turn": 135, "radius": 55 }, { "straight": 265.1 }, { "turn": 60, "radius": 90, "bank": 3 },
+        { "straight": 300 }
+      ]
+    },
+    {
+      "id": "harbour-streets",
+      "scenery": "city",
+      "name": "Harbour Streets",
+      "about": "Through the city at sunset: right-angle corners between the walls, no room for mistakes. 2.0 km.",
+      "time": "dusk",
+      "width": 15,
+      "bankStraights": 0,
+      "lap": [
+        { "straight": 200 }, { "turn": 90, "radius": 28 }, { "straight": 160 },
+        { "turn": -90, "radius": 30 }, { "straight": 120 }, { "turn": 90, "radius": 26 },
+        { "straight": 100 }, { "turn": 90, "radius": 32 }, { "straight": 467 },
+        { "turn": 90, "radius": 30 }, { "straight": 140 }, { "turn": -90, "radius": 30 },
+        { "straight": 110 }, { "turn": 90, "radius": 30 }, { "straight": 111 },
+        { "turn": 90, "radius": 35 }, { "straight": 260 }
+      ]
+    }
+  ]
+}
