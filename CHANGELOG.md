@@ -30,6 +30,8 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   and lights, their lights come on at dusk and at night, and each sits on a shadow of its own shape.
 
 ### Fixed
+- Two games finishing at the same moment could each pay the first-game-of-the-day bonus and go past the
+  daily limits on stars. Payouts now happen one at a time.
 - Going back to the game select page with the browser's Back button left a black screen until the page
   was reloaded.
 

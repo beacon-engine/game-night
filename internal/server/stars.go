@@ -104,6 +104,8 @@ func (s *Server) starsEarn(w http.ResponseWriter, r *http.Request, player string
 		http.Error(w, `send {"game": "<id>", "for": ["played", "won"]}`, http.StatusBadRequest)
 		return
 	}
+	s.earning.Lock()
+	defer s.earning.Unlock()
 	day := store.Day(time.Now())
 	lines := []earnLine{}
 	if n, err := s.db.EarnedToday(player, "", "", day); err != nil {

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/beacon-engine/game-night/internal/store"
@@ -25,6 +26,8 @@ type Server struct {
 	port  int
 	relay *Relay
 	db    *store.Store // saves and stars; nil turns both off
+
+	earning sync.Mutex // one stars payout at a time, so two at once can't both pass the daily checks
 }
 
 // New serves files on port, keeping saves and stars in db (both are off if it's nil).

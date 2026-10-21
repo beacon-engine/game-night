@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"testing/fstest"
 	"time"
@@ -247,5 +248,20 @@ func TestStars(t *testing.T) {
 	}
 	if _, body := do("GET", "/api/stars/capped", ""); !strings.Contains(body, `"balance":170`) {
 		t.Fatalf("daily cap (20 bonus + 10 x 15): %s", body)
+	}
+}
+
+// Games that finish together ask for their stars together: the daily bonus is still paid once, and
+// the per-day caps still hold
+func TestStarsAtOnce(t *testing.T) {
+	do := testServer(t, fstest.MapFS{"games/chess/game.json": {Data: []byte(`{"name":"Chess"}`)}})
+	var wg sync.WaitGroup
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func() { defer wg.Done(); do("POST", "/api/stars/racer/earn", `{"game":"chess","for":["played"]}`) }()
+	}
+	wg.Wait()
+	if _, body := do("GET", "/api/stars/racer", ""); !strings.Contains(body, `"balance":80`) {
+		t.Fatalf("20 at once (20 bonus + 12 x 5): %s", body)
 	}
 }
