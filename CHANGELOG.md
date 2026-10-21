@@ -5,50 +5,9 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 
 ## [Unreleased]
 
-### Added
-- **Stars and a shop.** Finishing a game earns stars (more for a win, a podium, a record or a title, and a
-  bonus for the first game of the day; capped per day so replaying one quick game all night doesn't flood
-  the shop). Each phone shows its stars; tapping them opens the shop, where they buy looks, never an
-  advantage: paint jobs in Stock Cars (pick them in the garage with ▲▼), board themes in Chess. Games
-  sell items with a `shop.json` and pay out with `earnStars()`.
-- **Football tactics.** Five shapes for 11-a-side (4-4-2, 4-3-3, 4-2-3-1, 3-5-2, 5-3-2) and more for 7- and
-  5-a-side; team instructions (with the ball, back line, closing down, width) that change how the
-  computer-controlled teammates play; a choice of keeper. Set them on the team sheet in the lobby or from
-  the pause menu. Each player's plan is saved.
+## [0.2.0] - 2026-10-21
 
-### Changed
-- Saved progress moved from JSON files to one database, `beacon-arcade.db` (SQLite, pure Go, so it runs
-  the same on Android TV). Saves from older versions are brought in automatically on the first run.
-- **Game Night is now Beacon Arcade** (the old name is already used by other game services). The program
-  is `beacon-arcade`, and the user folder is `beacon-arcade` (an existing `game-night` folder is moved
-  over, saved progress and all).
-- The pad's four buttons are our own icons: **Bolt** (bottom), **Drop** (right), **Leaf** (left), **Star** (top),
-  in amber, blue, green and pink. The logo is the four in their diamond. In `controls.json` the
-  buttons are `bolt`, `drop`, `leaf`, `star`; manuals can draw one with `{bolt}`.
-- Games renamed or reworked so none copies an existing game's name or look (see "Originality" in
-  `web/games/README.md`); Danfo Rush is dropped.
-- Football is marked **In progress**: playable, but still being worked on.
-
-### Fixed
-- A phone with the pad open in two tabs no longer flips between them every second (so nothing it
-  pressed counted). The older tab stops and offers to take over.
-
-- New look everywhere, defined once in `web/brand/` (colours, type, components; rules in its README):
-  a dark night palette with one volt accent and the pad's four button colours, Big Shoulders Display and
-  Inter (bundled, works offline), line icons instead of emoji, and a selection frame.
-- The game select page is now a library: the selected game on the left with how to join, every game
-  on the right grouped by category, moved through with the stick or keyboard.
-- The phone pad, football's lobby, scoreboard, banners, player HUD, pause menu and substitutions follow it.
-  Player colours are the brand's.
-
-### Added
-- Games can have an `icon.svg` and a `category` in `game.json`.
-- Plans for 12 more games: Superbikes (motorbike grand prix), Grand Prix (open-wheel), Stock Cars (ovals),
-  Go-Karts, and an Arcade category: Space Shooter, Bricks, Snake Battle, Neon Trails, Cat and Mouse,
-  Space Rocks, Pinball, Road Hopper. Racing is now its own category.
-- A shared plan for competitions in every game (`web/games/COMPETITIONS.md`): leagues, cups, groups,
-  race weekends with qualifying, championships with points tables, playoffs, title fights and careers,
-  ladders, arcade high scores, and an Arcade Cup across games. Each game's README says which it uses.
+Stock Cars, Neon Trails and Chess are playable, players earn stars, and the program is now Beacon Arcade.
 
 ### Added (games)
 - **Chess**, and a new **Board** category: 1–2 players, against a friend on the same screen or the computer
@@ -65,11 +24,29 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   dusk, a harbour at night, a city) and six cars (from Kenney's CC0 Car Kit); cars bounce, scrape and spin.
 - **Neon Trails**, the second playable game: 1–8 riders on phones or keyboards, computer riders to fill in,
   first to 3, 5 or 7 rounds, walls that close in so rounds don't drag, a demo round behind the lobby.
-- **Saved progress** for every game (`gameSaves()`): kept as files on the machine running Beacon Arcade
-  (`<your folder>/saves/`), so it's there next time. Neon Trails keeps each player's record, by phone.
+- **Saved progress** for every game (`gameSaves()`): kept on the machine running Beacon Arcade
+  (in `beacon-arcade.db`, SQLite, so it runs the same on Android TV), so it's there next time. Neon Trails keeps each player's record, by phone.
 - **How to play**: every playable game has a manual (`manual.json`), opened with Star on the game select page
   and in the lobby. The controls in it come from the game's `controls.json`.
 - The game select page lists the games you can play right now first, under "Ready to play".
+
+### Added
+- **Stars and a shop.** Finishing a game earns stars (more for a win, a podium, a record or a title, and a
+  bonus for the first game of the day; capped per day so replaying one quick game all night doesn't flood
+  the shop). Each phone shows its stars; tapping them opens the shop, where they buy looks, never an
+  advantage: paint jobs in Stock Cars (pick them in the garage with ▲▼), board themes in Chess. Games
+  sell items with a `shop.json` and pay out with `earnStars()`.
+- **Football tactics.** Five shapes for 11-a-side (4-4-2, 4-3-3, 4-2-3-1, 3-5-2, 5-3-2) and more for 7- and
+  5-a-side; team instructions (with the ball, back line, closing down, width) that change how the
+  computer-controlled teammates play; a choice of keeper. Set them on the team sheet in the lobby or from
+  the pause menu. Each player's plan is saved.
+- Games can have an `icon.svg` and a `category` in `game.json`.
+- Plans for 12 more games: Superbikes (motorbike grand prix), Grand Prix (open-wheel), Stock Cars (ovals),
+  Go-Karts, and an Arcade category: Space Shooter, Bricks, Snake Battle, Neon Trails, Cat and Mouse,
+  Space Rocks, Pinball, Road Hopper. Racing is now its own category.
+- A shared plan for competitions in every game (`web/games/COMPETITIONS.md`): leagues, cups, groups,
+  race weekends with qualifying, championships with points tables, playoffs, title fights and careers,
+  ladders, arcade high scores, and an Arcade Cup across games. Each game's README says which it uses.
 
 ### Added (TV)
 - **Android TV app** (`make android`, `android/README.md`): the TV runs the server and is the game screen;
@@ -88,7 +65,27 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   analog **stick** for moving freely, and **racing** (slide to steer, throttle and brake pedals). The game
   select page and football's menus now use the d-pad; football matches use the stick.
 
+### Changed
+- **Game Night is now Beacon Arcade** (the old name is already used by other game services). The program
+  is `beacon-arcade`, and the user folder is `beacon-arcade` (an existing `game-night` folder is moved
+  over, saved progress and all).
+- The pad's four buttons are our own icons: **Bolt** (bottom), **Drop** (right), **Leaf** (left), **Star** (top),
+  in amber, blue, green and pink. The logo is the four in their diamond. In `controls.json` the
+  buttons are `bolt`, `drop`, `leaf`, `star`; manuals can draw one with `{bolt}`.
+- Games renamed or reworked so none copies an existing game's name or look (see "Originality" in
+  `web/games/README.md`); Danfo Rush is dropped.
+- Football is marked **In progress**: playable, but still being worked on.
+- New look everywhere, defined once in `web/brand/` (colours, type, components; rules in its README):
+  a dark night palette with one volt accent and the pad's four button colours, Big Shoulders Display and
+  Inter (bundled, works offline), line icons instead of emoji, and a selection frame.
+- The game select page is now a library: the selected game on the left with how to join, every game
+  on the right grouped by category, moved through with the stick or keyboard.
+- The phone pad, football's lobby, scoreboard, banners, player HUD, pause menu and substitutions follow it.
+  Player colours are the brand's.
+
 ### Fixed
+- A phone with the pad open in two tabs no longer flips between them every second (so nothing it
+  pressed counted). The older tab stops and offers to take over.
 - A quick tap on the phone could be missed by menus; d-pad taps now always register.
 - Two open game screens kept taking the phones from each other every second. The newest screen now
   wins, and the other one says so, with a button to take over again.
@@ -102,7 +99,7 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 ## [0.1.0] - 2026-10-19
 
 First release (as "Game Night"; the program in that release is called `game-night`). The pad then used
-another console's button symbols; they were replaced by our own (see Unreleased).
+another console's button symbols; they were replaced by our own (see 0.2.0).
 
 ### Added
 - `beacon-arcade`: one program for macOS, Windows, Linux and Raspberry Pi that serves the games on your
@@ -118,5 +115,6 @@ another console's button symbols; they were replaced by our own (see Unreleased)
   bomb maze, sumo, dogfight, last stand, capture the flag, rooftop brawl, heist, and racing.
   (Some had other names at the time; they were renamed, and one dropped, so none borrows an existing game's name.)
 
-[Unreleased]: https://github.com/beacon-engine/game-night/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/beacon-engine/game-night/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/beacon-engine/game-night/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/beacon-engine/game-night/releases/tag/v0.1.0
