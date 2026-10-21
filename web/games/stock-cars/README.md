@@ -33,7 +33,7 @@ left and right to steer, with gas and brake pedals (`controls.json`). Menus use 
 | `scene.ts` | The venue in three.js, built from `track.ts` and lit for day, dusk or night; sparks; a chase camera per person (the screen splits for 2 to 4), a TV camera, and the turntables for picking cars. |
 | `scenery.ts` | The land around each track by its theme: countryside hills and forest, desert mesas, a harbour with cranes and containers, or a city. Flat by the track, rising into hills further out. |
 | `draw.ts` | Small helpers for textures drawn in code (and the noise the hills are made from). |
-| `sound.ts` | A synthesised engine per person driving, a thump for contact and a crunch for the wall. |
+| `sound.ts` | A synthesised engine per person driving, through the gears, with tyres, wind, squeal and the wall; the pack going by; a thump for contact and a crunch for the wall. |
 | `main.ts` | Lobby, picking cars, countdown, race, results, saved records, what the phones show. |
 
 Handling, in short: gas settles you at your top speed (more in a slipstream); the tyres and the banking hold

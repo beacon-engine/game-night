@@ -9,7 +9,7 @@ import {
 import { loadCars, type CarType } from './cars.ts';
 import { Race, TICK, type Car, type CarSpec, type Hit } from './race.ts';
 import { World } from './scene.ts';
-import { Engines } from './sound.ts';
+import { Engines, type Driving, type Others } from './sound.ts';
 import { Track, type TrackSpec } from './track.ts';
 
 const device = await requireDevice(); // (simple 3D: not on the lightest screens)
@@ -558,12 +558,30 @@ function frame(now: number) {
   }
   world.render(dt, tvFocus(dt));
   const racing = stage === 'racing' || stage === 'grid';
-  engines.update(racing ? people().filter((c) => c.finish === null).map((c) => ({ id: c.id, v: c.v, throttle: c.throttle })) : []);
+  if (racing) engines.update(people().filter((c) => c.finish === null).map(driving), pack());
+  else engines.update([]);
   hudT += dt;
   if (hudT > 0.1 && (racing || stage === 'paused')) { hudT = 0; updateHud(); }
   padT += dt;
   if (padT > 0.05) { padT = 0; for (const c of input.list) input.show(c, padScreen(c)); }
   guard.frame(now);
+}
+
+// What a person's car sounds like: how it's going, and which side of a split screen it's on
+function driving(c: Car): Driving {
+  const r = world.views.find((v) => v.car === c)?.rect;
+  return { id: c.id, v: c.v, throttle: c.throttle, slip: Math.abs(c.slide) + Math.abs(c.knock), scrape: c.scraping !== 0, pan: r ? (r.x + r.w / 2) * 2 - 1 : 0 };
+}
+
+// The computer car nearest to any person, for the sound of the pack going by
+function pack(): Others | undefined {
+  let best: Others | undefined;
+  for (const p of people()) for (const c of race.cars) {
+    if (!c.spec.ai) continue;
+    const near = 1 - Math.hypot(race.track.gap(c.dist, p.dist), c.d - p.d) / 50;
+    if (near > (best?.near ?? 0)) best = { near, v: c.v };
+  }
+  return best;
 }
 
 // --- helpers ------------------------------------------------------------------------------------------

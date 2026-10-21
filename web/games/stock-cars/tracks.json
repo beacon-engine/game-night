@@ -7,7 +7,7 @@
       "name": "Beacon Speedway",
       "about": "The classic, out in the hills: two long straights, two fast banked turns. 1.5 km.",
       "time": "day",
-      "width": 20,
+      "width": 24,
       "bankStraights": 5,
       "half": [{ "straight": 190 }, { "turn": 180, "radius": 110, "bank": 24 }]
     },
@@ -17,7 +17,7 @@
       "name": "Red Mesa Tri-Oval",
       "about": "Out in the desert at sunset. A kink in the front stretch, so it's never quite straight.",
       "time": "dusk",
-      "width": 22,
+      "width": 25,
       "bankStraights": 7,
       "half": [{ "turn": 24, "radius": 380 }, { "straight": 150 }, { "turn": 156, "radius": 120, "bank": 26 }]
     },
@@ -27,7 +27,7 @@
       "name": "Harbour Short Track",
       "about": "Down by the docks, under the lights. Tight and steep: bumping is how you pass. 0.7 km.",
       "time": "night",
-      "width": 17,
+      "width": 20,
       "bankStraights": 6,
       "half": [{ "straight": 80 }, { "turn": 180, "radius": 62, "bank": 28 }]
     },
@@ -37,7 +37,7 @@
       "name": "Grand Oval",
       "about": "The big one, on the edge of the city: 2.7 km, flat out, three wide in the draft.",
       "time": "day",
-      "width": 26,
+      "width": 30,
       "bankStraights": 4,
       "half": [{ "straight": 300 }, { "turn": 180, "radius": 240, "bank": 31 }]
     },
@@ -47,7 +47,7 @@
       "name": "Ridgeway Road Course",
       "about": "Turns both ways: the esses, a loop to the right and a hairpin. Brake for the turns. 2.3 km.",
       "time": "day",
-      "width": 15,
+      "width": 20,
       "bankStraights": 0,
       "lap": [
         { "straight": 120 }, { "turn": 90, "radius": 50, "bank": 4 }, { "straight": 150 },

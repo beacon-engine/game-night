@@ -20,6 +20,11 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   - Cars bounce off each other, and the walls, with a knock you can't just steer out of. Walls cost more
     speed, and grinding along one costs more still.
   - The computer drivers keep looking for a way past instead of sitting behind a slower car.
+  - Every track is wider (the road course and the short track most), so three wide fits.
+- **Stock Cars sounds like racing, not a hum.** Engines work through the gears (the revs climb, drop at
+  each shift and climb again) with a V8's burble, brighter on the gas; tyres and wind grow with speed,
+  tyres squeal in a slide, a wall grinds, and the computer drivers roar by. With the screen split, each
+  person's car is on their side.
 - **Stock Cars looks better.** The paint is glossy (with a clear coat where the screen has power to spare),
   the windows are dark glass, the rims are metal and the tyres are rubber; the cars reflect that track's sky
   and lights, their lights come on at dusk and at night, and each sits on a shadow of its own shape.
