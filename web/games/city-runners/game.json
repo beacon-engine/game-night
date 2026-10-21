@@ -1,0 +1,9 @@
+{
+  "name": "City Runners",
+  "icon": "🏃",
+  "tagline": "Race the rooftops together; the drone takes the slowest",
+  "players": "1–4",
+  "category": "Arcade",
+  "needs": "standard",
+  "order": 84
+}

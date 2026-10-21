@@ -1,0 +1,11 @@
+{
+  "_help": "The runners to choose from. body: male or female; skin: light or dark (tint shades it: 1 as it comes, lower is deeper); hair: a file in models/people (without .gltf); beard: true or false; top and legs: their kit's colours (a suit from the shop replaces the top). Compared with an all-rounder at 1: 'agility' (how fast they change lanes), 'spring' (how high they jump), 'grit' (how little a stumble costs: shorter slowdown, the drone gives up sooner) and 'reach' (how far to the side they pick up coins; 2.2 reaches into the next lane).",
+  "runners": [
+    { "id": "rio", "name": "Rio", "body": "male", "skin": "light", "tint": 0.95, "hair": "Hair_SimpleParted", "top": "#e8e6df", "legs": "#20242f", "about": "The all-rounder. Nothing to learn, nothing to make up for.", "agility": 1, "spring": 1, "grit": 1, "reach": 1 },
+    { "id": "kemi", "name": "Kemi", "body": "female", "skin": "dark", "tint": 0.7, "hair": "Hair_Buns", "top": "#ff6a1f", "legs": "#1b1f2a", "about": "Springs off the roof: the highest jump of anyone. A bit slow across.", "agility": 0.92, "spring": 1.14, "grit": 1, "reach": 1 },
+    { "id": "dash", "name": "Dash", "body": "male", "skin": "light", "tint": 0.85, "hair": "Hair_Buzzed", "top": "#2a6df4", "legs": "#151821", "about": "Quick feet: changes lanes in a flash. Doesn't get much air.", "agility": 1.3, "spring": 0.94, "grit": 0.95, "reach": 1 },
+    { "id": "tunde", "name": "Tunde", "body": "male", "skin": "dark", "tint": 0.55, "hair": "Hair_Buzzed", "beard": true, "top": "#0fa36b", "legs": "#1f2330", "about": "Tough: a stumble barely slows him and the drone gives up sooner. Heavy on his feet.", "agility": 0.88, "spring": 0.95, "grit": 1.4, "reach": 1 },
+    { "id": "ava", "name": "Ava", "body": "female", "skin": "light", "tint": 1, "hair": "Hair_Long", "top": "#9b6bff", "legs": "#22202c", "about": "Long reach: grabs coins from the next lane over. Rattled by a stumble.", "agility": 1, "spring": 1, "grit": 0.85, "reach": 2.2 },
+    { "id": "zara", "name": "Zara", "body": "female", "skin": "dark", "tint": 0.85, "hair": "Hair_BuzzedFemale", "top": "#d7ff3b", "legs": "#181b24", "about": "Light and nimble: quick across and a good jump. A stumble costs her most.", "agility": 1.15, "spring": 1.06, "grit": 0.78, "reach": 1 }
+  ]
+}
