@@ -68,6 +68,10 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 - Stock Cars: the front wheels turn with the steering.
 - Stock Cars: a knock from another car could throw a car right across the track. Hits are softer, and
   no hit throws a car sideways faster than 6 m/s.
+- Stock Cars and Grand Prix: a car that went into a tight turn much too fast could be flung across the
+  track, from one barrier to the other, without touching anything (up to 70 m/s sideways in one moment).
+  A slide now builds up over a moment and has a limit. The computer drivers also ease across when they
+  change lanes instead of darting.
 - Two games finishing at the same moment could each pay the first-game-of-the-day bonus and go past the
   daily limits on stars. Payouts now happen one at a time.
 - Going back to the game select page with the browser's Back button left a black screen until the page
