@@ -43,18 +43,27 @@ export interface Piece {
 
 export const ALL = 9;
 
+// The routes to choose from: the time of day, and how the course is mixed (how often a stretch is a
+// gap too wide to jump, or the rail line, and how often a train comes the other way on it)
+export interface Route { id: string; name: string; about: string; sky: 'dusk' | 'night' | 'dawn'; wide: number; rail: number; oncoming: number }
+export const ROUTES: Route[] = [
+  { id: 'rooftops', name: 'Rooftops', about: 'Over the roofs as the sun goes down. A bit of everything.', sky: 'dusk', wide: 0.2, rail: 0.25, oncoming: 0.55 },
+  { id: 'rail-line', name: 'The Rail Line', about: 'Along the elevated line at night: trains standing, trains coming at you.', sky: 'night', wide: 0.08, rail: 0.7, oncoming: 0.8 },
+  { id: 'sky-bridges', name: 'Sky Bridges', about: 'Tower to tower at sunrise. Gaps too wide to jump: find the beam or the zip line.', sky: 'dawn', wide: 0.45, rail: 0.12, oncoming: 0.3 },
+];
+
 export class Course {
   readonly grounds: Ground[] = [];
   readonly pieces: Piece[] = []; // everything that stays put, sorted by s0
   readonly movers: Piece[] = []; // oncoming trains' cars
   private rnd: () => number;
-  private end = 0; // made up to here
+  private end = -12; // made up to here (the first roof starts a little behind the start line)
   private nextId = 1;
   private nextPower = 220;
 
-  constructor(readonly seed: number, readonly base: number) {
+  constructor(readonly seed: number, readonly base: number, readonly route: Route = ROUTES[0]) {
     this.rnd = mulberry(seed);
-    this.roof(70, true);
+    this.roof(82, true);
   }
 
   // Make the course up to s
@@ -105,11 +114,11 @@ export class Course {
 
   // --- making it up ----------------------------------------------------------------------------------
   private next() {
-    const r = this.rnd(), v = this.speedAt(this.end), reach = JUMP_AIR * v;
-    if (r < 0.2 && this.end > 300) {
+    const r = this.rnd(), v = this.speedAt(this.end), reach = JUMP_AIR * v, { wide, rail } = this.route;
+    if (r < wide && this.end > 200) {
       this.gap(reach * (1.15 + this.rnd() * 0.35), true);
       this.roof(50 + this.rnd() * 40);
-    } else if (r < 0.45 && this.end > 200) {
+    } else if (r < wide + rail && this.end > 150) {
       this.gap(reach * (0.35 + this.rnd() * 0.2), false);
       this.rail(150 + this.rnd() * 90);
       this.gap(reach * (0.35 + this.rnd() * 0.2), false);
@@ -160,14 +169,14 @@ export class Course {
   // A roof: rows of things in the way, coins between them
   private roof(len: number, start = false) {
     const g = this.ground(len, 'roof');
-    let s = g.s0 + (start ? 45 : 10);
+    let s = g.s0 + (start ? 57 : 10);
     while (true) {
       const v = this.speedAt(s), space = Math.min(32, 9 + v * 0.95);
       if (s + 4 > g.s1 - 6) break;
       this.row(s);
       s += space * (0.8 + this.rnd() * 0.5);
     }
-    if (start) this.coins(0, g.s0 + 12, g.s0 + 40, () => 0.9);
+    if (start) this.coins(0, g.s0 + 24, g.s0 + 52, () => 0.9);
     this.maybePower(g.s0 + 4, g.s1 - 4);
   }
 
@@ -213,7 +222,7 @@ export class Course {
     const lanes = shuffle([-1, 0, 1], this.rnd);
     const [clear, a, b] = lanes;
     this.trains(a, g.s0 + 20, g.s1 - 10, true);
-    if (this.rnd() < 0.55) {
+    if (this.rnd() < this.route.oncoming) {
       // an oncoming train, starting near the far end; it sets off when the first runner comes near
       const cars = 2, s0 = g.s1 - 8 - cars * 15;
       for (let i = 0; i < cars; i++) this.add('car', b, s0 + i * 15, s0 + i * 15 + 14, 0, CAR_TOP, { move: 9, look: i === 0 ? 1 : 0.5 });

@@ -50,9 +50,15 @@
   #callout.show { opacity: 1; }
   #callout .big { font: 900 clamp(56px, 9vw, 130px)/0.9 var(--font-display); text-transform: uppercase; text-align: center; text-shadow: 0 4px 24px rgb(7 8 11 / 0.7); }
 
-  /* ---- picking a look: a card per person ---- */
-  #wardrobe { position: absolute; left: 18px; right: 18px; bottom: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
-  .look { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; background: rgb(14 16 22 / 0.9); }
+  /* ---- picking a runner: a card per person ---- */
+  #wardrobe { position: absolute; left: 18px; right: 18px; top: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 300px)); justify-content: center; gap: 12px; }
+  .look { display: flex; flex-direction: column; gap: 9px; padding: 16px 18px; background: rgb(14 16 22 / 0.9); }
+  .look .name { display: flex; align-items: center; gap: 10px; }
+  .look .name h2 { margin: 0; font: 900 36px/1 var(--font-display); text-transform: uppercase; }
+  .look p { margin: 0; font-size: 13px; }
+  .stat { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 10px; font: 600 11px/1 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--chalk-2); }
+  .stat i { height: 6px; background: var(--ink-3); border-radius: 3px; overflow: hidden; }
+  .stat b { display: block; height: 100%; background: var(--chalk); }
   .look .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font: 600 14px/1.2 var(--font-ui); }
   .look .row i { display: inline-block; width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--line-strong); vertical-align: -3px; margin-right: 6px; }
   .look .ready { font: 800 20px/1 var(--font-display); text-transform: uppercase; color: var(--chalk-2); display: flex; align-items: center; gap: 8px; }
@@ -95,7 +101,7 @@
       </div>
       <div><div class="caption" style="margin-bottom:10px">Runners</div><div id="runners"></div></div>
       <div id="settings"></div>
-      <div class="faint" id="record"></div>
+      <div><p class="muted" id="routeAbout" style="margin:0 0 6px"></p><div class="faint" id="record"></div></div>
       <div style="display:flex;gap:10px">
         <button id="start" class="btn btn-primary btn-lg"></button>
         <button id="howto" class="btn btn-lg"></button>

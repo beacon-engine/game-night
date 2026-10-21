@@ -5,8 +5,9 @@
 // from what's in view, so it runs on a TV.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { ALL, CAR_TOP, LANE_W, ZIP_Y, type Ground, type Piece, type PieceKind, type Power } from './course.ts';
-import type { Run, Runner } from './run.ts';
+import { ALL, CAR_TOP, LANE_W, ZIP_Y, type Ground, type Piece, type PieceKind, type Power, type Route } from './course.ts';
+import { Person } from './people.ts';
+import { SLIDE, type Run, type Runner } from './run.ts';
 import { canvas, DISPLAY_FONT, seeded, texture } from './draw.ts';
 
 const AHEAD = 190; // m of course drawn in front of the camera
@@ -14,9 +15,18 @@ const BEHIND = 12;
 const NIGHT_AFTER = 1600; // m: dusk has turned to night by here
 const COURSE_W = 11; // the width of a roof or the rail deck
 
-// Dusk and night, mixed by how far the leader has got
-const DUSK = { top: 0x2a2f63, bottom: 0xf08a5a, fog: 0x8e5a63, hemi: 1.5, sun: 2.2, sunColor: 0xffa66a, windows: 0.5 };
-const NIGHT = { top: 0x03050c, bottom: 0x1b2340, fog: 0x0c1020, hemi: 1.0, sun: 0.9, sunColor: 0xa8b8ff, windows: 1.4 };
+// The light at each time of day; each route goes from one to another as the leader gets further.
+// dark: how much the city's lit up (lit windows, neon, stars)
+interface Light { top: number; bottom: number; fog: number; hemi: number; sun: number; sunColor: number; dark: number }
+const LIGHT: Record<'dusk' | 'night' | 'dawn' | 'day', Light> = {
+  dusk: { top: 0x2a2f63, bottom: 0xf08a5a, fog: 0x8e5a63, hemi: 1.5, sun: 2.2, sunColor: 0xffa66a, dark: 0.35 },
+  night: { top: 0x03050c, bottom: 0x1b2340, fog: 0x0c1020, hemi: 1.0, sun: 0.9, sunColor: 0xa8b8ff, dark: 1 },
+  dawn: { top: 0x5b86c9, bottom: 0xffb27a, fog: 0xd9a888, hemi: 1.8, sun: 2.6, sunColor: 0xffc08a, dark: 0.15 },
+  day: { top: 0x4f8fdc, bottom: 0xcfe5fb, fog: 0xbcd3ea, hemi: 2.1, sun: 2.8, sunColor: 0xfff2dc, dark: 0 },
+};
+const SKIES: Record<Route['sky'], [Light, Light]> = { dusk: [LIGHT.dusk, LIGHT.night], night: [LIGHT.night, LIGHT.night], dawn: [LIGHT.dawn, LIGHT.day] };
+const mix = (a: Light, b: Light, k: number, key: 'hemi' | 'sun' | 'dark') => a[key] + (b[key] - a[key]) * k;
+const mixColor = (c: THREE.Color, a: number, b: number, k: number) => c.setHex(a).lerp(TMP_COLOR.setHex(b), k);
 
 export const POWER_COLOR: Record<Power, string> = { magnet: '#ff5a5a', boots: '#3ddc84', shield: '#3fb7ff', double: '#d7ff3b' };
 
@@ -37,12 +47,15 @@ export class World {
   private camX = 0;
   private camY = 4.5;
   private extras: THREE.Object3D[] = []; // what goes first when the screen struggles
+  facing = false; // the runners turned to the camera (while they're picked)
+  private sky0 = LIGHT.dusk; // the light at the start of the route, and further on
+  private sky1 = LIGHT.night;
 
   constructor(canvasEl: HTMLCanvasElement, tv: boolean) {
     this.renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: !tv, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, tv ? 1 : 1.5));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.scene.fog = new THREE.Fog(DUSK.fog, 60, 420);
+    this.scene.fog = new THREE.Fog(LIGHT.dusk.fog, 60, 420);
     this.sun.position.set(-60, 40, -120);
     this.sky = new Sky();
     this.city = new City();
@@ -73,6 +86,7 @@ export class World {
       this.scene.add(f.group, f.trail.mesh);
     }
     this.stage.clear();
+    [this.sky0, this.sky1] = SKIES[run.course.route.sky];
     this.camS = run.leader.s;
     this.camX = 0;
   }
@@ -99,26 +113,32 @@ export class World {
     this.camX += (mid * 0.55 - this.camX) * Math.min(1, 4 * dt);
     this.camY += (4.3 + spread * 0.18 + Math.max(0, top - 1) * 0.6 - this.camY) * Math.min(1, 3 * dt);
     const cam = this.camera;
-    cam.position.set(this.camX, this.camY, -this.camS);
-    cam.lookAt(this.camX * 0.5, 1.2 + top * 0.3, -(this.camS + 22 + spread * 0.5));
+    if (this.facing) {
+      // picking runners: in front of them, looking back at them all
+      cam.position.set(0, 1.9, -(lead.s + 6.5));
+      cam.lookAt(0, 0.9, -lead.s);
+    } else {
+      cam.position.set(this.camX, this.camY, -this.camS);
+      cam.lookAt(this.camX * 0.5, 1.2 + top * 0.3, -(this.camS + 22 + spread * 0.5));
+    }
 
-    // dusk to night
-    const night = Math.min(1, Math.max(0, lead.s / NIGHT_AFTER));
-    const fog = this.scene.fog as THREE.Fog;
-    fog.color.setHex(DUSK.fog).lerp(TMP_COLOR.setHex(NIGHT.fog), night);
-    this.hemi.intensity = THREE.MathUtils.lerp(DUSK.hemi, NIGHT.hemi, night);
-    this.sun.intensity = THREE.MathUtils.lerp(DUSK.sun, NIGHT.sun, night);
-    this.sun.color.setHex(DUSK.sunColor).lerp(TMP_COLOR.setHex(NIGHT.sunColor), night);
+    // the light changes as they go: dusk to night, or dawn to day
+    const k = Math.min(1, Math.max(0, lead.s / NIGHT_AFTER)), a = this.sky0, b = this.sky1;
+    const night = mix(a, b, k, 'dark');
+    mixColor((this.scene.fog as THREE.Fog).color, a.fog, b.fog, k);
+    this.hemi.intensity = mix(a, b, k, 'hemi');
+    this.sun.intensity = mix(a, b, k, 'sun');
+    mixColor(this.sun.color, a.sunColor, b.sunColor, k);
     this.sun.position.set(-60, 40, -this.camS - 120);
     this.sun.target.position.set(0, 0, -this.camS);
     this.fill.position.set(8, 14, -this.camS + 20);
     this.fill.target.position.set(0, 0, -this.camS - 10);
-    this.sky.update(night, cam.position);
+    this.sky.update(a, b, k, night, cam.position);
     this.city.update(this.camS, night);
     this.stage.update(run.course.grounds, this.camS, night);
     this.bits.update(run, this.camS, now);
 
-    for (const [r, f] of this.people) f.update(r, run, dt);
+    for (const [r, f] of this.people) f.update(r, run, dt, this.facing);
     this.drone.update(run, dt, now);
     this.renderer.render(this.scene, cam);
   }
@@ -137,7 +157,7 @@ class Sky {
       side: THREE.BackSide,
       depthWrite: false,
       fog: false,
-      uniforms: { top: { value: new THREE.Color(DUSK.top) }, bottom: { value: new THREE.Color(DUSK.bottom) }, night: { value: 0 } },
+      uniforms: { top: { value: new THREE.Color(LIGHT.dusk.top) }, bottom: { value: new THREE.Color(LIGHT.dusk.bottom) }, night: { value: 0 } },
       vertexShader: 'varying vec3 vDir; void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
       fragmentShader: `uniform vec3 top; uniform vec3 bottom; uniform float night; varying vec3 vDir;
         float hash(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
@@ -153,9 +173,9 @@ class Sky {
     this.mesh.renderOrder = -1;
   }
 
-  update(night: number, at: THREE.Vector3) {
-    this.mat.uniforms.top.value.setHex(DUSK.top).lerp(TMP_COLOR.setHex(NIGHT.top), night);
-    this.mat.uniforms.bottom.value.setHex(DUSK.bottom).lerp(TMP_COLOR.setHex(NIGHT.bottom), night);
+  update(a: Light, b: Light, k: number, night: number, at: THREE.Vector3) {
+    mixColor(this.mat.uniforms.top.value, a.top, b.top, k);
+    mixColor(this.mat.uniforms.bottom.value, a.bottom, b.bottom, k);
     this.mat.uniforms.night.value = night;
     this.mesh.position.copy(at);
   }
@@ -175,7 +195,7 @@ class City {
   constructor() {
     const rnd = seeded(41);
     const { map, glow } = windowTextures();
-    this.windows = new THREE.MeshLambertMaterial({ map, emissiveMap: glow, emissive: 0xffffff, emissiveIntensity: DUSK.windows });
+    this.windows = new THREE.MeshLambertMaterial({ map, emissiveMap: glow, emissive: 0xffffff, emissiveIntensity: 0.5 });
     const box = new THREE.BoxGeometry(1, 1, 1); // (the window texture stretches with each tower: a little variety)
     for (let z = 0; z < City.BLOCK; z += 14 + rnd() * 10) {
       for (const side of [-1, 1]) {
@@ -196,7 +216,7 @@ class City {
   }
 
   update(camS: number, night: number) {
-    this.windows.emissiveIntensity = THREE.MathUtils.lerp(DUSK.windows, NIGHT.windows, night);
+    this.windows.emissiveIntensity = 0.05 + night * 1.35;
     const B = City.BLOCK, base = Math.floor(camS / B) * B;
     const fill = (m: THREE.InstancedMesh, spots: typeof this.nearSpots) => {
       let n = 0;
@@ -534,102 +554,72 @@ function bitTextures() {
   return { stripes: tex(stripes), vent: tex(vent), sign: tex(sign, false), car: tex(car), front: tex(front, false), frontGlow: tex(frontGlow, false), glow: tex(glow, false) };
 }
 
-// --- a runner: a figure in a helmet, its trail, its shadow ---------------------------------------------
+// --- a runner: a person (people.ts), their trail, their shadow, their shield -----------------------------
 class Figure {
   group = new THREE.Group();
   trail: Trail;
-  private body = new THREE.Group(); // leans for a slide, tumbles in a crash
-  private legs: THREE.Object3D[] = [];
-  private arms: THREE.Object3D[] = [];
+  private person: Person;
   private shadow: THREE.Mesh;
   private shield: THREE.Mesh;
-  private mats: THREE.Material[] = [];
-  private tumble = 0;
+  private wasGrounded = true;
+  private wasSlow = 0;
+  private wasOut = false;
+  private lift = 0; // the drone carrying them off
 
   constructor(r: Runner) {
-    const suit = new THREE.MeshLambertMaterial({ color: r.spec.outfit });
-    const dark = new THREE.MeshLambertMaterial({ color: 0x15171d });
-    const accent = new THREE.MeshLambertMaterial({ color: r.spec.color, emissive: r.spec.color, emissiveIntensity: 0.5 });
-    const visor = new THREE.MeshLambertMaterial({ color: 0x0a0c12, emissive: 0x3fb7ff, emissiveIntensity: 0.35 });
-    this.mats.push(suit, dark, accent, visor);
-    const box = (w: number, h: number, d: number, mat: THREE.Material, y: number) => {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d).translate(0, y, 0), mat);
-      return m;
-    };
-    this.body.add(box(0.5, 0.62, 0.28, suit, 1.18), box(0.52, 0.08, 0.3, accent, 1.0), box(0.36, 0.2, 0.2, dark, 1.32).translateZ(0.18));
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 8), suit);
-    head.position.y = 1.64;
-    const face = box(0.3, 0.12, 0.08, visor, 1.66);
-    face.position.z = -0.17;
-    this.body.add(head, face);
-    for (const side of [-1, 1]) {
-      const hip = new THREE.Group();
-      hip.position.set(side * 0.13, 0.86, 0);
-      hip.add(box(0.17, 0.82, 0.2, suit, -0.41), box(0.18, 0.12, 0.3, accent, -0.82).translateZ(-0.04));
-      this.legs.push(hip);
-      const shoulder = new THREE.Group();
-      shoulder.position.set(side * 0.33, 1.42, 0);
-      shoulder.add(box(0.13, 0.6, 0.14, suit, -0.3));
-      this.arms.push(shoulder);
-      this.body.add(hip, shoulder);
-    }
-    this.group.add(this.body);
+    this.person = new Person(r.spec.look);
+    this.group.add(this.person.root);
     this.shadow = new THREE.Mesh(new THREE.CircleGeometry(0.42, 16).rotateX(-Math.PI / 2),
       new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.4, depthWrite: false }));
     this.shield = new THREE.Mesh(new THREE.SphereGeometry(1.05, 16, 10),
       new THREE.MeshBasicMaterial({ color: 0x3fb7ff, transparent: true, opacity: 0.18, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.shield.position.y = 0.95;
-    this.mats.push(this.shadow.material as THREE.Material, this.shield.material as THREE.Material);
     this.group.add(this.shield);
     this.trail = new Trail(r.spec.trail);
   }
 
-  update(r: Runner, run: Run, dt: number) {
-    const g = this.group;
-    g.position.set(r.x, r.y, -r.s);
-    const leg = Math.sin(r.stride * 1.15), arms = this.arms, legs = this.legs;
-    this.body.rotation.set(0, 0, 0);
-    this.body.position.set(0, 0, 0);
-    if (r.out === 'crashed' || r.out === 'caught') {
-      this.tumble = Math.min(1, this.tumble + dt * 3);
-      this.body.rotation.x = this.tumble * 1.5;
-      this.body.position.y = r.out === 'caught' ? this.tumble * 2.5 : 0;
-    } else {
-      this.tumble = 0;
-    }
-    if (r.zip) {
-      arms.forEach((a) => (a.rotation.x = Math.PI));
-      legs.forEach((l, i) => (l.rotation.x = 0.3 + (i ? 0.2 : -0.2)));
-    } else if (r.slide > 0) {
-      this.body.rotation.x = -1.05;
-      this.body.position.y = -0.25;
-      arms.forEach((a) => (a.rotation.x = -0.6));
-      legs.forEach((l, i) => (l.rotation.x = 1.0 + i * 0.25));
-    } else if (!r.grounded) {
-      arms.forEach((a, i) => (a.rotation.x = i ? -1.2 : 0.9));
-      legs.forEach((l, i) => (l.rotation.x = i ? 1.1 : -0.6));
-    } else if (!r.out) {
-      legs.forEach((l, i) => (l.rotation.x = leg * 0.9 * (i ? -1 : 1)));
-      arms.forEach((a, i) => (a.rotation.x = leg * 0.8 * (i ? 1 : -1)));
-    }
+  // `facing`: turned to the camera (picking a runner); `still`: before the start
+  update(r: Runner, run: Run, dt: number, facing: boolean) {
+    const p = this.person, still = run.t === 0;
+    this.lift = r.out === 'caught' ? this.lift + dt * 1.6 : 0;
+    this.group.position.set(r.x, r.y + this.lift, -r.s);
+    // what they're doing: the one-off moves (a jump's take-off, a landing, a stumble, a roll) play out
+    if (still) p.play('idle');
+    else if (r.out) { if (!this.wasOut) p.play(r.out === 'fell' ? 'air' : 'down', 0.1); }
+    else if (r.zip) p.play('air');
+    else if (r.slide > 0) { if (p.doing !== 'roll') p.play('roll', 0.08, SLIDE); }
+    else if (r.slow > this.wasSlow + 0.1) p.play('hit', 0.08, 0.45);
+    else if (!r.grounded) {
+      if (this.wasGrounded && r.vy > 0) p.play('jumpUp', 0.06, 0.22);
+      else if (p.doing !== 'jumpUp' || p.done) p.play('air', 0.15);
+    } else if (!this.wasGrounded) p.play('land', 0.05, 0.2);
+    else if (!((p.doing === 'land' || p.doing === 'hit' || p.doing === 'roll') && !p.done)) p.play('run', 0.15);
+    this.wasGrounded = r.grounded || !!r.zip;
+    this.wasSlow = r.slow;
+    this.wasOut = !!r.out;
+    p.pace = Math.min(1.5, Math.max(0.9, run.speed / 15));
     // leaning into a lane change
-    this.body.rotation.z = (r.lane * LANE_W - r.x) * -0.12;
+    const off = r.lane * LANE_W - r.x;
+    p.root.rotation.set(0, facing ? 0 : off * -0.12, off * 0.06); // (they face down the course, which is towards the camera while they're picked)
+    p.update(dt);
+
     this.shield.visible = r.powers.shield > 0 && !r.out;
     const floor = r.out ? -Infinity : run.floor(r);
     this.shadow.visible = Number.isFinite(floor) && r.y - floor < 4;
     if (this.shadow.visible) {
       this.shadow.position.set(r.x, floor + 0.03, -r.s);
-      if (!this.shadow.parent) g.parent?.add(this.shadow);
+      if (!this.shadow.parent) this.group.parent?.add(this.shadow);
       (this.shadow.material as THREE.MeshBasicMaterial).opacity = 0.4 * (1 - (r.y - floor) / 4);
     }
-    this.trail.update(r.out ? null : TMP_V.set(r.x, r.y + 1.0, -r.s + 0.2), r.slide > 0);
+    this.trail.update(r.out || still ? null : TMP_V.set(r.x, r.y + 1.0, -r.s + 0.2), r.slide > 0);
   }
 
   dispose() {
-    this.group.traverse((o) => { if (o instanceof THREE.Mesh) o.geometry.dispose(); });
+    this.person.dispose();
     this.shadow.parent?.remove(this.shadow);
     this.shadow.geometry.dispose();
-    for (const m of this.mats) m.dispose();
+    this.shield.geometry.dispose();
+    for (const m of [this.shadow.material, this.shield.material] as THREE.Material[]) m.dispose();
     this.trail.dispose();
   }
 }

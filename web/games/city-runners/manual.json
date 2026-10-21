@@ -3,8 +3,9 @@
   "inspiredBy": "Endless runner games have been around since the early 2000s; the three-lane kind became popular on phones in the 2010s. City Runners is our own take, made for running together.",
   "goal": "Be the last runner still going. On your own, run as far as you can: your best distance is saved.",
   "howToPlay": [
-    "Join with your phone, or run on your own. Add computer runners in the lobby if you want company.",
-    "Press {bolt} to start. Everyone runs on their own; it gets faster the longer you last.",
+    "Join with your phone. In the lobby, choose the route (Rooftops, The Rail Line or Sky Bridges) and how many computer runners to race, then press {bolt}.",
+    "Pick your runner with ◀ ▶. Each is good at something: changing lanes, jumping, shrugging off a stumble, or reaching for coins. Press {bolt} when you're happy.",
+    "Everyone runs on their own; it gets faster the longer you last.",
     "Tap ◀ and ▶ to change lanes, ▲ (or {bolt}) to jump and ▼ (or {drop}) to slide. Slide in the air to drop straight down.",
     "Jump barriers and gaps between the roofs. Slide under signs and pipes. Go round vent stacks, and don't run into the front of a train. A ramp takes you up onto a train's roof.",
     "Some gaps are too wide to jump: cross on the steel beam, or jump up and grab the zip line.",
@@ -16,6 +17,7 @@
     "Change lanes early: you can't go through two vent stacks at once.",
     "Run along the trains' roofs: it's safer up there, and that's where the coins are.",
     "With the jump boots you can jump straight onto a train.",
+    "New to it? Tunde forgives mistakes. Want coins? Ava reaches into the next lane.",
     "A shield also saves you from a fall: it throws you back up."
   ]
 }

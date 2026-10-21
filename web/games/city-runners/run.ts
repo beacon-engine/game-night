@@ -3,12 +3,13 @@
 // Runners don't bump into each other (they run through one another), but coins and power-ups are
 // first come, first served.
 import { ALL, CAR_TOP, Course, LANE_W, POWERS, ZIP_Y, type Piece, type Power } from './course.ts';
+import type { Look } from './people.ts';
 
 export const TICK = 1 / 60;
 const GRAVITY = 26;
 const JUMP = 9; // m/s up: about 1.5 m high, 0.69 s in the air (JUMP_AIR in course.ts)
 const BOOTS_JUMP = 12.6; // with the jump boots: up onto a train
-const SLIDE = 0.62; // seconds
+export const SLIDE = 0.62; // seconds
 const DIVE = 20; // m/s down: sliding in the air drops you straight down
 const TALL = 1.75, LOW = 0.85; // how tall a runner is, standing and sliding
 const HALF = 0.35; // half a runner's width and depth
@@ -18,12 +19,21 @@ const DRONE_TIME = 7; // seconds the drone stays after a stumble: stumble again 
 const LEFT_BEHIND = 24; // m behind the leader: off the back of the screen, and the drone has you
 export const POWER_TIME: Record<Power, number> = { magnet: 10, boots: 10, shield: 0, double: 12 };
 
+// What a runner is good at (runners.json), compared with an all-rounder at 1
+export interface Stats {
+  agility: number; // how fast they change lanes
+  spring: number; // how high they jump
+  grit: number; // how little a stumble costs
+  reach: number; // how far to the side they pick up coins
+}
+
 export interface RunnerSpec {
   id: string;
   name: string;
   color: string; // the player's colour (the standings, their tag)
-  outfit: string; // what they're wearing
+  look: Look; // who they are and what they're wearing
   trail: string; // their trail's colour ('rainbow' for the rainbow one)
+  stats: Stats;
   ai: boolean;
 }
 
@@ -112,7 +122,7 @@ export class Run {
 
   jump(r: Runner) {
     if (r.out || (!r.grounded && !r.zip)) return;
-    r.vy = r.powers.boots > 0 ? BOOTS_JUMP : JUMP;
+    r.vy = (r.powers.boots > 0 ? BOOTS_JUMP : JUMP) * Math.sqrt(r.spec.stats.spring); // (height goes with the square)
     r.grounded = false;
     r.zip = null;
     r.slide = 0;
@@ -159,7 +169,7 @@ export class Run {
     const prevS = r.s, prevX = r.x;
     r.s += v * TICK;
     r.stride += v * TICK;
-    r.x += (r.lane * LANE_W - r.x) * Math.min(1, LANE_RATE * TICK);
+    r.x += (r.lane * LANE_W - r.x) * Math.min(1, LANE_RATE * r.spec.stats.agility * TICK);
     r.score += v * TICK * (r.powers.double > 0 ? 2 : 1);
 
     // up and down: hanging from a zip line, or flying and landing
@@ -235,7 +245,7 @@ export class Run {
       if (p.taken) return;
       const reach = p.kind === 'coin' && r.powers.magnet > 0 ? 6 : 0.9;
       const dx = p.lane * LANE_W - r.x, ds = (s0 + s1) / 2 - r.s, dy = (p.y0 + p.y1) / 2 - (r.y + r.height / 2);
-      const near = reach > 1 ? Math.abs(dx) < reach * 1.3 && ds > -1 && ds < reach : Math.abs(dx) < 1.1 && Math.abs(ds) < reach && Math.abs(dy) < 1.4;
+      const near = reach > 1 ? Math.abs(dx) < reach * 1.3 && ds > -1 && ds < reach : Math.abs(dx) < 1.1 * r.spec.stats.reach && Math.abs(ds) < reach && Math.abs(dy) < 1.4;
       if (!near) return;
       p.taken = true;
       if (p.kind === 'coin') { r.coins++; r.score += r.powers.double > 0 ? 10 : 5; this.ev.coin.push(r); }
@@ -267,9 +277,9 @@ export class Run {
 
   private stumble(r: Runner) {
     if (r.drone > 0) return this.knockOut(r, 'caught');
-    r.slow = 0.9;
+    r.slow = 0.9 / r.spec.stats.grit;
     r.safe = 0.6;
-    r.drone = DRONE_TIME;
+    r.drone = DRONE_TIME / r.spec.stats.grit;
     this.ev.stumbled.push(r);
     this.ev.drone.push(r);
   }

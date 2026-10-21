@@ -6,47 +6,55 @@ import {
   manualPadInput, manualScreen, ownedItems, PerformanceGuard, playerColor, playerKey, requireDevice, shopItems, showManual,
   starsLabel, type EarnFor, type Earned, type Pad, type PadScreen,
 } from '@platform';
-import { Course, todaySeed, type Power } from './course.ts';
-import { POWER_TIME, Run, TICK, type Out, type Runner, type RunnerSpec } from './run.ts';
+import { Course, ROUTES, todaySeed, type Power } from './course.ts';
+import { loadPeople, type Look } from './people.ts';
+import { POWER_TIME, Run, TICK, type Out, type Runner, type RunnerSpec, type Stats } from './run.ts';
 import { POWER_COLOR, World } from './scene.ts';
 import { Sounds } from './sound.ts';
 
 const device = await requireDevice(); // (simple 3D: not on the lightest screens)
+// The runners to choose from (runners.json), as animated people (people.ts)
+interface RunnerType extends Stats { id: string; name: string; about: string; body: Look['body']; skin: Look['skin']; tint: number; hair: string; beard?: boolean; top: string; legs: string }
+const [{ runners: RUNNERS }] = await Promise.all([
+  fetch('runners.json', { cache: 'no-store' }).then((r) => r.json() as Promise<{ runners: RunnerType[] }>),
+  loadPeople(),
+  document.fonts.load('900 100px "Big Shoulders Display"'), // (the signs are painted in it)
+]);
 const controls = await loadControls(['run'] as const, ['jump', 'slide'] as const);
 const saves = gameSaves();
-// Outfits and trails bought with stars (shop.json); everyone also has the plain suit and a trail in their colour
-interface Look { id: string; name: string; color: string }
+// Suits and trails bought with stars (shop.json); everyone also has their runner's own kit and a trail in their colour
+interface Item { id: string; name: string; color: string }
 const SHOP = await shopItems('city-runners');
-const lookOf = (kind: string): Look[] => SHOP.filter((it) => it.extra.kind === kind && typeof it.extra.color === 'string')
+const lookOf = (kind: string): Item[] => SHOP.filter((it) => it.extra.kind === kind && typeof it.extra.color === 'string')
   .map((it) => ({ id: it.id.slice('city-runners/'.length), name: it.name, color: it.extra.color as string }));
 const OUTFITS = lookOf('outfit'), TRAILS = lookOf('trail');
-const PLAIN_SUIT = '#8d96aa';
 
 // What we remember about each runner, and the furthest anyone has run
-interface PlayerRecord { name: string; runs: number; wins: number; best: number; bestScore: number; coins: number; outfit?: string; trail?: string }
+interface PlayerRecord { name: string; runs: number; wins: number; best: number; bestScore: number; coins: number; runner?: string; outfit?: string; trail?: string }
 interface BestRun { distance: number; name: string }
 const freshRecord = (name: string): PlayerRecord => ({ name, runs: 0, wins: 0, best: 0, bestScore: 0, coins: 0 });
 let bestRun: BestRun | null = null;
 
 interface Person {
   record: PlayerRecord | null;
-  outfits: Look[]; // what they own
-  trails: Look[];
-  outfit: number; // 0 = the plain suit, then outfits[outfit - 1]
+  pick: number; // their runner (runners.json)
+  outfits: Item[]; // what they own
+  trails: Item[];
+  outfit: number; // 0 = their runner's own top, then outfits[outfit - 1]
   trail: number; // 0 = their own colour, then trails[trail - 1]
   ready: boolean;
   newBest: boolean;
   earned: Earned | null;
 }
-const input = new Input({ state: (): Person => ({ record: null, outfits: [], trails: [], outfit: 0, trail: 0, ready: false, newBest: false, earned: null }) });
+const input = new Input({ state: (): Person => ({ record: null, pick: 0, outfits: [], trails: [], outfit: 0, trail: 0, ready: false, newBest: false, earned: null }) });
 type Player = Pad<Person>;
-const outfitOf = (c: Player) => c.outfits[c.outfit - 1] ?? { id: '', name: 'Plain suit', color: PLAIN_SUIT };
+const outfitOf = (c: Player) => c.outfits[c.outfit - 1] ?? { id: '', name: `${RUNNERS[c.pick].name}'s kit`, color: RUNNERS[c.pick].top };
 const trailOf = (c: Player) => c.trails[c.trail - 1] ?? { id: '', name: 'Your colour', color: c.color };
 
 // --- settings, chosen in the lobby --------------------------------------------------------------
 const PACES = [{ name: 'Easy', base: 11 }, { name: 'Normal', base: 13 }, { name: 'Fast', base: 15.5 }];
-const settings = { course: 0, rivals: 1, pace: 1 }; // course: 0 today's, 1 a new one
-const ROWS = ['course', 'rivals', 'pace'] as const;
+const settings = { route: 0, course: 0, rivals: 1, pace: 1 }; // course: 0 today's, 1 a new one
+const ROWS = ['route', 'course', 'rivals', 'pace'] as const;
 let row = 0;
 
 type Stage = 'lobby' | 'wardrobe' | 'countdown' | 'running' | 'results' | 'paused';
@@ -69,26 +77,41 @@ const guard = new PerformanceGuard({
 guard.watchCanvas(world.renderer.domElement);
 
 // --- the runners ------------------------------------------------------------------------------------
-const RIVALS = ['Kestrel', 'Flint', 'Mira'];
+const stats = (t: RunnerType): Stats => ({ agility: t.agility, spring: t.spring, grit: t.grit, reach: t.reach });
+// a runner in their kit (or a suit from the shop), in shoes of their player colour
+const look = (t: RunnerType, top: string, shoes: string): Look =>
+  ({ body: t.body, skin: t.skin, tint: t.tint, hair: t.hair, beard: t.beard, top, legs: t.legs, shoes });
 
+// The computer runners are the runners nobody's picked, in a random order
 function field(withPeople: boolean): RunnerSpec[] {
-  const people: RunnerSpec[] = (withPeople ? [...input.list].sort((a, b) => a.slot - b.slot) : []).map((c) => ({
-    id: c.id, name: c.label, color: c.color, outfit: outfitOf(c).color, trail: trailOf(c).color, ai: false,
-  }));
-  const used = new Set((withPeople ? input.list : []).map((c) => c.slot));
-  const n = withPeople ? settings.rivals : 3;
+  const list = withPeople ? [...input.list].sort((a, b) => a.slot - b.slot) : [];
+  const people: RunnerSpec[] = list.map((c) => {
+    const t = RUNNERS[c.pick];
+    return { id: c.id, name: c.label, color: c.color, look: look(t, outfitOf(c).color, c.color), trail: trailOf(c).color, stats: stats(t), ai: false };
+  });
+  const used = new Set(list.map((c) => c.slot)), picked = new Set(list.map((c) => c.pick));
+  const free = shuffle(RUNNERS.filter((_, i) => !picked.has(i)));
+  const n = Math.min(free.length, withPeople ? settings.rivals : 3);
   const rivals: RunnerSpec[] = [];
   for (let slot = 0; rivals.length < n && slot < 16; slot++) {
     if (used.has(slot)) continue;
-    const color = playerColor(slot);
-    rivals.push({ id: `cpu${rivals.length}`, name: RIVALS[rivals.length], color, outfit: PLAIN_SUIT, trail: color, ai: true });
+    const color = playerColor(slot), t = free[rivals.length];
+    rivals.push({ id: `cpu${rivals.length}`, name: t.name, color, look: look(t, t.top, color), trail: color, stats: stats(t), ai: true });
   }
   return [...people, ...rivals];
 }
 
+function shuffle<T>(list: T[]) {
+  for (let i = list.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [list[i], list[j]] = [list[j], list[i]];
+  }
+  return list;
+}
+
 function newRun(withPeople: boolean) {
   const seed = withPeople && settings.course === 0 ? todaySeed() : Math.floor(Math.random() * 1e9);
-  run = new Run(new Course(seed, PACES[settings.pace].base), field(withPeople));
+  run = new Run(new Course(seed, PACES[settings.pace].base, ROUTES[settings.route]), field(withPeople));
   world.setRun(run);
   buildTags();
 }
@@ -104,11 +127,10 @@ function toLobby() {
   loadBestRun();
 }
 
-// Start: a look first for anyone who's bought one (otherwise straight to the countdown)
+// Start: everyone picks their runner first
 function start() {
-  if (!input.list.length) return startRun();
+  if (!input.list.length) return callout('Join first', 'Scan the code with your phone');
   for (const c of input.list) { c.ready = false; loadLooks(c); }
-  if (!input.list.some((c) => c.outfits.length || c.trails.length)) return startRun();
   stage = 'wardrobe';
   newRun(true);
   renderWardrobe();
@@ -150,6 +172,8 @@ const OUT_TEXT: Record<Out, string> = { crashed: 'crashed', fell: 'fell', caught
 // --- saved records ----------------------------------------------------------------------------------
 async function loadRecord(c: Player) {
   c.record = (await saves.get<PlayerRecord>(playerKey(c))) ?? freshRecord(c.label);
+  const last = RUNNERS.findIndex((t) => t.id === c.record?.runner); // (who they ran as last time)
+  c.pick = last >= 0 ? last : c.slot % RUNNERS.length;
   if (stage === 'lobby') renderLobby();
   loadLooks(c);
 }
@@ -200,6 +224,7 @@ function saveRecords() {
     rec.best = Math.max(rec.best, m);
     rec.bestScore = Math.max(rec.bestScore, Math.floor(r.score));
     rec.coins += r.coins;
+    rec.runner = RUNNERS[c.pick].id;
     rec.outfit = outfitOf(c).id || undefined;
     rec.trail = trailOf(c).id || undefined;
     c.record = rec;
@@ -241,14 +266,18 @@ function menuInput(c: Player) {
     if (fx) change(fx);
   }
   if (stage === 'wardrobe' && !c.ready && (fx || fy)) {
-    if (fx) c.outfit = (c.outfit + fx + c.outfits.length + 1) % (c.outfits.length + 1);
-    if (fy) c.trail = (c.trail - fy + c.trails.length + 1) % (c.trails.length + 1);
+    if (fx) c.pick = (c.pick + fx + RUNNERS.length) % RUNNERS.length;
+    if (fy) c.outfit = (c.outfit - fy + c.outfits.length + 1) % (c.outfits.length + 1);
     newRun(true);
     renderWardrobe();
   }
   for (const ev of c.drain()) {
     if (!ev.down) continue;
-    if (ev.bit === BIT.bolt) (stage === 'wardrobe' ? toggleReady(c) : confirm());
+    if (ev.bit === BIT.leaf && stage === 'wardrobe' && !c.ready && c.trails.length) {
+      c.trail = (c.trail + 1) % (c.trails.length + 1);
+      newRun(true);
+      renderWardrobe();
+    } else if (ev.bit === BIT.bolt) (stage === 'wardrobe' ? toggleReady(c) : confirm());
     else if (ev.bit === BIT.drop) (stage === 'wardrobe' && c.ready ? toggleReady(c) : back());
     else if (ev.bit === BIT.star && stage === 'lobby') howTo();
   }
@@ -262,7 +291,10 @@ function toggleReady(c: Player) {
 
 function change(d: number) {
   const key = ROWS[row];
-  if (key === 'course') settings.course = 1 - settings.course;
+  if (key === 'route') {
+    settings.route = (settings.route + d + ROUTES.length) % ROUTES.length;
+    newRun(false); // (the run behind the menu moves to the new route)
+  } else if (key === 'course') settings.course = 1 - settings.course;
   else if (key === 'rivals') settings.rivals = Math.max(0, Math.min(3, settings.rivals + d));
   else settings.pace = (settings.pace + d + PACES.length) % PACES.length;
   renderLobby();
@@ -315,7 +347,8 @@ function padScreen(c: Player): PadScreen {
     case 'lobby': return { ...base, labels: { bolt: 'Start', drop: 'Games', star: 'How to play' }, hint: '▲▼ choose · ◀▶ change' };
     case 'wardrobe': return c.ready
       ? { ...base, labels: { drop: 'Change' }, hint: 'Ready. Waiting for the others' }
-      : { ...base, labels: { bolt: 'Ready', drop: 'Back' }, hint: `◀▶ suit: ${outfitOf(c).name} · ▲▼ trail: ${trailOf(c).name}` };
+      : { ...base, labels: { bolt: 'Ready', drop: 'Back', ...(c.trails.length ? { leaf: 'Trail' } : {}) },
+        hint: `◀▶ runner: ${RUNNERS[c.pick].name}${c.outfits.length ? ' · ▲▼ suit' : ''}` };
     case 'results': return { ...base, labels: { bolt: 'Run again', drop: 'Lobby' }, hint: 'Run over' };
     case 'paused': return { ...base, labels: { bolt: 'Resume', drop: 'Quit' }, hint: 'Paused' };
     default: {
@@ -338,19 +371,29 @@ function renderLobby() {
   $('runners').innerHTML = people.length
     ? people.map((c) => `<div class="runner">${chip(c)}<span class="caption faint">${escapeHtml(recordLine(c.record))}</span></div>`).join('')
     : '<p class="muted" style="margin:0">Join with your phone to run. On your own? Run against the computer, or for distance.</p>';
-  const value = { course: settings.course ? 'A new one' : "Today's", rivals: String(settings.rivals), pace: PACES[settings.pace].name };
-  const label = { course: 'Course', rivals: 'Computer runners', pace: 'Start speed' };
+  const value = { route: ROUTES[settings.route].name, course: settings.course ? 'A new one' : "Today's", rivals: String(settings.rivals), pace: PACES[settings.pace].name };
+  const label = { route: 'Route', course: 'Course', rivals: 'Computer runners', pace: 'Start speed' };
   $('settings').innerHTML = ROWS.map((r, i) => `<div class="setting ${i === row ? 'sel' : ''}">
       <span>${label[r]}</span><span class="value"><span class="glyph glyph-key">◀</span><b>${escapeHtml(value[r])}</b><span class="glyph glyph-key">▶</span></span></div>`).join('');
+  $('routeAbout').textContent = ROUTES[settings.route].about;
   $('record').textContent = bestRun ? `Furthest run: ${bestRun.distance.toLocaleString()} m by ${bestRun.name}` : 'Nobody has set a distance here yet.';
 }
 
+// Picking runners: a card each, over the runners standing on the first roof
 function renderWardrobe() {
   const list = [...input.list].sort((a, b) => a.slot - b.slot);
-  $('wardrobe').innerHTML = list.map((c) => `<div class="look panel">${chip(c)}
-      <div class="row"><span><i style="background:${outfitOf(c).color}"></i>${escapeHtml(outfitOf(c).name)}</span><span class="faint">${c.outfits.length ? '◀▶' : ''}</span></div>
-      <div class="row"><span><i style="background:${trailOf(c).color === 'rainbow' ? 'linear-gradient(90deg,#f55,#fd3,#3d8,#3bf,#a6f)' : trailOf(c).color}"></i>${escapeHtml(trailOf(c).name)}</span><span class="faint">${c.trails.length ? '▲▼' : ''}</span></div>
-      <div class="ready ${c.ready ? 'on' : ''}">${c.ready ? 'Ready' : `${glyph('bolt')} when you're happy`}</div></div>`).join('');
+  const bar = (label: string, v: number, lo: number, hi: number) =>
+    `<div class="stat"><span>${label}</span><i><b style="width:${Math.round(Math.max(0.08, Math.min(1, (v - lo) / (hi - lo))) * 100)}%"></b></i></div>`;
+  $('wardrobe').innerHTML = list.map((c) => {
+    const t = RUNNERS[c.pick];
+    return `<div class="look panel">${chip(c)}
+      <div class="name"><span class="glyph glyph-key">◀</span><h2>${escapeHtml(t.name)}</h2><span class="glyph glyph-key">▶</span></div>
+      <p class="muted">${escapeHtml(t.about)}</p>
+      ${bar('Agility', t.agility, 0.7, 1.35)}${bar('Spring', t.spring, 0.85, 1.18)}${bar('Grit', t.grit, 0.6, 1.45)}${bar('Reach', t.reach, 0.6, 2.3)}
+      <div class="row"><span><i style="background:${outfitOf(c).color}"></i>${escapeHtml(outfitOf(c).name)}</span><span class="faint">${c.outfits.length ? '▲▼' : 'more in the shop'}</span></div>
+      <div class="row"><span><i style="background:${trailOf(c).color === 'rainbow' ? 'linear-gradient(90deg,#f55,#fd3,#3d8,#3bf,#a6f)' : trailOf(c).color}"></i>${escapeHtml(trailOf(c).name)}</span><span class="faint">${c.trails.length ? glyph('leaf') : ''}</span></div>
+      <div class="ready ${c.ready ? 'on' : ''}">${c.ready ? 'Ready' : `${glyph('bolt')} when you're happy`}</div></div>`;
+  }).join('');
   $('board').innerHTML = '';
 }
 
@@ -472,11 +515,12 @@ function frame(now: number) {
     acc += dt;
     while (acc >= TICK) { tick(); acc -= TICK; }
   }
+  world.facing = stage === 'wardrobe';
   world.render(run, dt, now);
   if (stage !== 'lobby' && stage !== 'results') placeTags();
   const racing = stage === 'running';
   let danger = 0;
-  if (racing) for (const r of run.runners) if (human(r) && !r.out) danger = Math.max(danger, r.drone / 7);
+  if (racing) for (const r of run.runners) if (human(r) && !r.out) danger = Math.max(danger, Math.min(1, r.drone / 7));
   sounds.whine(danger);
   hudT += dt;
   if (hudT > 0.1 && (racing || stage === 'countdown' || stage === 'paused')) { hudT = 0; updateHud(); }
