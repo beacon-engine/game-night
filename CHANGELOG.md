@@ -5,6 +5,29 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 
 ## [Unreleased]
 
+### Added
+- **Stock Cars: a road course.** Ridgeway, 2.3 km in the hills, turning both ways: the esses, a loop to the
+  right and a hairpin, with walls both sides and kerbs in the turns. Brake for the turns; the computer
+  drivers take the racing line and brake for them too. Tracks can now be a whole lap (`"lap"` in
+  `tracks.json`), with right turns.
+
+### Changed
+- **Stock Cars handles differently.**
+  - The cars differ more: the Prototype is quickest flat out and wins on the big oval, the Hot Hatch and
+    the Open Wheeler on the short track and the road course, and the heavy ones win the shoving matches.
+  - An oval's banking is steeper up by the wall, so the high line carries more speed, and the apron below
+    the inside edge is slow: hugging the bottom is no longer the way round.
+  - Cars bounce off each other, and the walls, with a knock you can't just steer out of. Walls cost more
+    speed, and grinding along one costs more still.
+  - The computer drivers keep looking for a way past instead of sitting behind a slower car.
+- **Stock Cars looks better.** The paint is glossy (with a clear coat where the screen has power to spare),
+  the windows are dark glass, the rims are metal and the tyres are rubber; the cars reflect that track's sky
+  and lights, their lights come on at dusk and at night, and each sits on a shadow of its own shape.
+
+### Fixed
+- Going back to the game select page with the browser's Back button left a black screen until the page
+  was reloaded.
+
 ## [0.2.0] - 2026-10-21
 
 Stock Cars, Neon Trails and Chess are playable, players earn stars, and the program is now Beacon Arcade.

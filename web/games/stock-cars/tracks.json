@@ -1,5 +1,5 @@
 {
-  "_help": "The tracks to choose from in the lobby. 'half' is the first half of a lap, from the start/finish line to the middle of the back straight: straights (metres) and left turns (degrees, radius in metres, banking in degrees). It must turn 180° in all; the second half is its mirror image, and the straight back to the middle is added for you. 'width' is the racing surface in metres; 'time' is day, dusk or night; 'scenery' is countryside, desert, harbour or city.",
+  "_help": "The tracks to choose from in the lobby. An oval has 'half': the first half of a lap, from the start/finish line to the middle of the back straight: straights (metres) and left turns (degrees, radius in metres, banking in degrees). It must turn 180° in all; the second half is its mirror image, and the straight back to the middle is added for you. A road course has 'lap' instead: the whole lap, with left turns positive and right turns negative; it must turn 360° and end where it started. 'width' is the racing surface in metres; 'time' is day, dusk or night; 'scenery' is countryside, desert, harbour or city.",
   "tracks": [
     {
       "id": "beacon-speedway",
@@ -40,6 +40,22 @@
       "width": 26,
       "bankStraights": 4,
       "half": [{ "straight": 300 }, { "turn": 180, "radius": 240, "bank": 31 }]
+    },
+    {
+      "id": "ridgeway",
+      "scenery": "countryside",
+      "name": "Ridgeway Road Course",
+      "about": "Turns both ways: the esses, a loop to the right and a hairpin. Brake for the turns. 2.3 km.",
+      "time": "day",
+      "width": 15,
+      "bankStraights": 0,
+      "lap": [
+        { "straight": 120 }, { "turn": 90, "radius": 50, "bank": 4 }, { "straight": 150 },
+        { "turn": -45, "radius": 70 }, { "turn": 45, "radius": 70 }, { "straight": 120 },
+        { "turn": 90, "radius": 60, "bank": 4 }, { "straight": 365 }, { "turn": -90, "radius": 55 },
+        { "straight": 90 }, { "turn": 180, "radius": 48, "bank": 6 }, { "straight": 559 },
+        { "turn": 90, "radius": 65, "bank": 4 }, { "straight": 300 }
+      ]
     }
   ]
 }

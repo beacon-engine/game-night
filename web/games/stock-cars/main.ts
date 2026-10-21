@@ -19,7 +19,7 @@ const [{ tracks: TRACKS }, { cars: CARS }] = await Promise.all([
   getJson<{ cars: CarType[] }>('cars.json'),
   document.fonts.load('900 100px "Big Shoulders Display"'), // (the cars' numbers are painted in it)
 ]);
-const models = await loadCars(CARS);
+const models = await loadCars(CARS, device.tier === 'heavy' && !device.tv); // (clear coats where there's power to spare)
 // Paint jobs bought with stars (shop.json); everyone also has their own player colour
 interface Paint { id: string; name: string; color: string }
 const PAINTS: Paint[] = (await shopItems('stock-cars')).filter((it) => typeof it.extra.color === 'string')
