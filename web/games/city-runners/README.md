@@ -33,6 +33,17 @@ with Rio, the all-rounder:
 They're picked, not bought: the shop only sells looks (a suit replaces the runner's top; trails).
 Shoes are always in the player's colour. The computer runners are the runners nobody picked.
 
+**Crossings**: some gaps have three ways across, one in each lane, so each runner chooses how much to risk:
+
+| | Speed (vs running) | The risk |
+|---|---|---|
+| Zip line | 1.3× | You have to jump to grab it. Miss and you fall. |
+| Thin rail | 0.72× | Can't be missed, but you lose ground (and the drone takes anyone 24 m behind). Step off it and you fall. |
+| Ropes | 1.25× on the rope | Jump onto the first. On each, press ▲ in the last 40% of the swing to fly to the next; earlier, or holding on to the end, and you fall. Spring throws you further. |
+
+In simulation (computer runners, Sky Bridges) a crossing takes 0.78× the time of running it on the zip line, 0.94×
+on the ropes and 1.42× on the rail; letting go of a rope in the last 40% of its swing always reaches the next.
+
 **Three routes** (`ROUTES` in `course.ts`): **Rooftops** (dusk into night, a bit of everything), **The Rail Line** (at
 night, mostly trains, more of them coming at you) and **Sky Bridges** (sunrise into day, gaps too wide to jump, so beams
 and zip lines).

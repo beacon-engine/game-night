@@ -9,6 +9,10 @@ export const LANE_W = 2.4;
 export const CAR_TOP = 2.6; // the roof of a rail car
 export const ZIP_Y = 2.8; // a zip line's cable
 export const JUMP_AIR = 0.69; // seconds in the air from an ordinary jump (see run.ts)
+export const ROPE_TOP = 8.5; // where the swinging ropes hang from
+export const ROPE_SPAN = 6; // m a rope carries you
+export const ROPE_FLIGHT = 0.22; // seconds between letting go of one rope and catching the next
+export const ROPE_CATCH = 1.2; // how high you have to be to catch the next rope (the first: just off the ground)
 
 export type GroundKind = 'roof' | 'rail' | 'gap';
 export interface Ground {
@@ -17,12 +21,17 @@ export interface Ground {
   kind: GroundKind;
   depth: number; // how far the building drops below the roof (for the scenery)
   wide?: boolean; // a gap too far to jump: cross on the beam or the zip line
+  crossing?: boolean; // a crossing: a zip line, a thin rail and swinging ropes, one in each lane
 }
+
+// The ways across a crossing, each its own trade-off (see run.ts)
+export type Tech = 'zip' | 'balance' | 'ropes';
 
 // low: a barrier to jump; bar: a pipe or sign to slide under; block: a vent stack to go round;
 // car: a rail car (a train is several), run along its roof; ramp: up onto one; beam and zip: across a
-// wide gap; coin and power: to pick up
-export type PieceKind = 'low' | 'bar' | 'block' | 'car' | 'ramp' | 'beam' | 'zip' | 'coin' | 'power';
+// wide gap; balance: a thin rail to walk; rope: one of a line of ropes to swing on; sign: which lane
+// crosses how; coin and power: to pick up
+export type PieceKind = 'low' | 'bar' | 'block' | 'car' | 'ramp' | 'beam' | 'zip' | 'balance' | 'rope' | 'sign' | 'coin' | 'power';
 export type Power = 'magnet' | 'boots' | 'shield' | 'double';
 export const POWERS: Power[] = ['magnet', 'boots', 'shield', 'double'];
 
@@ -37,6 +46,7 @@ export interface Piece {
   move: number; // m/s towards the runners (an oncoming train), 0 for everything else
   go: number; // when it set off (seconds into the run), -1 until a runner comes near
   power?: Power;
+  tech?: Tech; // a crossing's sign: which way across this lane is
   taken: boolean; // a coin or power-up someone has picked up
   look: number; // 0..1, picks a variation when it's drawn
 }
@@ -45,11 +55,11 @@ export const ALL = 9;
 
 // The routes to choose from: the time of day, and how the course is mixed (how often a stretch is a
 // gap too wide to jump, or the rail line, and how often a train comes the other way on it)
-export interface Route { id: string; name: string; about: string; sky: 'dusk' | 'night' | 'dawn'; wide: number; rail: number; oncoming: number }
+export interface Route { id: string; name: string; about: string; sky: 'dusk' | 'night' | 'dawn'; wide: number; rail: number; oncoming: number; crossing: number }
 export const ROUTES: Route[] = [
-  { id: 'rooftops', name: 'Rooftops', about: 'Over the roofs as the sun goes down. A bit of everything.', sky: 'dusk', wide: 0.2, rail: 0.25, oncoming: 0.55 },
-  { id: 'rail-line', name: 'The Rail Line', about: 'Along the elevated line at night: trains standing, trains coming at you.', sky: 'night', wide: 0.08, rail: 0.7, oncoming: 0.8 },
-  { id: 'sky-bridges', name: 'Sky Bridges', about: 'Tower to tower at sunrise. Gaps too wide to jump: find the beam or the zip line.', sky: 'dawn', wide: 0.45, rail: 0.12, oncoming: 0.3 },
+  { id: 'rooftops', name: 'Rooftops', about: 'Over the roofs as the sun goes down. A bit of everything.', sky: 'dusk', wide: 0.2, rail: 0.25, oncoming: 0.55, crossing: 0.45 },
+  { id: 'rail-line', name: 'The Rail Line', about: 'Along the elevated line at night: trains standing, trains coming at you.', sky: 'night', wide: 0.08, rail: 0.7, oncoming: 0.8, crossing: 0.3 },
+  { id: 'sky-bridges', name: 'Sky Bridges', about: 'Tower to tower at sunrise. Gaps too wide to jump: zip lines, thin rails and swinging ropes.', sky: 'dawn', wide: 0.45, rail: 0.12, oncoming: 0.3, crossing: 0.6 },
 ];
 
 export class Course {
@@ -96,6 +106,14 @@ export class Course {
     return Math.max(0, Math.min(p.move * (t - p.go), p.s0 - this.groundAt(p.s0).s0 - 2));
   }
 
+  // A crossing coming up within `range` of s: its ways across, left lane to right
+  crossingAhead(s: number, range: number) {
+    const g = this.grounds.find((x) => x.crossing && x.s0 > s && x.s0 < s + range);
+    if (!g) return null;
+    const signs = this.pieces.filter((p) => p.kind === 'sign' && p.tech && Math.abs(p.s0 - (g.s0 - 14)) < 1);
+    return [-1, 0, 1].map((l) => signs.find((p) => p.lane === l)?.tech ?? null);
+  }
+
   // The first piece that could reach past s (they're sorted by s0, and none is longer than 60 m)
   firstNear(s: number) {
     const p = this.pieces;
@@ -116,7 +134,8 @@ export class Course {
   private next() {
     const r = this.rnd(), v = this.speedAt(this.end), reach = JUMP_AIR * v, { wide, rail } = this.route;
     if (r < wide && this.end > 200) {
-      this.gap(reach * (1.15 + this.rnd() * 0.35), true);
+      if (this.rnd() < this.route.crossing) this.crossing(v);
+      else this.gap(reach * (1.15 + this.rnd() * 0.35), true);
       this.roof(50 + this.rnd() * 40);
     } else if (r < wide + rail && this.end > 150) {
       this.gap(reach * (0.35 + this.rnd() * 0.2), false);
@@ -146,15 +165,16 @@ export class Course {
     return p;
   }
 
-  private gap(len: number, wide: boolean) {
+  private gap(len: number, wide: boolean, way = true) {
     const g = this.ground(len, 'gap', wide);
-    if (!wide) return;
+    if (!wide) return g;
     // a clear run-up, so there's time to get into the right lane
     const runUp = g.s0 - this.speedAt(g.s0) * 1.8;
     for (let i = this.pieces.length - 1; i >= 0 && this.pieces[i].s1 > runUp - 30; i--) {
       const p = this.pieces[i];
       if (p.kind !== 'coin' && p.kind !== 'power' && p.s1 > runUp) this.pieces.splice(i, 1);
     }
+    if (!way) return g; // (a crossing puts in its own)
     // a beam to run across, or a zip line to grab (jump up to it), in one lane
     const lane = this.lane();
     if (this.rnd() < 0.5) {
@@ -163,6 +183,29 @@ export class Course {
     } else {
       this.add('zip', lane, g.s0 - 6, g.s1 + 4, ZIP_Y - 0.1, ZIP_Y);
       this.coins(lane, g.s0 + 1, g.s1 - 1, () => ZIP_Y - 1.4);
+    }
+    return g;
+  }
+
+  // A crossing: one way across in each lane. A zip line (jump to grab it: quick, but miss and you
+  // fall); a thin rail (can't be missed, but you walk it slowly, and stepping off is a fall); a line
+  // of ropes (swing, and jump at the end of each swing to fly to the next: a bit quicker than running).
+  // The gap is as long as three swings and the flights between them.
+  private crossing(v: number) {
+    const flight = ROPE_FLIGHT * v, n = 3;
+    const g = this.gap(1 + n * ROPE_SPAN + (n - 1) * flight + flight * 0.8, true, false);
+    g.crossing = true;
+    const [zip, balance, ropes] = shuffle([-1, 0, 1], this.rnd);
+    this.add('zip', zip, g.s0 - 6, g.s1 + 4, ZIP_Y - 0.1, ZIP_Y);
+    this.coins(zip, g.s0 + 1, g.s1 - 1, () => ZIP_Y - 1.4);
+    this.add('balance', balance, g.s0 - 0.5, g.s1 + 0.5, -0.1, 0);
+    for (let i = 0, s = g.s0 - 1; i < n; i++, s += ROPE_SPAN + flight) {
+      // (the first is caught with a jump off the roof; the others on the way past, high up)
+      this.add('rope', ropes, s, s + ROPE_SPAN, i ? ROPE_CATCH : 0.3, ROPE_TOP);
+      if (i < n - 1) this.coins(ropes, s + ROPE_SPAN + 1, s + ROPE_SPAN + flight - 1, () => 3.2);
+    }
+    for (const [lane, tech] of [[zip, 'zip'], [balance, 'balance'], [ropes, 'ropes']] as [number, Tech][]) {
+      this.add('sign', lane, g.s0 - 14, g.s0 - 13.6, 0, 2.6, { tech });
     }
   }
 

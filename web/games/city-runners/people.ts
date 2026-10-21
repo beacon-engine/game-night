@@ -21,9 +21,10 @@ export interface Look {
   shoes: string;
 }
 
-export type Move = 'idle' | 'run' | 'jumpUp' | 'air' | 'land' | 'roll' | 'hit' | 'down' | 'dance';
+export type Move = 'idle' | 'run' | 'jog' | 'jumpUp' | 'air' | 'land' | 'roll' | 'hit' | 'down' | 'dance';
 const CLIP: Record<Move, string> = {
-  idle: 'Idle_Loop', run: 'Sprint_Loop', jumpUp: 'Jump_Start', air: 'Jump_Loop', land: 'Jump_Land',
+  idle: 'Idle_Loop', run: 'Sprint_Loop', jog: 'Jog_Fwd_Loop', // (jog: careful steps along a thin rail)
+  jumpUp: 'Jump_Start', air: 'Jump_Loop', land: 'Jump_Land',
   roll: 'Roll', hit: 'Hit_Chest', down: 'Death01', dance: 'Dance_Loop',
 };
 const ONCE = new Set<Move>(['jumpUp', 'land', 'roll', 'hit', 'down']);

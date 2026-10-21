@@ -10,7 +10,8 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   Pick one of six runners (real, motion-captured people, each with a strength: quick across, a big jump, shrugs off
   stumbles, long reach for coins) and one of three routes (Rooftops at dusk, The Rail Line at night, Sky Bridges at
   sunrise). Change lanes, jump and slide with the phone's arrows; jump the gaps, slide under the signs,
-  run along the trains, and cross the widest gaps on a beam or a zip line. Coins and power-ups (magnet, jump boots,
+  run along the trains, and cross the widest gaps on a beam or a zip line. At a crossing, choose your way across:
+  the zip line (fastest, but jump to grab it), the thin rail (safe but slow) or swinging ropes (time each jump). Coins and power-ups (magnet, jump boots,
   shield, double) go to whoever gets there first. Stumble twice, or fall behind, and the security drone has you: the
   last one running wins. Computer runners to race, "today's course" (the same all day), saved records and best
   distances, and suits and light trails in the shop.
