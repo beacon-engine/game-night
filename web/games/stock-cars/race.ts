@@ -10,7 +10,9 @@ const ACCEL = 16;
 const BRAKE = 26;
 const GRIP = 34; // m/s² of cornering the tyres hold on the flat...
 const BANK_GRIP = 45; // ...plus this much per unit of banking slope; beyond it the car slides to the outside
-const SLIDE = 0.45; // how fast the extra pushes it out
+const SLIDE = 0.45; // how fast the extra pushes it out...
+const SLIDE_MAX = 6; // ...at most (m/s)
+const SLIDE_BUILD = 3; // and how quickly a slide builds up and dies away (per second): never all at once
 const SCRUB = 0.1; // ...and the speed that costs
 const TOW = 0.07; // up to 7% more top speed in another car's slipstream
 const TOW_RANGE = 45; // m
@@ -144,7 +146,10 @@ export class Race {
     // speed. A lane further out is a wider turn, and on an oval it's banked steeper.
     const kd = k / (1 + k * c.d), dir = Math.sign(k);
     const extra = Math.max(0, c.v * c.v * Math.abs(kd) - this.grip(c, c.dist, c.d, dir));
-    c.slide = extra * SLIDE * dir;
+    // (it builds over a moment, and has a limit: far too fast into a tight turn used to fling the car
+    // across the track in one tick)
+    const slide = Math.min(SLIDE_MAX, extra * SLIDE) * dir;
+    c.slide += (slide - c.slide) * Math.min(1, SLIDE_BUILD * TICK);
     c.v = Math.max(0, c.v - extra * SCRUB * TICK);
 
     // steering moves you across the track, quicker the faster you go
@@ -315,7 +320,10 @@ export class Race {
       }
     }
     const reach = 3 + 0.12 * c.v;
-    c.steer = clamp((c.lane - c.d) * 0.25 - c.vd * 0.05 - c.slide / reach, -1, 1);
+    // (changing lanes, they ease across: two-thirds lock at most, so they don't dart; more only to
+    // catch a slide)
+    const ease = Math.abs(c.slide) > 1 ? 1 : 0.65;
+    c.steer = clamp((c.lane - c.d) * 0.25 - c.vd * 0.05 - c.slide / reach, -ease, ease);
     const target = this.cornerSpeed(c);
     c.brake = 0;
     if (c.finish !== null) c.throttle = 0.45; // the cool-down lap
