@@ -11,3 +11,5 @@ node_modules/
 /android/build/
 /android/app/src/main/jniLibs/
 /android/app/src/main/assets/
+# Claude Code agents' scratch checkouts
+/.claude/worktrees/

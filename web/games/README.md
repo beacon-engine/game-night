@@ -13,6 +13,7 @@ Pick one and go.
 | ⚡ | [Neon Trails](neon-trails) | 1–8 | First to 3/5/7, saved records | **playable** |
 | 🚗 | [Stock Cars](stock-cars) | 1–4 | Exhibition, saved records (Race weekend, Championship next) | **playable** |
 | ♟️ | [Chess](chess) | 1–2 | Saved records (Ladder next) | **playable** |
+| 🏃 | [City Runners](city-runners) | 1–4 | Last one running, saved best distances | **playable** |
 | | **Sports** | | | |
 | 🏀 | [Basketball](basketball) | 1–6 | Exhibition, League, Cup, Groups + knockout | coming soon |
 | ⚾ | [Baseball](baseball) | 1–2 (teams) | Exhibition, League, Series | coming soon |
@@ -27,10 +28,10 @@ Pick one and go.
 | 🤾 | [Dodgeball](dodgeball) | 2–8 | Exhibition, League, Cup | coming soon |
 | | **Racing** | | | |
 | 🏍️ | [Superbikes](superbikes) | 1–4 | Exhibition, Race weekend, Championship, Career | coming soon |
-| 🏎️ | [Grand Prix](grand-prix) | 1–4 | Exhibition, Race weekend, Championship, Career | coming soon |
+| 🏎️ | [Grand Prix](grand-prix) | 1–4 | Race with pit stops (Race weekend, Championship next) | **playable** (in progress) |
 | 🏁 | [Go-Karts](go-karts) | 1–4 | Exhibition, Cup, Battle | coming soon |
 | 🏙️ | [Street Racing](street-racing) | 1–4 | Exhibition, Cup, Career | coming soon |
-| ⛰️ | [Rally](rally) | 1–4 | Stage, Rally, Rallycross | coming soon |
+| ⛰️ | [Rally](rally) | 1–4 | Race (rallycross), stage records (Stage, Rally next) | **playable** (in progress) |
 | | **Action** | | | |
 | 🥋 | [Fighters](fighters) | 1–2 | Arcade ladder, Tournament, Ranked | coming soon |
 | 👊 | [Brawlers](brawler) | 1–4 | Story, Score attack | coming soon |

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/beacon-engine/game-night/internal/store"
@@ -18,13 +19,16 @@ import (
 
 // Server serves one set of web files (the built web/dist, possibly with user overrides on top).
 type Server struct {
-	Version string // shown on the game select page
-	Host    string // this machine's address for the phones; detected when empty
+	Version string        // shown on the game select page
+	Host    string        // this machine's address for the phones; detected when empty
+	Awake   func(on bool) // keeps the machine awake during games (NewWaker); nil leaves it to the OS
 
 	files fs.FS
 	port  int
 	relay *Relay
 	db    *store.Store // saves and stars; nil turns both off
+
+	earning sync.Mutex // one stars payout at a time, so two at once can't both pass the daily checks
 }
 
 // New serves files on port, keeping saves and stars in db (both are off if it's nil).
@@ -47,6 +51,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/info", s.info)
 	mux.Handle("/api/saves/", &Saves{db: s.db})
 	s.starsRoutes(mux)
+	s.relay.awake = s.Awake
 	mux.Handle("/ws", s.relay)
 	mux.Handle("/", s.static())
 	return mux

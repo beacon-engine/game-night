@@ -1,0 +1,21 @@
+{
+  "intro": "Single-seaters on road circuits that turn both ways. Fast, light and fragile: every hit costs you, a big one can set the car alight or end your race, and the tyres and fuel won't last the distance.",
+  "inspiredBy": "Open-wheel racing has been around since the early 1900s. Grand Prix is our own take, with our own cars, circuits and drivers.",
+  "goal": "Be first across the line after the last lap, still in one piece. Races are 5, 10 or 15 laps.",
+  "howToPlay": [
+    "Join with your phone, or race the computer drivers on your own.",
+    "In the lobby, choose the circuit, how many computer drivers, how many laps and how quick they are, then press {bolt} to start.",
+    "Your phone becomes a steering pad: slide your thumb left and right to steer. Hold {bolt} for gas and {drop} to brake. Brake before the corners, not in them.",
+    "Your car has health, tyres and fuel, shown on your screen and your phone. Hits take health, worn tyres grip less, and a damaged car is slower.",
+    "Press {l1} to box this lap, then keep to the left side of the main straight and you'll turn into the pit lane. The crew refuels, changes the tyres and mends the damage; the more they do, the longer you wait.",
+    "A full tank lasts 7 laps, so longer races need at least one stop. Your phone says when the pit wall thinks you should come in.",
+    "A hard hit can start a fire. A burning car loses health fast: box straight away or it burns out. A really big hit, especially into a barrier at speed, ends your race."
+  ],
+  "steering": "Slide left and right on your phone to steer (or use the arrow keys)",
+  "tips": [
+    "Brake in a straight line, then turn in. Open-wheelers grip well, but not at any speed.",
+    "Stopping one lap too late is better than running dry: an empty car can only coast.",
+    "Fresh tyres are worth seconds a lap. Sometimes a second stop wins the race.",
+    "Hold {r1} to see who's behind you."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "_comment": "Paint jobs bought with stars. color: the car's body colour. Looks only: every paint drives the same.",
+  "items": [
+    { "id": "mud-brown", "name": "Mud Brown", "price": 40, "color": "#6b4a2f", "about": "It'll look like this by the end anyway" },
+    { "id": "arctic", "name": "Arctic White", "price": 40, "color": "#eef3f7", "about": "Clean, for about a minute" },
+    { "id": "pine", "name": "Pine Green", "price": 60, "color": "#1f5a3a", "about": "Blends into the forest" },
+    { "id": "canyon-red", "name": "Canyon Red", "price": 60, "color": "#b5402a", "about": "The colour of the rocks at sunset" },
+    { "id": "signal", "name": "Signal Yellow", "price": 80, "color": "#f2c418", "about": "Easy to spot through the dust" },
+    { "id": "deep-blue", "name": "Deep Blue", "price": 80, "color": "#1d3f9a", "about": "Dark and glossy" },
+    { "id": "sand", "name": "Desert Sand", "price": 100, "color": "#d6b27a", "about": "For the long dry stages" },
+    { "id": "bronze", "name": "Bronze", "price": 150, "color": "#b0742c", "about": "Earned the hard way" }
+  ]
+}

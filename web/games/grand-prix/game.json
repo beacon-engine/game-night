@@ -1,10 +1,11 @@
 {
   "name": "Grand Prix",
   "icon": "🏎️",
-  "tagline": "Open-wheel racing: qualifying, pit stops, championship",
+  "tagline": "Single-seaters, road circuits, damage and pit stops",
   "players": "1–4",
   "category": "Racing",
-  "needs": "heavy",
+  "needs": "standard",
   "order": 42,
-  "status": "soon"
+  "status": "ready",
+  "inProgress": true
 }

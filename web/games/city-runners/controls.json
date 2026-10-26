@@ -1,0 +1,11 @@
+{
+  "_help": "Which pad button does what while running. The arrows change lanes (left, right), jump (up) and slide (down); these buttons do the same. Actions: jump, slide.",
+  "run": {
+    "bolt": "jump",
+    "drop": "slide"
+  },
+  "labels": {
+    "jump": "Jump",
+    "slide": "Slide"
+  }
+}

@@ -26,6 +26,7 @@ type Relay struct {
 	display *client
 	pads    map[string]*pad
 	slots   map[string]int // the last slot each pad id had
+	awake   func(on bool)  // keeps the machine awake while it's on (see awake.go); nil for none
 }
 
 type client struct {
@@ -102,6 +103,7 @@ func (r *Relay) helloDisplay(c *client) {
 		go r.display.conn.Close(StatusReplaced, "another screen opened Beacon Arcade") // (waits for the goodbye: not under the lock)
 	}
 	r.display = c
+	r.checkAwake()
 	for id, p := range r.pads {
 		c.sendJSON(map[string]any{"t": "join", "id": id, "name": p.name, "slot": p.slot})
 		p.sendJSON(map[string]any{"t": "display", "on": true})
@@ -124,6 +126,7 @@ func (r *Relay) helloPad(c *client, id, name string) string {
 	p := &pad{client: c, name: name, slot: r.slotFor(id)}
 	r.pads[id] = p
 	r.slots[id] = p.slot
+	r.checkAwake()
 	p.sendJSON(map[string]any{"t": "welcome", "id": id, "slot": p.slot, "display": r.display != nil})
 	r.display.sendJSON(map[string]any{"t": "join", "id": id, "name": name, "slot": p.slot})
 	log.Printf("[pad] P%d %s connected (%d total)", p.slot+1, displayName(name, id), len(r.pads))
@@ -183,6 +186,7 @@ func (r *Relay) disconnect(c *client, role, padID string) {
 	case "display":
 		if r.display == c {
 			r.display = nil
+			r.checkAwake()
 			for _, p := range r.pads {
 				p.sendJSON(map[string]any{"t": "display", "on": false})
 			}
@@ -190,9 +194,17 @@ func (r *Relay) disconnect(c *client, role, padID string) {
 	case "pad":
 		if p := r.pads[padID]; p != nil && p.client == c {
 			delete(r.pads, padID)
+			r.checkAwake()
 			r.display.sendJSON(map[string]any{"t": "leave", "id": padID})
 			log.Printf("[pad] P%d %s left (%d total)", p.slot+1, displayName(p.name, padID), len(r.pads))
 		}
+	}
+}
+
+// Stay awake while a screen has phones playing on it. Call with r.mu held.
+func (r *Relay) checkAwake() {
+	if r.awake != nil {
+		r.awake(r.display != nil && len(r.pads) > 0)
 	}
 }
 

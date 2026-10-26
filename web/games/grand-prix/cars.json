@@ -1,0 +1,6 @@
+{
+  "_help": "The cars. 'model' is a .glb file under models/ here, without .glb (this one borrows Stock Cars' open-wheeler; a model of your own needs four wheel parts named wheel-front-left, wheel-front-right, wheel-back-left and wheel-back-right). 'length' is its length in metres. The rest are compared with a Stocker in Stock Cars: 'top' speed, 'accel', 'grip' (open-wheelers corner on downforce) and 'weight'.",
+  "cars": [
+    { "id": "gp", "name": "Single-seater", "model": "../../stock-cars/models/race", "about": "Light, quick and planted in the corners. Fragile: the barriers are not your friend.", "length": 5.2, "top": 1.1, "accel": 1.25, "grip": 1.3, "weight": 0.7 }
+  ]
+}

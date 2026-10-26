@@ -1,0 +1,21 @@
+{
+  "intro": "Loose gravel and dirt over rough, hilly land, with crests that throw you into the air. Everyone is on the stage at once: first across the line after the last lap wins.",
+  "inspiredBy": "Rally driving goes back over a hundred years, and rallycross put everyone on the course together. Rally is our own take, with our own cars, stages and drivers.",
+  "goal": "Be first across the line after the last lap. Races are 1, 2, 3 or 5 laps of a stage.",
+  "howToPlay": [
+    "Join with your phone, or race the computer drivers on your own.",
+    "In the lobby, choose the stage, how many computer drivers, how many laps and how quick they are, then press {bolt} to start.",
+    "Your phone becomes a steering pad: slide your thumb left and right to steer. Hold {bolt} for gas and {drop} to brake. Hold {drop} when you've stopped to reverse.",
+    "The road is loose: brake before the bends, not in them. Pull {leaf}, the handbrake, to swing the back round in a hairpin.",
+    "Watch the top of your screen (and your phone) for your co-driver's calls: which way the next bend goes and how tight it is, from 2 (very tight) to 6 (nearly flat out), and crests, jumps, dips and water.",
+    "Crests throw you into the air, more the faster you take them. In the air, the gas lifts the nose and the brake drops it: land on all four wheels.",
+    "Stuck, upside down or lost in the trees? Press {l1} to get back on the road. If you can't, you're put back after a few seconds anyway."
+  ],
+  "steering": "Slide left and right on your phone to steer (or use the arrow keys)",
+  "tips": [
+    "Land a big jump nose-down and you'll bottom out and lose speed. A touch of gas in the air levels the car.",
+    "The heavy cars and the 4x4 soak up rough ground; the light ones are quicker through the bends but get knocked about.",
+    "Cutting across the land doesn't count: only the road takes you round.",
+    "Hold {r1} to see who's behind you."
+  ]
+}

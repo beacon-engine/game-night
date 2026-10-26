@@ -6,6 +6,7 @@ import { DEFAULT_KEYMAPS, type KeyAction, type Keymap } from './keyboard.ts';
 import { ALL_BITS, BIT, DPAD, type Bit, playerColor } from './pad.ts';
 import { keyCode } from './dom.ts';
 import { CLOSE_REPLACED, socketUrl, type DisplayToServer, type PadScreen, type ServerToDisplay } from './protocol.ts';
+import { keepAwake } from './awake.ts';
 
 export interface PadEvent {
   bit: Bit;
@@ -105,6 +106,7 @@ export class Input<T extends object = object> {
 
   constructor({ state = () => ({}) as T, keyboard = DEFAULT_KEYMAPS }: InputOptions<T> = {}) {
     this.state = state;
+    keepAwake(); // (a page taking players is a game screen: don't let it sleep)
     this.connect();
     this.hangUpOnLeave();
     if (keyboard) this.listenKeyboard(keyboard);

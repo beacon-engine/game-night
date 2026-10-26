@@ -5,6 +5,78 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 
 ## [Unreleased]
 
+### Added (games)
+- **City Runners**, an endless runner for 1–4 at once on one screen: over city rooftops and an elevated rail line.
+  Pick one of six runners (real, motion-captured people, each with a strength: quick across, a big jump, shrugs off
+  stumbles, long reach for coins) and one of three routes (Rooftops at dusk, The Rail Line at night, Sky Bridges at
+  sunrise). Change lanes, jump and slide with the phone's arrows; jump the gaps, slide under the signs,
+  run along the trains, and cross the widest gaps on a beam or a zip line. At a crossing, choose your way across:
+  the zip line (fastest, but jump to grab it), the thin rail (safe but slow) or swinging ropes (time each jump). Coins and power-ups (magnet, jump boots,
+  shield, double) go to whoever gets there first. Stumble twice, or fall behind, and the security drone has you: the
+  last one running wins. Computer runners to race, "today's course" (the same all day), saved records and best
+  distances, and suits and light trails in the shop.
+- **Rally**, the fourth playable racing game (marked In progress): 1–4 drivers and up to 5 computer drivers,
+  everyone on the stage at once, 1 to 5 laps. Two stages built from a seed: Forest Ridge (gravel through
+  the pines, with a water splash) and Red Canyon (dirt between the rocks at sunset). Real car physics: each
+  car is a body on four sprung wheels, so it slides on loose ground, flies off crests (further the faster you
+  take them), pitches nose-down in the air, lands on its springs and can roll if it lands badly. Cars hit each
+  other and the trees and rocks. A handbrake for the hairpins, the gas and brake to level the car in the air,
+  a button to get back on the road, and a co-driver calling the bends and jumps on the screen and the phone.
+  Five cars (Kenney's Car Kit, shared with Stock Cars), dust and spray, saved records (stage records, biggest
+  air) and paint jobs in the shop.
+- **Grand Prix**, the fifth playable racing game (marked In progress): 1–4 drivers and up to 11 computer
+  drivers in single-seaters on two road circuits that turn both ways: Valley Ring (fast and flowing, 2.8 km)
+  and Harbour Streets (right-angle corners between the walls at sunset, 2.0 km); 5, 10 or 15 laps. Every
+  car has health, tyres and fuel, shown beside each name and on your own screen. Hits take health by how
+  hard they are; a hard one can start a fire (box now, or it burns out) and a big one, worst into a barrier
+  at speed, ends your race. Tyres wear and grip less, a damaged car is slower, and a full tank lasts 7
+  laps. Press L1 to box: the pit lane runs alongside the main straight, and the crew refuels, changes tyres,
+  mends damage and puts out fires, taking longer the more they do. The computer drivers plan their own
+  stops, retirements show as DNF, and your phone says when to come in. Lap records, wins and liveries in
+  the shop.
+
+### Added
+- **Stock Cars: a road course.** Ridgeway, 2.3 km in the hills, turning both ways: the esses, a loop to the
+  right and a hairpin, with walls both sides and kerbs in the turns. Brake for the turns; the computer
+  drivers take the racing line and brake for them too. Tracks can now be a whole lap (`"lap"` in
+  `tracks.json`), with right turns.
+
+### Changed
+- **Stock Cars handles differently.**
+  - The cars differ more: the Prototype is quickest flat out and wins on the big oval, the Hot Hatch and
+    the Open Wheeler on the short track and the road course, and the heavy ones win the shoving matches.
+  - An oval's banking is steeper up by the wall, so the high line carries more speed, and the apron below
+    the inside edge is slow: hugging the bottom is no longer the way round.
+  - Cars bounce off each other, and the walls, with a knock you can't just steer out of. Walls cost more
+    speed, and grinding along one costs more still.
+  - The computer drivers keep looking for a way past instead of sitting behind a slower car.
+  - Every track is wider (the road course and the short track most), so three wide fits.
+- **Stock Cars sounds like racing, not a hum.** Engines work through the gears (the revs climb, drop at
+  each shift and climb again) with a V8's burble, brighter on the gas; tyres and wind grow with speed,
+  tyres squeal in a slide, a wall grinds, and the computer drivers roar by. With the screen split, each
+  person's car is on their side.
+- **Stock Cars looks better.** The paint is glossy (with a clear coat where the screen has power to spare),
+  the windows are dark glass, the rims are metal and the tyres are rubber; the cars reflect that track's sky
+  and lights, their lights come on at dusk and at night, and each sits on a shadow of its own shape.
+
+### Fixed
+- The screen no longer dims and sleeps mid-game, on the TV page or on the phones (where the browser
+  allows it; the TV app already kept its screen on).
+- Stock Cars: the turns were bumpy. The banked surface was drawn flat across, so cars sank into it and
+  rose out of it as they moved across the track; and a car sliding out to the wall bounced off it over
+  and over instead of grinding along it.
+- Stock Cars: the front wheels turn with the steering.
+- Stock Cars: a knock from another car could throw a car right across the track. Hits are softer, and
+  no hit throws a car sideways faster than 6 m/s.
+- Stock Cars and Grand Prix: a car that went into a tight turn much too fast could be flung across the
+  track, from one barrier to the other, without touching anything (up to 70 m/s sideways in one moment).
+  A slide now builds up over a moment and has a limit. The computer drivers also ease across when they
+  change lanes instead of darting.
+- Two games finishing at the same moment could each pay the first-game-of-the-day bonus and go past the
+  daily limits on stars. Payouts now happen one at a time.
+- Going back to the game select page with the browser's Back button left a black screen until the page
+  was reloaded.
+
 ## [0.2.0] - 2026-10-21
 
 Stock Cars, Neon Trails and Chess are playable, players earn stars, and the program is now Beacon Arcade.

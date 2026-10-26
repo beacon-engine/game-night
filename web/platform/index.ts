@@ -11,3 +11,4 @@ export * from './saves.ts';
 export * from './stars.ts';
 export * from './manual.ts';
 export * from './icons.ts';
+export * from './awake.ts';

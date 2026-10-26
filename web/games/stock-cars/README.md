@@ -25,7 +25,7 @@ left and right to steer, with gas and brake pedals (`controls.json`). Menus use 
 
 | File | |
 |---|---|
-| `tracks.json` | The tracks: half a lap of straights and left turns (the other half is its mirror image, so it always closes), width, banking, time of day. Add one and it's in the lobby. |
+| `tracks.json` | The tracks. An oval is half a lap of straights and left turns (the other half is its mirror image, so it always closes); a road course is the whole lap, turning both ways. Width, banking, time of day. Add one and it's in the lobby. |
 | `cars.json` | The cars: which model, how long, and top speed, pick-up, grip and weight compared with the Stocker. |
 | `track.ts` | A track as numbers, from its description. Everything is measured along it (`s`) and across it (`d`). |
 | `race.ts` | The cars, the slipstream, contact (cars bounce off the wall and each other by weight; hard hits spin you round), laps, finishing order, and the computer drivers. No graphics, so it can be tested on its own. |
@@ -33,12 +33,15 @@ left and right to steer, with gas and brake pedals (`controls.json`). Menus use 
 | `scene.ts` | The venue in three.js, built from `track.ts` and lit for day, dusk or night; sparks; a chase camera per person (the screen splits for 2 to 4), a TV camera, and the turntables for picking cars. |
 | `scenery.ts` | The land around each track by its theme: countryside hills and forest, desert mesas, a harbour with cranes and containers, or a city. Flat by the track, rising into hills further out. |
 | `draw.ts` | Small helpers for textures drawn in code (and the noise the hills are made from). |
-| `sound.ts` | A synthesised engine per person driving, a thump for contact and a crunch for the wall. |
+| `sound.ts` | A synthesised engine per person driving, through the gears, with tyres, wind, squeal and the wall; the pack going by; a thump for contact and a crunch for the wall. |
 | `main.ts` | Lobby, picking cars, countdown, race, results, saved records, what the phones show. |
 
-Handling, in short: gas settles you at your top speed (more in a slipstream); the banking holds the turns up
-to a point, and beyond it you slide up toward the wall and scrub speed; steering moves you across the track,
-faster the faster you go; the outside wall costs a lot of speed.
+Handling, in short: gas settles you at your top speed (more in a slipstream); the tyres and the banking hold
+the turns up to a point, and beyond it you slide to the outside and scrub speed. An oval's banking is steeper
+up by the wall, so the high line carries more speed, and the apron below the inside edge is slow. Steering
+moves you across the track, faster the faster you go. Hits bounce cars apart (a knock you can't just steer
+out of), the walls cost a lot of speed, and grinding along one costs more. The computer drivers brake for
+the turns they can't take flat, take the racing line on a road course, and keep looking for a way past.
 
 Saved: each driver's races, wins, podiums, best lap and last car, and each track's lap record.
 
@@ -69,12 +72,14 @@ track; no real series, teams, sponsors, manufacturers or circuits. See [Original
 - [x] A manual (`manual.json`): what it is, how you win, how to play, tips
 - [x] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [x] Two keyboard players can play it too (they come free with `Input`)
+- [x] A road course, turning both ways
 
 ## Next
 
 - Cautions and restarts (a yellow flag after a big hit, the pack bunches up behind a pace car)
 - Qualifying, then Race weekend and Championship (with COMPETITIONS.md)
 - Pit stops: tyres wear, fresh ones are faster
-- Short tracks, a superspeedway and a road course
+- A superspeedway
+- More road courses
 - Overtime finish
 - A spotter: "car outside" on your phone

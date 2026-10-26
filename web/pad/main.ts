@@ -1,9 +1,11 @@
 // The phone controller. The same pad for every game: a floating stick on the left, the four
 // face buttons and two shoulder buttons on the right. The game decides what they say.
 import {
-  $, BIT, buyItem, CLOSE_REPLACED, escapeHtml, FACE_BITS, shopItems, socketUrl, starsLabel, starsOf,
+  $, BIT, buyItem, CLOSE_REPLACED, escapeHtml, FACE_BITS, keepAwake, shopItems, socketUrl, starsLabel, starsOf,
   type Button, type PadLayout, type PadScreen, type PadToServer, type ServerToPad, type ShopItem,
 } from '@platform';
+
+keepAwake(); // a phone in someone's hands mid-game shouldn't dim and lock
 
 const STICK_R = 60; // px from the centre to full tilt
 const STEER_R = 90; // the steering slider (racing) is wider and only goes sideways

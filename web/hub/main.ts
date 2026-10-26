@@ -105,6 +105,14 @@ function play() {
   setTimeout(() => { location.href = g.url; }, 220);
 }
 
+// Coming back with the browser's Back button can bring this page back exactly as it was left
+// (the back/forward cache): faded out and leaving. Undo that so it isn't a black screen.
+addEventListener('pageshow', (e) => {
+  if (!e.persisted) return;
+  for (const a of document.body.getAnimations()) a.cancel();
+  leaving = false;
+});
+
 function howTo() {
   const g = games[sel];
   if (g?.manual) showManual(g.url, g.name);
