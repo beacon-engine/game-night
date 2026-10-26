@@ -61,6 +61,7 @@ func main() {
 	srv := server.New(files(*webDir, *userDir), *port, db)
 	srv.Version = version
 	srv.Host = *host
+	srv.Awake = server.NewWaker()
 	ln, err := srv.Listen()
 	if errors.Is(err, server.ErrPortInUse) {
 		log.Fatalf("Port %d is already in use (is Beacon Arcade already running?). Try another: -port %d", *port, *port+1)
