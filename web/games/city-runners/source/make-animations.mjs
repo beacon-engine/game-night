@@ -1,5 +1,6 @@
 // Makes models/animations.json: the few clips City Runners uses, cut out of Quaternius' Universal
-// Animation Library (CC0; the 25 MB FBX football ships), so the game loads a few hundred KB instead.
+// Animation Library (CC0; the 25 MB FBX, kept with the other shared sources in people/source/ual1/),
+// so the game loads a few hundred KB instead.
 // Joint rotations only (plus the pelvis's height), no fingers, rounded; the game fits them to each body.
 //
 //   cd web && node games/city-runners/source/make-animations.mjs
@@ -8,7 +9,7 @@ import * as THREE from 'three';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 
 const KEEP = ['Idle_Loop', 'Sprint_Loop', 'Jog_Fwd_Loop', 'Jump_Start', 'Jump_Loop', 'Jump_Land', 'Roll', 'Crouch_Fwd_Loop', 'Hit_Chest', 'Death01', 'Dance_Loop'];
-const FBX = 'games/football/models/ual_ue.fbx';
+const FBX = 'people/source/ual1/Unreal Engine/AL_Standard.fbx';
 const OUT = 'games/city-runners/models/animations.json';
 
 const buf = readFileSync(FBX);

@@ -1,0 +1,21 @@
+{
+  "_help": "Which pad button does what in the fight. Moving is the stick (past its ring: sprint). Actions: fire (hold; close up it's the knife), grenade, crouch (a tap: crouch or stand; held beside the gun: set the charge), order (your squad: follow me, hold here, assault), nvg (night-vision goggles up or down), reload, swap (rifle or pistol).",
+  "fight": {
+    "bolt": "fire",
+    "drop": "grenade",
+    "leaf": "crouch",
+    "star": "order",
+    "star+swipe": "nvg",
+    "l1": "reload",
+    "r1": "swap"
+  },
+  "labels": {
+    "fire": "Fire",
+    "grenade": "Grenade",
+    "crouch": "Crouch",
+    "order": "Orders",
+    "nvg": "Night vision",
+    "reload": "Reload",
+    "swap": "Pistol"
+  }
+}

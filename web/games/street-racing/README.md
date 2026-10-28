@@ -30,8 +30,8 @@ The formats (and how standings, brackets and seasons work in every game) are in
 
 ## How it builds on Stock Cars
 
-- The cars, the repainting, the car picker, collisions and sound come straight from `stock-cars/`
-  (`cars.ts`, `race.ts`'s contact rules, `sound.ts`). They should move into a shared place first.
+- The cars, the repainting, collisions, the weather and sound come from the shared racing code in
+  [`web/racing/`](../../racing/README.md) (`cars.ts`, `race.ts`'s contact rules, `weather.ts`, `sound.ts`).
 - New: road layouts with left and right turns that don't need to mirror (a list of straights and curves
   that closes, or a road network the race follows), road-side buildings, junctions, and simple traffic
   cars on fixed routes.

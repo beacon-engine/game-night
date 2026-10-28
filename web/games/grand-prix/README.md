@@ -18,9 +18,22 @@ how quick they are. After Start, everyone picks a livery on their phone.
 | L1 | Box this lap (press again to stay out) |
 | R1 | Look back |
 
-Box, then keep to the left side of the main straight: you turn into the pit lane where it leaves the
-track. In the lane the speed limiter drives for you: down to 90 km/h, a stop at your box while the crew
-works, and back out when the track is clear.
+Box with L1, then keep to the left of the main straight: a dashed line runs down the left for the last
+250 m, the screen counts down the metres to the entry, and a ◀ PIT board stands over it. In the lane the
+speed limiter drives for you: down to 90 km/h, a stop at your box while the crew works, and back out when
+the track is clear.
+
+**The pit stop is yours to plan.** On the way down the pit lane your phone becomes a d-pad and a panel
+opens on your screen with what the crew will do (they suggest it; you change it):
+
+| | Choices |
+|---|---|
+| Tyres | Keep them, or new slicks (or wets, in a wet race) |
+| Fuel | None, a lap at a time up to a full tank, or exactly enough to the flag |
+| Repairs | Mend the damage, or leave it and save the time |
+
+▲▼ picks a line, ◀▶ changes it, and the panel shows how long you'll be stopped. It's settled when you
+stop in your box; a fire is always put out.
 
 ## How a car wears (`damage.ts`)
 
@@ -41,15 +54,25 @@ fire, and never on the last lap unless they're burning. Your phone gives you the
 | File | What's in it |
 |---|---|
 | `circuits.json` | The circuits: a whole lap of straights and turns both ways, the same as Stock Cars' road courses. The first and last straights are the main straight, where the pit lane goes. |
-| `cars.json` | The car. The model borrows Stock Cars' open-wheeler; a `.glb` of your own goes in `models/` (with wheel parts named `wheel-front-left` and so on). |
+| `cars.json` | The car. The model is the kit's open-wheeler (`web/racing/models`); a `.glb` of your own goes in `models/` here (with wheel parts named `wheel-front-left` and so on). |
 | `damage.ts` | Health, tyres, fuel and fire, and the pit crew's times. No race rules or graphics, so Superbikes can use it too. |
 | `pits.ts` | The pit lane: where it is, a box per car, and driving cars through it. Works on anything with a place on the track. |
-| `gp.ts` | The race: Stock Cars' racing (`../stock-cars/race.ts`) with each car's condition and the pit lane. Cars in the pits or out of the race are taken off the track. |
+| `gp.ts` | The race: the shared racing (`web/racing/race.ts`) with each car's condition, the pit lane and the weather. Cars in the pits or out of the race are taken off the track. |
 | `scene.ts` | The circuit in three.js, with the pit lane, garages and grandstand; sparks, flames and smoke; the cameras. |
 | `main.ts` | Lobby, picking liveries, countdown, race, results (with DNFs), saved records, what the phones show. |
 
-Built on Stock Cars: the handling, the computer drivers, the track model, the cars and the engine sound are
-imported from `../stock-cars/`, not copied.
+Built on the shared racing code in [`web/racing/`](../../racing/README.md) (the same as Stock Cars): the
+handling, the computer drivers, the track model, the cars, the weather and the engine sound.
+
+## Weather
+
+Dry, Showers or Rain, chosen in the lobby. Rain soaks the road over half a minute; once it stops, it dries
+over a couple of minutes. Slicks are the quickest tyres in the dry and slide everywhere in the wet; wets
+have grooves that clear the water: 12% slower on a dry road (and they wear three times as fast there), far
+quicker once it's about a third wet. The crew fits whichever suits the road when you box (a change of tyres
+is always a full set), and the pit wall calls **Wets** or **Slicks** on your phone and screen when you're
+on the wrong ones (not for a damp track with two laps to go). The computer drivers come in for them too.
+Watch the spray: the car in front throws it up in your face.
 
 Saved: each driver's races, wins, podiums and best lap, and each circuit's lap record.
 
@@ -69,6 +92,7 @@ circuits; no real series, teams, sponsors, manufacturers or circuits. See [Origi
 - [x] A manual (`manual.json`): what it is, how you win, how to play, tips
 - [x] Menus and HUD use the brand (`/brand/brand.css`)
 - [x] Two keyboard players can play it too (they come free with `Input`)
+- [x] Weather: showers and rain, wet tyres, the pit wall's call to change
 
 ## Next
 
@@ -76,7 +100,6 @@ circuits; no real series, teams, sponsors, manufacturers or circuits. See [Origi
 - Tyre compounds (soft, hard), and a mandatory stop
 - A safety car after a crash
 - Grip that grows with speed (real downforce)
-- Weather, and wet tyres
 - Our own single-seater model
 
 ## Competition

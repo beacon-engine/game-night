@@ -1,10 +1,10 @@
 {
-  "_help": "The cars to choose from. 'model' is a model from Stock Cars (web/games/stock-cars/models, without .glb, as a path from models/ here); 'length' is how long it is in metres. The rest are compared with the Saloon: 'top' speed, 'accel' (how quickly it gets there), 'grip', 'weight' (who gets pushed around), and 'ride': how soft and long the springs are (soft soaks up the landings and the rough stuff, stiff bottoms out but sits flatter in the turns).",
+  "_help": "The cars to choose from. 'model' is one of the shared models in web/racing/models (without .glb), or models/<name> for one of this game's own; 'length' is how long it is in metres. The rest are compared with the Saloon: 'top' speed, 'accel' (how quickly it gets there), 'grip', 'weight' (who gets pushed around), and 'ride': how soft and long the springs are (soft soaks up the landings and the rough stuff, stiff bottoms out but sits flatter in the turns).",
   "cars": [
-    { "id": "saloon", "name": "Saloon", "model": "../../stock-cars/models/sedan-sports", "about": "The all-rounder. Good everywhere, best nowhere.", "length": 4.6, "top": 1, "accel": 1, "grip": 1, "weight": 1, "ride": 1 },
-    { "id": "hatch", "name": "Rally Hatch", "model": "../../stock-cars/models/hatchback-sports", "about": "Light and nimble: flicks through the bends, but gets knocked about.", "length": 4.1, "top": 0.95, "accel": 1.1, "grip": 1.06, "weight": 0.85, "ride": 1 },
-    { "id": "desert-racer", "name": "Desert Racer", "model": "../../stock-cars/models/race-future", "about": "Fastest flat out. Stiff springs: land a big jump badly and you'll feel it.", "length": 4.6, "top": 1.07, "accel": 1.05, "grip": 0.97, "weight": 0.95, "ride": 0.8 },
-    { "id": "trail-4x4", "name": "Trail 4x4", "model": "../../stock-cars/models/suv", "about": "Long, soft springs that soak up anything. Sits tall, so mind the rolls.", "length": 4.8, "top": 0.92, "accel": 0.95, "grip": 0.97, "weight": 1.35, "ride": 1.35 },
-    { "id": "pickup", "name": "Pickup", "model": "../../stock-cars/models/truck", "about": "Heavy and tough. Nobody moves it out of the way.", "length": 5.1, "top": 0.94, "accel": 0.9, "grip": 0.95, "weight": 1.5, "ride": 1.25 }
+    { "id": "saloon", "name": "Saloon", "model": "sedan-sports", "about": "The all-rounder. Good everywhere, best nowhere.", "length": 4.6, "top": 1, "accel": 1, "grip": 1, "weight": 1, "ride": 1 },
+    { "id": "hatch", "name": "Rally Hatch", "model": "hatchback-sports", "about": "Light and nimble: flicks through the bends, but gets knocked about.", "length": 4.1, "top": 0.95, "accel": 1.1, "grip": 1.06, "weight": 0.85, "ride": 1 },
+    { "id": "desert-racer", "name": "Desert Racer", "model": "race-future", "about": "Fastest flat out. Stiff springs: land a big jump badly and you'll feel it.", "length": 4.6, "top": 1.07, "accel": 1.05, "grip": 0.97, "weight": 0.95, "ride": 0.8 },
+    { "id": "trail-4x4", "name": "Trail 4x4", "model": "suv", "about": "Long, soft springs that soak up anything. Sits tall, so mind the rolls.", "length": 4.8, "top": 0.92, "accel": 0.95, "grip": 0.97, "weight": 1.35, "ride": 1.35 },
+    { "id": "pickup", "name": "Pickup", "model": "truck", "about": "Heavy and tough. Nobody moves it out of the way.", "length": 5.1, "top": 0.94, "accel": 0.9, "grip": 0.95, "weight": 1.5, "ride": 1.25 }
   ]
 }

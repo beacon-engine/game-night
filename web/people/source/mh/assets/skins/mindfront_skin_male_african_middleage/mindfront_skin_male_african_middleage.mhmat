@@ -1,0 +1,49 @@
+# Material definition for skin male african middleage
+
+name skin_male_african_middleage
+description Male skin
+ambientColor 0.301960784314 0.278431372549 0.278431372549
+diffuseColor 1.0 1.0 1.0
+specularColor 0.02 0.02 0.02
+shininess 0.5
+emissiveColor 0.196078431373 0.101960784314 0.101960784314
+opacity 1.0
+translucency 0.0
+
+shadeless False
+wireframe False
+transparent False
+alphaToCoverage True
+backfaceCull True
+depthless False
+
+tag male
+tag african
+tag middleage
+
+castShadows True
+
+receiveShadows True
+
+diffuseTexture skin_male_african_middleage.png
+normalmapTexture skin_male_african_middleage_NRM.png
+specularTexture skin_male_african_middleage_SPEC.png
+
+# Sub-surface scattering parameters
+sssEnabled True
+sssRScale 5.0
+sssGScale 2.5
+sssBScale 1.0
+
+shader shaders/glsl/litsphere
+
+shaderParam litsphereTexture litspheres/lit_standard_skin.png
+
+shaderConfig ambientOcclusion True
+shaderConfig normal True
+shaderConfig bump False
+shaderConfig displacement False
+shaderConfig vertexColors True
+shaderConfig spec True
+shaderConfig transparency True
+shaderConfig diffuse True

@@ -3,6 +3,7 @@
 // they're upside down, stuck, or lost out in the trees. Only driving counts: cutting across the land
 // doesn't move you on. No graphics.
 import * as THREE from 'three';
+import type { Weather } from '@world/weather.ts';
 import { Car, clamp, G, Physics, SURFACES, TICK, type Chassis, type Hit, type Landing } from './physics.ts';
 import type { Stage, Where } from './stage.ts';
 
@@ -62,6 +63,7 @@ export class Race {
   readonly physics: Physics;
   readonly racers: Racer[];
   t = 0; // seconds since the green flag
+  weather: Weather | null = null; // none: dry
   private byCar = new Map<Car, Racer>();
   private where: Where = { s: 0, d: 0, dist: 0 };
 
@@ -82,6 +84,8 @@ export class Race {
   step(green: boolean): RaceEvents {
     const ev: RaceEvents = { hits: [], landings: [], lap: [], finished: [], reset: [] };
     if (green) this.t += TICK;
+    this.weather?.step(this.t, TICK);
+    this.physics.weather = this.weather;
     for (const r of this.racers) {
       if (r.spec.ai || r.finish !== null) this.drive(r);
       if (!green) { r.car.throttle = r.car.brake = 0; r.car.handbrake = 1; }
@@ -165,7 +169,7 @@ export class Race {
     if (r.finish !== null) return;
 
     // how fast: the bends ahead (and stopping for them in time), the jumps and the water
-    const mu = SURFACES[st.surface(car.p.x, car.p.z)].grip * car.c.grip;
+    const mu = this.physics.grip(st.surface(car.p.x, car.p.z)) * car.c.grip;
     let top = 60 * r.spec.skill;
     for (let x = 5; x <= 130; x += 5) {
       const k = Math.abs(st.curve(r.s + x));

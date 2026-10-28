@@ -8,6 +8,7 @@
 // body hits the ground and can roll. Cars hit each other as three spheres each; trees and rocks are
 // posts. World space, metres and seconds, y up. No graphics here, and nothing allocated per step.
 import * as THREE from 'three';
+import type { Weather } from '@world/weather.ts';
 
 export const TICK = 1 / 60;
 const SUB = 3; // steps per tick: the springs are stiff
@@ -32,6 +33,12 @@ export const SURFACES = {
 } as const;
 export type Surface = keyof typeof SURFACES;
 export const SURFACE_LIST = Object.keys(SURFACES) as Surface[];
+
+// The weather's share of that (racing/weather.ts has the rain): soaked tarmac loses the most, wet
+// gravel hardly anything (the stones drain), dirt turns to mud. Snow packs over everything; rally
+// cars run studded tyres on it, which bite, but it's still the slipperiest there is.
+const SOAKED: Record<Surface, number> = { tarmac: 0.72, gravel: 0.93, dirt: 0.78, grass: 0.72, water: 1 };
+const SNOWED: Record<Surface, number> = { tarmac: 0.5, gravel: 0.62, dirt: 0.6, grass: 0.6, water: 1 };
 
 // A tree trunk or a rock: an upright post, from the ground to `top`
 export interface Post { x: number; z: number; r: number; top: number }
@@ -131,7 +138,16 @@ export class Physics {
   readonly hits: Hit[] = [];
   readonly landings: Landing[] = [];
 
+  weather: Weather | null = null; // none: dry
+
   constructor(readonly ground: Ground) {}
+
+  // How much this surface grips (× the tyres' grip), in this weather
+  grip(s: Surface) {
+    const w = this.weather, dry = SURFACES[s].grip;
+    if (!w) return dry;
+    return dry * (w.snow ? SNOWED[s] : 1 + (SOAKED[s] - 1) * w.wet);
+  }
 
   // One tick. hits and landings say what happened in it.
   step() {
@@ -193,7 +209,7 @@ export class Physics {
       _sw.crossVectors(_fw, _n);
       const vAlong = _vc.dot(_fw), vAcross = _vc.dot(_sw);
       const surface = SURFACES[(wh.surface = g.surface(_cp.x, _cp.z))];
-      const grip = surface.grip * c.grip * load;
+      const grip = this.grip(wh.surface) * c.grip * load;
       const locked = !wh.front && car.handbrake > 0.5;
       // across: as hard as it's sliding, up to the grip (stiffer when nearly still, so it parks on a slope)
       const give = Math.abs(vAlong) + Math.abs(vAcross) < 1 ? 0.08 : 0.45;

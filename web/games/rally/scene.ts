@@ -1,16 +1,21 @@
 // The 3D world: the stage's land and road (drawn from stage.ts's grid, so it's exactly what the cars
-// drive on), the ford, trees and rocks, lit for day or dusk; the cars (Stock Cars' models, with their
+// drive on), the ford, trees and rocks, lit for day or dusk; the cars (the shared models, with their
 // front wheels steering, every wheel spinning and riding its spring, and a shadow on the ground under
 // them however high they fly); dust and spray; and the cameras: a chase camera per person (the screen
 // splits for 2 to 4) that keeps the horizon level through the jumps, a roadside camera when nobody's
 // driving, and a turntable for each person while they pick a car. Plain three.js, cheap materials.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { carLights, carMesh, disposeCar, type CarModel } from '../stock-cars/cars.ts';
-import { canvas, DISPLAY_FONT, seeded, speckle, texture } from '../stock-cars/draw.ts';
+import { carLights, carMesh, disposeCar, fitTyres, type CarModel } from '@racing/cars.ts';
+import { canvas, checkerTexture, DISPLAY_FONT, seeded, speckle, texture } from '@world/draw.ts';
+import { Tyre } from '@racing/tyres.ts';
+import { WeatherLook } from '@world/precipitation.ts';
+import { layout, type Rect } from '@world/screen.ts';
+import { reflections, sky } from '@world/sky.ts';
 import { SURFACE_LIST, SURFACES } from './physics.ts';
 import type { Racer } from './race.ts';
 import type { Stage } from './stage.ts';
+import type { Weather } from '@world/weather.ts';
 
 // The light of each time of day. `env`: how strongly the cars reflect the sky; `carLights`: their lamps
 const TIMES = {
@@ -24,16 +29,28 @@ const LOOKS = {
   forest: { low: '#5a8240', high: '#3a6131', rock: '#77736a', bank: '#6e5a40', tree: '#25552f', trunk: '#5a4030', stone: '#8a877e' },
   canyon: { low: '#c98d58', high: '#a95a33', rock: '#7c3a26', bank: '#a8683f', tree: '#4f7a3a', trunk: '#4f7a3a', stone: '#8c4a30' },
 } as const;
+// Under snow: white land with the rock showing through, the road packed white with the gravel
+// rutted through it, and the trees dark under their load
+type Look = { -readonly [K in keyof (typeof LOOKS)['forest']]: string } & { road: Record<string, string> };
+function lookFor(st: Stage, snow: boolean): Look {
+  const base = LOOKS[st.spec.look], white = (c: string, k: number) => '#' + new THREE.Color(c).lerp(new THREE.Color('#eef2f7'), k).getHexString();
+  if (!snow) return { ...base, road: ROAD };
+  return {
+    ...base, low: white(base.low, 0.85), high: white(base.high, 0.8), bank: white(base.bank, 0.7), rock: white(base.rock, 0.25),
+    tree: '#' + new THREE.Color(base.tree).multiplyScalar(0.75).getHexString(),
+    road: Object.fromEntries(Object.entries(ROAD).map(([k, c]) => [k, k === 'water' ? c : white(c, 0.68)])),
+  };
+}
 // the road's colour, by surface (the texture is grey grit and ruts, tinted by this)
 const ROAD: Record<string, string> = { tarmac: '#4a4c52', gravel: '#b7a283', dirt: '#6e4a30', grass: '#6e7d4a', water: '#6b6250' };
 // what each surface throws up
+const SNOW_DUST: [number, number, number] = [0.95, 0.97, 1]; // powder
+const MUD: [number, number, number] = [0.36, 0.3, 0.24]; // what wet gravel and dirt throw up
 const DUST: Record<string, [number, number, number]> = { gravel: [0.72, 0.65, 0.53], dirt: [0.74, 0.55, 0.38], grass: [0.45, 0.42, 0.3], tarmac: [0.6, 0.6, 0.62], water: [0.92, 0.95, 1] };
 
 const CELL_STEPS = [1, 2, 4]; // the land's detail near, further, far
 const LOD_AT = [0, 280, 650]; // m: where each takes over (the coarse ones smooth over the road in a cutting: keep them far off)
 const CHUNK = 32; // grid squares per side of a piece of land (small, so how far each is from the camera is about right)
-
-export interface Rect { x: number; y: number; w: number; h: number }
 
 export interface View {
   racer: Racer | null; // whose chase camera; null: the roadside camera
@@ -68,6 +85,10 @@ export class World {
   private shown: THREE.Group[] = [];
   private lightsOn = 0;
   private dustColor: [number, number, number] = DUST.gravel;
+  private snow = false;
+  private weather = new WeatherLook(this.scene);
+  private road: THREE.MeshLambertMaterial | null = null;
+  private wet = 0;
   views: View[] = [];
 
   constructor(canvas: HTMLCanvasElement) {
@@ -80,7 +101,7 @@ export class World {
   // Lower the detail when the screen can't keep up: first the resolution, then the extras
   lowerDetail(level: number) {
     if (level === 1) this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1) * 0.75);
-    else { for (const o of this.extras) o.visible = false; this.dust.thin = true; }
+    else { for (const o of this.extras) o.visible = false; this.dust.thin = true; this.weather.fewer(); }
   }
 
   resize() {
@@ -89,9 +110,10 @@ export class World {
   }
 
   // --- the stage -------------------------------------------------------------------------------------
-  setStage(stage: Stage) {
-    if (this.stage === stage) return;
+  setStage(stage: Stage, snow = false) {
+    if (this.stage === stage && this.snow === snow) return;
     this.stage = stage;
+    this.snow = snow;
     this.venue.traverse((o) => {
       if (!(o instanceof THREE.Mesh || o instanceof THREE.Points || o instanceof THREE.Sprite)) return;
       o.geometry.dispose();
@@ -99,7 +121,7 @@ export class World {
     });
     this.venue.clear();
     this.extras = [];
-    const time = TIMES[stage.spec.time], look = LOOKS[stage.spec.look];
+    const time = TIMES[stage.spec.time], look = lookFor(stage, snow);
     this.scene.fog = new THREE.Fog(time.fog, 260, 1700);
     this.scene.background = new THREE.Color(time.fog);
     const pmrem = new THREE.PMREMGenerator(this.renderer), env = reflections(time, look.low);
@@ -109,10 +131,12 @@ export class World {
     env.traverse((o) => { if (o instanceof THREE.Mesh) { o.geometry.dispose(); (o.material as THREE.MeshBasicMaterial).map?.dispose(); o.material.dispose(); } });
     pmrem.dispose();
     this.lightsOn = time.carLights;
-    this.dustColor = DUST[stage.spec.look === 'forest' ? 'gravel' : 'dirt'];
+    this.dustColor = snow ? SNOW_DUST : DUST[stage.spec.look === 'forest' ? 'gravel' : 'dirt'];
     for (const d of this.cars.values()) carLights(d.g, this.lightsOn);
     for (const g of this.shown) carLights(g, this.lightsOn);
-    buildVenue((o, extra) => { this.venue.add(o); if (extra) this.extras.push(o); }, stage, time);
+    buildVenue((o, extra) => { this.venue.add(o); if (extra) this.extras.push(o); }, stage, time, look);
+    this.weather.venue(null);
+    this.road = ((this.venue.children.find((o) => o.userData.road) as THREE.Mesh | undefined)?.material as THREE.MeshLambertMaterial) ?? null;
   }
 
   // --- the cars ----------------------------------------------------------------------------------------
@@ -164,6 +188,7 @@ export class World {
     this.views = layout(picks.length).slice(0, picks.length).map((rect, i) => {
       const g = carMesh(picks[i].model, picks[i].color, picks[i].number);
       carLights(g, this.lightsOn);
+      fitTyres(g, this.snow ? Tyre.Snow : Tyre.Gravel);
       g.position.copy(st.point(-60, (i - (picks.length - 1) / 2) * 8));
       g.rotation.y = 0.6 + i;
       this.scene.add(g);
@@ -193,9 +218,13 @@ export class World {
   }
 
   // Place everything and draw each view. `follow`: who the roadside camera watches.
-  render(dt: number, follow: Racer | null) {
+  render(dt: number, follow: Racer | null, weather: Weather | null = null) {
     const st = this.stage!;
+    this.weather.update(dt, weather);
+    this.wet = weather && !weather.snow ? weather.wet : 0;
+    this.road?.color.setScalar(1 - 0.38 * this.wet); // (a wet road is darker; Lambert can't shine)
     for (const [r, d] of this.cars) {
+      fitTyres(d.g, this.snow ? Tyre.Snow : Tyre.Gravel);
       this.place(r, d);
       this.kickUp(r, dt);
     }
@@ -253,14 +282,12 @@ export class World {
       if (Math.random() > amount * dt * 4) continue;
       _a.set(w.x, -car.c.cmHeight + 0.2, w.z).applyQuaternion(car.q).add(car.p);
       _v.copy(car.v).multiplyScalar(water ? 0.2 : -0.05).add(_b.set((Math.random() - 0.5) * 2, water ? 3 + Math.random() * 3 : 0.6 + Math.random(), (Math.random() - 0.5) * 2));
-      this.dust.emit(_a, _v, water ? 1.2 : 1.6 + Math.random(), water ? 0.7 : 1.4 + Math.random(), DUST[w.surface] ?? this.dustColor, water ? 0.8 : 0.45);
+      // (in the snow everything throws up powder; once it's wet, gravel and dirt throw mud, not dust)
+      const color = water ? DUST.water : this.snow ? SNOW_DUST : this.wet > 0.4 && surface.dust > 0.5 ? MUD : DUST[w.surface] ?? this.dustColor;
+      this.dust.emit(_a, _v, water ? 1.2 : 1.6 + Math.random(), water ? 0.7 : 1.4 + Math.random(), color, water ? 0.8 : 0.45);
     }
   }
 }
-
-const layout = (n: number): Rect[] => n <= 1 ? [{ x: 0, y: 0, w: 1, h: 1 }]
-  : n === 2 ? [{ x: 0, y: 0, w: 1, h: 0.5 }, { x: 0, y: 0.5, w: 1, h: 0.5 }]
-  : [{ x: 0, y: 0, w: 0.5, h: 0.5 }, { x: 0.5, y: 0, w: 0.5, h: 0.5 }, { x: 0, y: 0.5, w: 0.5, h: 0.5 }, { x: 0.5, y: 0.5, w: 0.5, h: 0.5 }];
 
 const view = (rect: Rect, racer: Racer | null): View => ({
   racer, show: null, rect, lookBack: false, shake: 0, fresh: true,
@@ -325,16 +352,15 @@ function turntable(st: Stage, cam: THREE.PerspectiveCamera, g: THREE.Object3D) {
 // --- the venue, from the stage ----------------------------------------------------------------------
 type Add = (o: THREE.Object3D, extra?: boolean) => void; // extra: drop it when the screen struggles
 
-function buildVenue(add: Add, st: Stage, time: Time) {
-  const look = LOOKS[st.spec.look];
+function buildVenue(add: Add, st: Stage, time: Time, look: Look) {
   add(new THREE.HemisphereLight(time.hemi[0], time.hemi[1], time.hemi[2]));
   const sun = new THREE.DirectionalLight(time.sun[0], time.sun[1]);
   sun.position.set(time.sunAt[0], time.sunAt[1], time.sunAt[2]);
   add(sun);
-  add(sky(time.sky[0], time.sky[1]));
-  land(add, st, time);
-  add(farLand(st, time), true);
-  road(add, st, time);
+  add(sky(time.sky[0], time.sky[1], 4800));
+  land(add, st, time, look);
+  add(farLand(st, time, look), true);
+  road(add, st, time, look);
   if (st.water) {
     const w = st.water;
     add(new THREE.Mesh(new THREE.CircleGeometry(w.r, 40).rotateX(-Math.PI / 2).translate(w.x, w.level, w.z),
@@ -347,8 +373,8 @@ function buildVenue(add: Add, st: Stage, time: Time) {
 
 // The land, in pieces, each drawn finer near the camera and coarser far away; each piece has a skirt
 // hanging down round its edge, so where a fine piece meets a coarse one there's no gap to see through
-function land(add: Add, st: Stage, time: Time) {
-  const look = LOOKS[st.spec.look], mat = new THREE.MeshLambertMaterial({ vertexColors: true, map: grainTexture() });
+function land(add: Add, st: Stage, time: Time, look: Look) {
+  const mat = new THREE.MeshLambertMaterial({ vertexColors: true, map: grainTexture() });
   const low = new THREE.Color(look.low), high = new THREE.Color(look.high), rock = new THREE.Color(look.rock), bank = new THREE.Color(look.bank);
   const wild = SURFACE_LIST.indexOf(st.spec.look === 'forest' ? 'grass' : 'dirt'); // (as stage.ts lays it)
   let lowest = Infinity, highest = -Infinity;
@@ -413,8 +439,8 @@ function land(add: Add, st: Stage, time: Time) {
 }
 
 // Hills all round, out to the horizon, under the stage's land and rising away from it
-function farLand(st: Stage, time: Time) {
-  const look = LOOKS[st.spec.look], size = 9000, n = 110;
+function farLand(st: Stage, time: Time, look: Look) {
+  const size = 9000, n = 110;
   const g = new THREE.PlaneGeometry(size, size, n, n).rotateX(-Math.PI / 2);
   const cx = st.x0 + (st.nx * 2.5) / 2, cz = st.z0 + (st.nz * 2.5) / 2, half = Math.max(st.nx, st.nz) * 1.25;
   g.translate(cx, 0, cz);
@@ -434,12 +460,12 @@ function farLand(st: Stage, time: Time) {
 }
 
 // The road: a ribbon a little above the land, gritty, with ruts worn into it, tinted by its surface
-function road(add: Add, st: Stage, time: Time) {
+function road(add: Add, st: Stage, time: Time, look: Look) {
   const W = st.width, cols = 9, rows = Math.ceil(st.length / 2);
   const pos: number[] = [], uv: number[] = [], col: number[] = [], idx: number[] = [], c = new THREE.Color();
   for (let r = 0; r <= rows; r++) {
     const s = (r / rows) * st.length;
-    c.set(ROAD[st.surfs[Math.floor(s) % st.length]]).multiplyScalar(time.dim);
+    c.set(look.road[st.surfs[Math.floor(s) % st.length]]).multiplyScalar(time.dim);
     for (let k = 0; k < cols; k++) {
       const u = k / (cols - 1), p = st.point(s, (u - 0.5) * (W + 2.8), _a);
       pos.push(p.x, p.y + 0.04, p.z);
@@ -454,7 +480,9 @@ function road(add: Add, st: Stage, time: Time) {
   g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   g.setIndex(idx);
   g.computeVertexNormals();
-  add(new THREE.Mesh(g, new THREE.MeshLambertMaterial({ map: roadTexture(), vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 })));
+  const ribbon = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ map: roadTexture(), vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 }));
+  ribbon.userData.road = true; // (it darkens when it's wet)
+  add(ribbon);
   // the start/finish line
   const line: number[] = [], lineUv: number[] = [];
   for (const [ds, v] of [[-0.8, 0], [0.8, 1]]) for (const u of [0, 1]) {
@@ -469,7 +497,7 @@ function road(add: Add, st: Stage, time: Time) {
   add(new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ map: checkerTexture(), side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -6 })));
 }
 
-function scenery(add: Add, st: Stage, time: Time, look: (typeof LOOKS)[keyof typeof LOOKS]) {
+function scenery(add: Add, st: Stage, time: Time, look: Look) {
   const place = (kind: string, geo: THREE.BufferGeometry, color: string, size: (s: number) => [number, number, number], flat = false) => {
     const list = st.scenery.filter((s) => s.kind === kind);
     if (!list.length) return;
@@ -536,40 +564,7 @@ function gantry(add: Add, st: Stage) {
   add(beam);
 }
 
-// What the cars' paint and glass reflect: the sky, the ground, and a bright panel where the sun is
-function reflections(time: Time, ground: string) {
-  const env = new THREE.Scene();
-  const c = canvas(4, 256), g = c.getContext('2d')!, grad = g.createLinearGradient(0, 0, 0, 256);
-  const earth = '#' + new THREE.Color(ground).multiplyScalar(time.dim * 0.5).getHexString();
-  grad.addColorStop(0, time.sky[0]);
-  grad.addColorStop(0.48, time.sky[1]);
-  grad.addColorStop(0.52, earth);
-  grad.addColorStop(1, earth);
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 4, 256);
-  env.add(new THREE.Mesh(new THREE.SphereGeometry(100, 32, 16), new THREE.MeshBasicMaterial({ map: texture(c, false), side: THREE.BackSide })));
-  const panel = (at: THREE.Vector3, w: number, h: number, color: number, power: number) => {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(power), side: THREE.DoubleSide }));
-    m.position.copy(at);
-    m.lookAt(0, 0, 0);
-    env.add(m);
-  };
-  panel(new THREE.Vector3(...time.sunAt).normalize().multiplyScalar(80), 30, 30, time.sun[0], 6);
-  panel(new THREE.Vector3(0, 90, 0), 120, 20, 0xffffff, 1.5);
-  return env;
-}
 
-// A dome with the sky's colours, from the top down to the horizon
-function sky(top: string, horizon: string) {
-  const c = canvas(4, 256), g = c.getContext('2d')!, grad = g.createLinearGradient(0, 0, 0, 256);
-  grad.addColorStop(0, top);
-  grad.addColorStop(0.75, horizon);
-  grad.addColorStop(1, horizon);
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 4, 256);
-  return new THREE.Mesh(new THREE.SphereGeometry(4800, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2 + 0.1),
-    new THREE.MeshBasicMaterial({ map: texture(c, false), side: THREE.BackSide, fog: false, depthWrite: false }));
-}
 
 // --- dust and spray: soft round puffs that drift, grow and fade ----------------------------------------
 class Dust {
@@ -705,14 +700,6 @@ function chevronTexture(dir: number) {
   return texture(c, false);
 }
 
-function checkerTexture() {
-  const c = canvas(64, 64), g = c.getContext('2d')!;
-  for (let y = 0; y < 2; y++) for (let x = 0; x < 16; x++) {
-    g.fillStyle = (x + y) % 2 ? '#111' : '#f3f0e8';
-    g.fillRect(x * 4, y * 32, 4, 32);
-  }
-  return texture(c, false);
-}
 
 function gantryTexture() {
   const c = canvas(512, 64), g = c.getContext('2d')!;

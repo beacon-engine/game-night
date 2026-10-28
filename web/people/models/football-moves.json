@@ -1,0 +1,84 @@
+{
+ "fps": 30,
+ "clips": {
+  "idle": {
+   "duration": 2.5,
+   "speed": 0.0,
+   "loop": true
+  },
+  "walk": {
+   "duration": 1.1,
+   "speed": 1.172,
+   "loop": true
+  },
+  "jog": {
+   "duration": 0.8,
+   "speed": 2.646,
+   "loop": true
+  },
+  "run": {
+   "duration": 0.6,
+   "speed": 4.791,
+   "loop": true
+  },
+  "kick_r": {
+   "duration": 1.2667,
+   "speed": 1.438,
+   "contact": 0.75,
+   "loop": false
+  },
+  "kick_l": {
+   "duration": 1.2667,
+   "speed": 1.438,
+   "contact": 0.75,
+   "loop": false
+  },
+  "pass_r": {
+   "duration": 1.1,
+   "speed": 1.416,
+   "contact": 0.6,
+   "loop": false
+  },
+  "pass_l": {
+   "duration": 1.1,
+   "speed": 1.416,
+   "contact": 0.6,
+   "loop": false
+  },
+  "fall": {
+   "duration": 6.0,
+   "speed": 0.025,
+   "loop": false
+  },
+  "getup": {
+   "duration": 6.9,
+   "speed": 0.129,
+   "loop": false
+  },
+  "slide_in": {
+   "duration": 0.8333,
+   "speed": 0.095,
+   "loop": false
+  },
+  "slide": {
+   "duration": 2.0,
+   "speed": 0.0,
+   "loop": true
+  },
+  "slide_out": {
+   "duration": 0.5,
+   "speed": 0.158,
+   "loop": false
+  },
+  "throw": {
+   "duration": 1.3333,
+   "speed": 0.0,
+   "loop": false
+  },
+  "lie_up": {
+   "duration": 1.5333,
+   "speed": 0.116,
+   "loop": false
+  }
+ }
+}

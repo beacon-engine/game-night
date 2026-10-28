@@ -51,6 +51,6 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 
 ## Notes
 
-3D with three.js. The football player model and motion capture (`web/games/football/player.ts`) can be reused; the kit painting already handles vests and shorts.
+3D with three.js. The people and their moves come from [`web/people/`](../../people/README.md), as the footballers do: a basketball cast (vests, long shorts, high-tops) and its moves are recipes in `tools/people/recipes/`.
 
 See [Building a game](../README.md) for how a game folder works and how to run it while you work on it.

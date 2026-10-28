@@ -3,9 +3,24 @@
 Couch games for the TV after a long day: the laptop is the console, everyone's phone is a pad.
 No accounts, no app to install on the phones, nothing leaves your Wi-Fi.
 
-Football is playable today and [35 more games](web/games) are planned across sports, racing, action and
-arcade, each with its own README, plus [competitions](web/games/COMPETITIONS.md) (leagues, cups, race
-weekends, championships). Pick one and help build it.
+Nine games are playable today: Football, Stock Cars, Grand Prix, Rally, City Runners, Neon Trails, Space
+Shooter, Fireteam and Chess. [Many more](web/games) are planned across sports, racing, action and arcade, each with its own
+README, plus [competitions](web/games/COMPETITIONS.md) (leagues, cups, race weekends, championships).
+Pick one and help build it.
+
+### Weather
+
+The outdoor games can be played in any weather, chosen in the lobby: **Dry**, **Showers** (dry to start,
+then rain on and off), **Rain** (all game) or **Snow**. The rain wets the ground over half a minute and
+it takes a couple of minutes to dry, so a shower changes the game for a stretch, not all at once. You
+see it fall, the sky clouds over and the ground darkens and shines.
+
+| Game | Weather | What it changes |
+|---|---|---|
+| Football | Dry, Showers, Rain, Snow | A wet pitch is quicker (the ball skids on and bounces lower) and players lose a little footing. In snow the ball rolls short, hardly bounces, and is orange so you can see it. |
+| Grand Prix | Dry, Showers, Rain | Slicks or grooved wets: box when it changes and the crew fits the right ones. |
+| Rally | Dry, Showers, Rain, Snow | Dirt turns to mud, tarmac gets slippery; snow covers the stage and everyone runs studs. |
+| Stock Cars | Showers or Rain on the road course | Ovals are only raced dry, as in the real sport. Pick slicks or wets before the start. |
 
 ## Play
 
@@ -102,6 +117,10 @@ Each player in `teams.json` has ratings out of 100:
 - **stamina**: how quickly a player tires (tired players are slower and can't sprint as much)
 - **tackling**: chance of winning the ball cleanly
 - **keeping** (keepers): reach, reactions, catching instead of parrying
+- **foot**: his better foot: `"right"`, `"left"` or `"both"`. He strikes with the foot on the side the
+  ball is; a one-footed player wraps his good foot round it some of the time, and with his weaker foot a
+  pass or shot is less accurate and has less on it. Two-footed players are nearly as good with either.
+  The foot shows beside his ratings on screen.
 - **style** (optional): how he runs with the ball: `"close"` (little touches, sharp turns),
   `"knock"` (pushes it into space and sprints onto it) or `"balanced"`.
   If left out it's worked out from the ratings: dribbling 86+ = close, pace 86+ = knock.
@@ -177,10 +196,23 @@ internal/store/         the database (SQLite, pure Go: the same build runs on An
 web/
   build.ts              bundles each app with esbuild into web/dist (embedded in the binary)
   platform/             shared by every game: the pad, input, controls, wire protocol
+  world/                shared by the 3D games: weather, rain and snow, the sky, particles, split screen, trees (ez-tree)
+  racing/               shared by the racing games: cars and tyres, tracks, the race, engine sound (car models at /racing/models/)
+  people/               the people in the 3D games: real bodies in real clothes, and their motion capture (/people/)
+  armoury/              guns, ready to hold (/armoury/)
   hub/                  the game select page (/)
   pad/                  the phone controller (/pad/)
   games/<id>/           one folder per game (/games/<id>/)
 ```
+
+Games share code through these folders (imported as `@platform`, `@world/…`, `@racing/…`, `@people/…`, `@armoury/…`), never by
+reaching into another game's folder. Each page is bundled with only what it imports.
+
+**Only the game you're playing is loaded.** Every game is its own page: the game select page loads
+nothing but its own small script (20 KB) and the list of games, and a game's page loads only its own
+script, models and textures, from the server, when you open it. Leaving a game frees all of it in the
+browser. The server reads files out of the binary as they're asked for (it idles at about 20 MB of
+memory, every game's models included).
 
 The server relays between one display (the page on the TV) and the phones; the message shapes are
 in [`web/platform/protocol.ts`](web/platform/protocol.ts). It also hands out player slots (P1, P2...),
@@ -206,13 +238,23 @@ pads are web pages over Wi-Fi, which needs nothing installed; the protocol in
 
 ## Credits
 - Brand: [`web/brand/`](web/brand). Fonts: Big Shoulders Display and Inter (SIL Open Font License).
-  Icons: [Tabler Icons](https://tabler.io/icons) (MIT).- Player bodies, faces and hair: [Universal Base Characters](https://quaternius.itch.io/universal-base-characters) by Quaternius, CC0.
-- Running/walking/idle motion capture: [Universal Animation Library](https://quaternius.com/packs/universalanimationlibrary.html) by Quaternius, CC0.
+  Icons: [Tabler Icons](https://tabler.io/icons) (MIT).
+- People (the footballers): bodies, faces, skin, hair and clothes from [MakeHuman](http://www.makehumancommunity.org)
+  community assets, CC0, apart from two CC-BY parts: the shorts by Elvaerwyn and the boots (running shoes) by punkduck. They're built with [MPFB](https://extensions.blender.org/add-ons/mpfb/) in Blender
+  ([`tools/people/`](tools/people/README.md)).
+- Motion capture: the [CMU Graphics Lab Motion Capture Database](http://mocap.cs.cmu.edu) (runs, kicks, falls,
+  getting up), and the [Universal Animation Library](https://quaternius.com/packs/universalanimationlibrary.html)
+  1 and 2 by Quaternius, CC0 (the idle, slides, throws; and City Runners' moves).
+- City Runners' bodies: [Universal Base Characters](https://quaternius.itch.io/universal-base-characters) by Quaternius, CC0.
+- Cars: [Car Kit](https://kenney.nl/assets/car-kit) by Kenney, CC0 (in [`web/racing/models/`](web/racing/models)).
+- Space Shooter's ships, enemies, bosses and scenery: [Space Kit](https://kenney.nl/assets/space-kit) by Kenney, CC0.
+- Fireteam's countryside: textures, plants, props and the sky from [Poly Haven](https://polyhaven.com), CC0; trees grown
+  by [ez-tree](https://github.com/dgreenheck/ez-tree) by Daniel Greenheck, MIT (in [`web/world/trees/`](web/world/trees)). Guns: the [Low Poly Weapon Pack](https://opengameart.org/content/low-poly-weapon-pack), CC0.
 
-The game loads `web/games/football/models/`; the full original packs are in [`web/games/football/source/`](web/games/football/source)
-(not shipped in the binary). Each game keeps its own source art in its own `source/` folder.
-Football actions (kicks, tackles, slides, dives...) are posed in code on the same skeleton.
+The original downloads are kept in `source/` folders next to what's made from them
+([`web/people/source/`](web/people/README.md), a game's own `source/`), and aren't shipped in the binary.
+Football actions other than running and striking the ball (tackles, dives, controls...) are still posed in code, on the same skeleton.
 
 ## License
 
-Code: [MIT](LICENSE). 3D models and animations: CC0 (see Credits).
+Code: [MIT](LICENSE). 3D models and animations: CC0, CC-BY and the CMU database's terms (see Credits).

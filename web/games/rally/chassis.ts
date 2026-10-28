@@ -2,7 +2,7 @@
 // and grip, with its size and where its wheels are taken from the model (Kenney's Car Kit, shared with
 // Stock Cars).
 import * as THREE from 'three';
-import type { CarModel, CarType } from '../stock-cars/cars.ts';
+import type { CarModel, CarType } from '@racing/cars.ts';
 import type { Chassis } from './physics.ts';
 
 // cars.json: compared with the Saloon, as in Stock Cars, plus `ride`: how soft and long its springs

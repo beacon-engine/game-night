@@ -6,6 +6,9 @@
 //   brand/          -> dist/brand/        the brand: brand.css, fonts, the mark (see brand/README.md)
 //   hub/            -> dist/              the game select page
 //   pad/            -> dist/pad/          the phone controller
+//   racing/         -> dist/racing/       what the racing games share: code (bundled into each) and the car models
+//   people/         -> dist/people/       the people in the 3D games: their models, their moves and the mesh decoder
+//   armoury/        -> dist/armoury/      guns, ready to hold
 //   games/<id>/     -> dist/games/<id>/   one folder per game
 //
 //   node build.ts            one-off production build
@@ -26,7 +29,7 @@ function apps(): App[] {
   const games = readdirSync('games', { withFileTypes: true })
     .filter((d) => d.isDirectory())
     .map((d) => ({ src: join('games', d.name), out: join(OUT, 'games', d.name) }));
-  return [{ src: 'brand', out: join(OUT, 'brand') }, { src: 'hub', out: OUT }, { src: 'pad', out: join(OUT, 'pad') }, ...games];
+  return [{ src: 'brand', out: join(OUT, 'brand') }, { src: 'hub', out: OUT }, { src: 'pad', out: join(OUT, 'pad') }, { src: 'racing', out: join(OUT, 'racing') }, { src: 'people', out: join(OUT, 'people') }, { src: 'armoury', out: join(OUT, 'armoury') }, ...games];
 }
 
 const shipped = (f: string) => !/\.(ts|md)$/.test(f) && !f.endsWith('.gitkeep') && !/\/source(\/|$)/.test(f);

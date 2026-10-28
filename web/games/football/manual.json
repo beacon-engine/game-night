@@ -1,21 +1,25 @@
 {
-  "intro": "Eleven against eleven in a stadium, in the style of the classic console football games. Everyone with a phone plays for one side; the computer plays the rest of the team, and the other side if no one is on it.",
-  "goal": "Score more goals than the other side by full time.",
-  "howToPlay": [
-    "Join with your phone. In the lobby, move up and down your team sheet with ▲▼ and change the line you're on with ◀ ▶: your club, its shape, who starts in goal, and how the team plays. Swap sides with {leaf}. Press {bolt} to kick off.",
-    "How the team plays: With the ball (keep the ball, mix it up, get it forward, or hit on the break), Back line (sit deep or push up), Closing down (stand off or hunt the ball) and Width (stay narrow or stretch wide). Your teammates follow it. Your phone remembers your choices for next time.",
-    "You control one player at a time: the one with the ring under him. Move with the stick; push it past its ring to sprint.",
-    "With the ball, pass toward where the stick points, shoot (hold for more power), or play a through ball into space.",
-    "Without the ball, press the man with the ball or tackle him. Switch to the player nearest the ball when you need to.",
-    "The referee gives fouls, cards and penalties. Free kicks, corners and throw-ins are yours to take when your side has them.",
-    "Press ❚❚ on your phone to pause: substitutions, tactics, the camera and the controls are there. In Tactics, ▲▼ picks a line and ◀ ▶ changes it."
-  ],
-  "steering": "Move with the stick; push it past its ring to sprint",
-  "tips": [
-    "A standing tackle from in front is safer than a slide; tackles from behind get you booked.",
-    "Players tire as they run. Rest them, or bring on substitutes in the second half.",
-    "Each side has a spare keeper on the bench. To change keeper during a match, use Substitutions: a keeper can only come off for another keeper.",
-    "Aim shots across the keeper, away from where he's standing.",
-    "Pushing up and hunting the ball wins it back higher up the pitch, but leaves space behind your defence. Sitting deep is safer, but the other side gets more of the ball."
-  ]
+ "intro": "Eleven against eleven in a stadium, in the style of the classic console football games. Everyone with a phone plays for one side; the computer plays the rest of the team, and the other side if no one is on it.",
+ "goal": "Score more goals than the other side by full time.",
+ "howToPlay": [
+  "Join with your phone. In the lobby, move up and down your team sheet with ▲▼ and change the line you're on with ◀ ▶: your club, its shape, who starts in goal, and how the team plays. Swap sides with {leaf}. Press {bolt} to kick off.",
+  "How the team plays: With the ball (keep the ball, mix it up, get it forward, or hit on the break), Back line (sit deep or push up), Closing down (stand off or hunt the ball) and Width (stay narrow or stretch wide). Your teammates follow it. Your phone remembers your choices for next time.",
+  "You control one player at a time: the one with the ring under him. Move with the stick; push it past its ring to sprint.",
+  "With the ball, pass toward where the stick points, shoot (hold for more power), or play a through ball into space. To bend it, hold the stick to one side just after you strike it: the ball curls that way.",
+  "Without the ball, press the man with the ball or tackle him. Switch to the player nearest the ball when you need to.",
+  "The referee gives fouls, cards and penalties. Free kicks, corners and throw-ins are yours to take when your side has them.",
+  "Press ❚❚ on your phone to pause: substitutions, tactics, the camera and the controls are there. In Tactics, ▲▼ picks a line and ◀ ▶ changes it."
+ ],
+ "steering": "Move with the stick; push it past its ring to sprint",
+ "tips": [
+  "A standing tackle from in front is safer than a slide; tackles from behind get you booked.",
+  "Players tire as they run. Rest them, or bring on substitutes in the second half.",
+  "Each side has a spare keeper on the bench. To change keeper during a match, use Substitutions: a keeper can only come off for another keeper.",
+  "Aim shots across the keeper, away from where he's standing.",
+  "Curl a shot round the keeper: aim outside the post, then hold the stick back toward goal just after you hit it.",
+  "To pass behind you, the player turns with the ball first. Snatching at it the way you aren't facing costs pace and accuracy, and a really awkward one leaves him off balance.",
+  "Pushing up and hunting the ball wins it back higher up the pitch, but leaves space behind your defence. Sitting deep is safer, but the other side gets more of the ball.",
+  "Every player has a better foot (R, L or both, beside his ratings). With his weaker foot a pass or shot is less accurate and has less on it, so set him up on his good side.",
+  "Choose the weather in the lobby. On a wet pitch the ball skids on fast and stays low; in the snow it holds up and rolls short, so pass harder."
+ ]
 }

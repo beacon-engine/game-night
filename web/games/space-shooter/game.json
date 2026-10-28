@@ -4,7 +4,7 @@
   "tagline": "Co-op space shooter: waves, bosses, power-ups",
   "players": "1–4",
   "category": "Arcade",
-  "needs": "light",
+  "needs": "standard",
   "order": 80,
-  "status": "soon"
+  "inProgress": true
 }

@@ -1,0 +1,511 @@
+{
+  "asset": {
+    "generator": "Khronos glTF Blender I/O v5.1.20",
+    "version": "2.0"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "metal_jerrycan_green_pin",
+      "rotation": [
+        0.6712583303451538,
+        0.2222888320684433,
+        0.2222888320684433,
+        0.6712583303451538
+      ],
+      "translation": [
+        -0.1570529043674469,
+        0.4557216763496399,
+        0.026917116716504097
+      ]
+    },
+    {
+      "mesh": 1,
+      "name": "metal_jerrycan_green_cap",
+      "rotation": [
+        0,
+        0,
+        0.3826834559440613,
+        0.9238795638084412
+      ],
+      "translation": [
+        -0.1615537405014038,
+        0.42073002457618713,
+        0.028927268460392952
+      ]
+    },
+    {
+      "mesh": 2,
+      "name": "metal_jerrycan_green_body"
+    },
+    {
+      "mesh": 3,
+      "name": "metal_jerrycan_green_latch",
+      "rotation": [
+        0.6712583303451538,
+        0.2222888320684433,
+        0.2222888320684433,
+        0.6712583303451538
+      ],
+      "translation": [
+        -0.1716453582048416,
+        0.4351022243499756,
+        0.02892722375690937
+      ]
+    },
+    {
+      "mesh": 4,
+      "name": "metal_jerrycan_green_fastener",
+      "rotation": [
+        0.6830127239227295,
+        0.1830126941204071,
+        0.1830126941204071,
+        0.6830126643180847
+      ],
+      "translation": [
+        -0.1570890247821808,
+        0.45596909523010254,
+        0.025539588183164597
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "metal_jerrycan_green",
+      "normalTexture": {
+        "index": 0
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Plane.038",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        }
+      ]
+    },
+    {
+      "name": "Circle.002",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 4,
+            "NORMAL": 5,
+            "TEXCOORD_0": 6
+          },
+          "indices": 7,
+          "material": 0
+        }
+      ]
+    },
+    {
+      "name": "Plane.044",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 8,
+            "NORMAL": 9,
+            "TEXCOORD_0": 10
+          },
+          "indices": 11,
+          "material": 0
+        }
+      ]
+    },
+    {
+      "name": "Plane.031",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 12,
+            "NORMAL": 13,
+            "TEXCOORD_0": 14
+          },
+          "indices": 15,
+          "material": 0
+        }
+      ]
+    },
+    {
+      "name": "Plane.001",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 16,
+            "NORMAL": 17,
+            "TEXCOORD_0": 18
+          },
+          "indices": 19,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ],
+  "images": [
+    {
+      "mimeType": "image/jpeg",
+      "name": "metal_jerrycan_green_nor_gl",
+      "uri": "textures/metal_jerrycan_green_nor_gl_1k.jpg"
+    },
+    {
+      "mimeType": "image/jpeg",
+      "name": "metal_jerrycan_green_diff",
+      "uri": "textures/metal_jerrycan_green_diff_1k.jpg"
+    },
+    {
+      "mimeType": "image/jpeg",
+      "name": "metal_jerrycan_green_metal-metal_jerrycan_green_rough",
+      "uri": "textures/metal_jerrycan_green_arm_1k.jpg"
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 329,
+      "max": [
+        0.0042594377882778645,
+        0.03609670326113701,
+        0.013210981152951717
+      ],
+      "min": [
+        -0.010941321030259132,
+        -0.03609670326113701,
+        -0.003268377622589469
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 329,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 329,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 1554,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 734,
+      "max": [
+        0.03763405978679657,
+        0.025317246094346046,
+        0.027154764160513878
+      ],
+      "min": [
+        -0.027154767885804176,
+        0,
+        -0.027154764160513878
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5126,
+      "count": 734,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 734,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 7,
+      "componentType": 5123,
+      "count": 3144,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 8,
+      "componentType": 5126,
+      "count": 2803,
+      "max": [
+        0.17236989736557007,
+        0.48277783393859863,
+        0.08543366193771362
+      ],
+      "min": [
+        -0.17802883684635162,
+        0,
+        -0.08543366193771362
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 9,
+      "componentType": 5126,
+      "count": 2803,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 10,
+      "componentType": 5126,
+      "count": 2803,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 11,
+      "componentType": 5123,
+      "count": 11826,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 12,
+      "componentType": 5126,
+      "count": 2153,
+      "max": [
+        0.07021679729223251,
+        0.029581759124994278,
+        0.042307741940021515
+      ],
+      "min": [
+        -0.015116646885871887,
+        -0.029581759124994278,
+        -0.02978621982038021
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 13,
+      "componentType": 5126,
+      "count": 2153,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 14,
+      "componentType": 5126,
+      "count": 2153,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 15,
+      "componentType": 5123,
+      "count": 9354,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 16,
+      "componentType": 5126,
+      "count": 717,
+      "max": [
+        0.023504961282014847,
+        0.022129880264401436,
+        0.02920595556497574
+      ],
+      "min": [
+        0.0030121803283691406,
+        -0.015354521572589874,
+        -0.004672741983085871
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 17,
+      "componentType": 5126,
+      "count": 717,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 18,
+      "componentType": 5126,
+      "count": 717,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 19,
+      "componentType": 5123,
+      "count": 3030,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 3948,
+      "byteOffset": 0,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 3948,
+      "byteOffset": 3948,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 2632,
+      "byteOffset": 7896,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 3108,
+      "byteOffset": 10528,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 8808,
+      "byteOffset": 13636,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 8808,
+      "byteOffset": 22444,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 5872,
+      "byteOffset": 31252,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 6288,
+      "byteOffset": 37124,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 33636,
+      "byteOffset": 43412,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 33636,
+      "byteOffset": 77048,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 22424,
+      "byteOffset": 110684,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 23652,
+      "byteOffset": 133108,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 25836,
+      "byteOffset": 156760,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 25836,
+      "byteOffset": 182596,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 17224,
+      "byteOffset": 208432,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 18708,
+      "byteOffset": 225656,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 8604,
+      "byteOffset": 244364,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 8604,
+      "byteOffset": 252968,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 5736,
+      "byteOffset": 261572,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 6060,
+      "byteOffset": 267308,
+      "target": 34963
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 273368,
+      "uri": "metal_jerrycan_green.bin"
+    }
+  ]
+}

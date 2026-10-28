@@ -38,10 +38,16 @@ level the car for the landing.
 | `scene.ts` | The world in three.js: the land in pieces, finer near the camera; the road; the ford, trees, rocks, chevron boards; the cars with their wheels steering, spinning and riding their springs, and their shadows on the ground; dust and spray; the chase camera (level through the jumps), a TV camera, turntables. |
 | `main.ts` | Lobby, picking cars, countdown, race, results, saved records, what the phones show. |
 
-It builds on Stock Cars: the car models, their paint, finishes and lights (`../stock-cars/cars.ts`), the
-drawing helpers (`../stock-cars/draw.ts`) and the engine sound (`../stock-cars/sound.ts`) are imported from
-there (the bundler follows the imports), not copied. The models are Kenney's Car Kit (CC0), kept in
-`../stock-cars/models` with their licence in `../stock-cars/source/`.
+It builds on the racing games' shared code in [`web/racing/`](../../racing/README.md): the car models,
+their paint, finishes, lights and tyres (`cars.ts`), the weather (`weather.ts`, `rain.ts`), the sky,
+the drawing helpers and the engine sound. The models are Kenney's Car Kit (CC0), kept in
+`web/racing/models` with their licence in `web/racing/source/`.
+
+**Weather**, chosen in the lobby: Dry, Showers, Rain or Snow. Rain soaks the stage over half a minute and
+dries over a couple once it stops: wet gravel hardly grips less (the stones drain), dirt turns to mud
+(and the cars throw mud, not dust), and wet tarmac loses the most. Snow packs over the whole stage: the
+land and road go white, everyone's on studded tyres, and it's the slipperiest there is. Rally tyres
+always have a chunky tread (studs in it in the snow).
 
 The kit's cars are toys, their wheels tucked well in under tall bodies; on those a real car would tip over
 in an ordinary bend. The physics puts the tyres out near the body's edges (they're drawn where the model
@@ -70,11 +76,12 @@ makers. See [Originality](../README.md#originality).
 - [x] Computer drivers; back on the road when stuck or upside down
 - [x] A co-driver's calls on the screen and the phone
 - [x] Phones show what each button does; a manual; the brand; saved records; stars and paint jobs
+- [x] Weather: showers, rain and snow
 
 ## Next
 
 - Stage mode: one at a time against the clock, with ghosts
 - Rally: several stages, times added up; rallycross heats and a final
-- Snow and tarmac stages; mud that slows you
+- Tarmac stages; mud that slows you
 - Damage you can see; punctures
 - More cars

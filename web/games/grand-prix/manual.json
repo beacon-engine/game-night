@@ -7,8 +7,9 @@
     "In the lobby, choose the circuit, how many computer drivers, how many laps and how quick they are, then press {bolt} to start.",
     "Your phone becomes a steering pad: slide your thumb left and right to steer. Hold {bolt} for gas and {drop} to brake. Brake before the corners, not in them.",
     "Your car has health, tyres and fuel, shown on your screen and your phone. Hits take health, worn tyres grip less, and a damaged car is slower.",
-    "Press {l1} to box this lap, then keep to the left side of the main straight and you'll turn into the pit lane. The crew refuels, changes the tyres and mends the damage; the more they do, the longer you wait.",
+    "Press {l1} to box this lap, then keep to the left of the main straight (follow the dashed line to the ◀ PIT board) and you'll turn into the pit lane. On the way down the lane, choose what the crew does on your phone: ▲▼ picks tyres, fuel or repairs, ◀▶ changes it. The more they do, the longer you wait.",
     "A full tank lasts 7 laps, so longer races need at least one stop. Your phone says when the pit wall thinks you should come in.",
+    "Choose the weather in the lobby: Dry, Showers or Rain. When it rains the road gets wet over half a minute and takes a couple of minutes to dry. Slicks are quickest in the dry and slide everywhere in the wet; wets have grooves that clear the water. Box when it changes and the crew fits the right ones: your phone says Wets or Slicks when it's time.",
     "A hard hit can start a fire. A burning car loses health fast: box straight away or it burns out. A really big hit, especially into a barrier at speed, ends your race."
   ],
   "steering": "Slide left and right on your phone to steer (or use the arrow keys)",
@@ -16,6 +17,8 @@
     "Brake in a straight line, then turn in. Open-wheelers grip well, but not at any speed.",
     "Stopping one lap too late is better than running dry: an empty car can only coast.",
     "Fresh tyres are worth seconds a lap. Sometimes a second stop wins the race.",
+    "In the wet, brake earlier: the tyres lock sooner and the car takes longer to stop.",
+    "Wets wear out fast once the road dries. Don't stay out on them too long.",
     "Hold {r1} to see who's behind you."
   ]
 }

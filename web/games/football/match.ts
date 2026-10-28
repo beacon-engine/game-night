@@ -1,10 +1,11 @@
 // Match simulation: players, ball physics, rules (fouls, cards, set pieces), human control and AI.
 import * as THREE from 'three';
+import type { Weather } from '@world/weather.ts';
 import { BIT, type Pad } from '@platform';
 import type { Action, Context, FootballControls } from './actions.ts';
-import { PlayerModel, type BodyState, type Card, type Fall, type Foot, type SkillKind } from './player.ts';
+import { KICK_CONTACT, PlayerModel, type Strike, type BodyState, type Card, type Fall, type Foot, type SkillKind } from './player.ts';
 import { DEFAULT_TACTICS, tune, type Tactics, type Tune } from './tactics.ts';
-import type { Club, DribbleStyle, FormationSlot, Kit, PlayerData, Settings, Stat } from './types.ts';
+import { Footed, type Club, type DribbleStyle, type FormationSlot, type Kit, type PlayerData, type Settings, type Stat } from './types.ts';
 
 // ------------------------------------------------------------------- types --
 // A person playing, on a pad: the platform's controller plus what the match tracks for them
@@ -22,7 +23,7 @@ export const newHuman = (): HumanState => ({ team: 0, player: null, charge: -1, 
 interface Point { x: number; z: number }
 type Aim = Point | null; // stick direction on the pitch, or none
 
-interface Motion { x: number; y: number; z: number; vx: number; vy: number; vz: number }
+interface Motion { x: number; y: number; z: number; vx: number; vy: number; vz: number; curl?: number } // (curl: see CURL)
 
 export interface Ball extends Motion {
   owner: Player | null;
@@ -38,6 +39,7 @@ export type SetPieceKind = 'kickoff' | 'freekick' | 'penalty' | 'corner' | 'goal
 export type MatchEvent =
   | { type: 'kick'; power: number }
   | { type: 'post' }
+  | { type: 'net'; x: number; y: number; z: number; speed: number } // the ball hit the net (it billows)
   | { type: 'shot' }
   | { type: 'save'; parry?: boolean; block?: boolean }
   | { type: 'tackle'; controller: Human | null }
@@ -82,7 +84,50 @@ const RUN_UP: SetPieceKind[] = ['freekick', 'penalty', 'corner', 'goalkick'];
 // ------------------------------------------------------------------ physics --
 const GRAV = 9.81;
 const DRAG = 0.012; // quadratic air drag (a real football is ~0.01-0.015 per metre)
+
+// Bend (the Magnus effect): a ball struck with spin swerves sideways, by `curl` m/s² at full pace
+// (less as it slows), the spin fading in the air and quickly once it's rolling. You put it on by
+// holding the stick to one side just after you strike it (`window` s); the computer curls some of its
+// shots round the keeper.
+const CURL = { most: 7, rate: 22, window: 0.4, pace: 14, decay: 0.35, rolling: 2.5, bounce: 0.6, ai: 4.5, aiChance: 0.4 };
+
+// Striking it where you aren't facing: up to `free` rad off is a normal pass or shot (the hips turn
+// into it); past that, the further round it is the more it costs: less pace, more error, and a
+// stumble after a really awkward one. Before a strike, the player turns toward where it's going
+// (`turn` rad/s) and strikes once he's within `turned` of it, or after `hurry` s of turning anyway.
+const BALANCE = { free: 0.6, error: 2, spread: 0.22, power: 0.3, stumble: 0.55, stumbleT: 0.35, turn: 10, turned: 1.2, hurry: { human: 0.35, ai: 0.45 }, giveUp: 1.2 };
 const ROLL_A = 0.7, ROLL_B = 0.13; // rolling resistance on grass: decel = A + B * speed
+
+const SNOW_BALL = '#ff7a1a';
+
+// How close a body part has to be to the ball for it to touch it (m, centre to the part)
+const CONTACT = {
+  foot: 0.5, // a kick: the boot to the ball, across the ground
+  set: 0.55, // the ball must be this close to where the boot will meet it before the swing starts
+  again: 1.0, // further than that at the strike, but within this: he steps in and swings again (any further, he missed it)
+  head: 0.32, chest: 0.36, thigh: 0.34, // controlling a ball in the air
+  reachReceiver: 0.12, // the intended receiver stretches a little further for it
+  snap: 0.2, // m the ball may be drawn onto the boot as it's struck (more would show)
+};
+
+// Where each part that takes a ball out of the air is on a player of height 1 (m up, m in front)
+const PARTS = { head: { up: 1.72, fwd: 0.05 }, chest: { up: 1.3, fwd: 0.14 }, thigh: { up: 0.78, fwd: 0.2 } } as const;
+
+// The pitch as the weather has left it (setPitch). A wet pitch is quicker: the ball skids on and
+// keeps its pace, and bounces lower. Snow holds the ball up: it rolls short and hardly bounces.
+// Players lose a little footing on either. Shared by the real ball and every prediction of it.
+const PITCH = {
+  dry: { rollA: ROLL_A, rollB: ROLL_B, bounce: 0.62, skid: 0.87, footing: 1 },
+  soaked: { rollA: ROLL_A * 0.6, rollB: ROLL_B * 0.75, bounce: 0.5, skid: 0.95, footing: 0.88 },
+  snow: { rollA: ROLL_A * 2.4, rollB: ROLL_B * 1.6, bounce: 0.32, skid: 0.7, footing: 0.84 },
+};
+const pitch = { ...PITCH.dry };
+
+export function setPitch(w: Weather | null) {
+  if (w?.snow) return void Object.assign(pitch, PITCH.snow);
+  const k = w?.wet ?? 0, d = PITCH.dry, s = PITCH.soaked;
+  for (const key of Object.keys(d) as (keyof typeof d)[]) pitch[key] = d[key] + (s[key] - d[key]) * k;
+}
 export const BALL_R = 0.12;
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const rand = (a = 0, b = 1) => a + Math.random() * (b - a);
@@ -93,10 +138,27 @@ const angDiff = (a: number, b: number) => {
   return d;
 };
 const tmpV = new THREE.Vector3();
+const NET_FELT = 1.5; // m/s: slower than this into the net, it just drops
 
 // Advance a free ball one step: gravity, air drag, bounces, rolling resistance.
 // Used both for the real ball and for predicting where a kick will go.
 function ballStep(b: Motion, dt: number) {
+  if (b.curl) {
+    // swerve across its line of flight (to its right for a positive curl)
+    const sp = Math.hypot(b.vx, b.vz);
+    if (sp > 0.5) {
+      const a = b.curl * Math.min(1, sp / CURL.pace) * dt;
+      const ux = b.vx / sp, uz = b.vz / sp;
+      b.vx += uz * a;
+      b.vz -= ux * a;
+      const k = Math.hypot(b.vx, b.vz);
+      b.vx *= sp / k; // (it bends the ball's path; it doesn't speed it up)
+      b.vz *= sp / k;
+    }
+    const rolling = b.y <= BALL_R + 0.005 && b.vy === 0;
+    b.curl *= Math.max(0, 1 - dt * (rolling ? CURL.rolling : CURL.decay));
+    if (Math.abs(b.curl) < 0.05) b.curl = 0;
+  }
   if (b.y > BALL_R + 0.005 || b.vy > 0) {
     const v = Math.hypot(b.vx, b.vy, b.vz);
     const k = Math.min(0.5, DRAG * v * dt);
@@ -113,16 +175,17 @@ function ballStep(b: Motion, dt: number) {
     if (b.vy < -0.6) {
       // grass gives back a bit over half the vertical speed and takes a little pace off,
       // so a dropping ball bounces several times in shrinking hops and runs on
-      const e = 0.62 - Math.min(0.12, -b.vy * 0.008);
-      b.vy = -b.vy * e;
-      b.vx *= 0.87;
-      b.vz *= 0.87;
+      const e = pitch.bounce - Math.min(0.12, -b.vy * 0.008);
+      b.vy = -b.vy * Math.max(0.1, e);
+      b.vx *= pitch.skid;
+      b.vz *= pitch.skid;
+      if (b.curl) b.curl *= CURL.bounce;
     } else b.vy = 0;
   }
   if (b.y <= BALL_R + 0.005 && b.vy === 0) {
     const sp = Math.hypot(b.vx, b.vz);
     if (sp > 0) {
-      const ns = Math.max(0, sp - (ROLL_A + ROLL_B * sp) * dt);
+      const ns = Math.max(0, sp - (pitch.rollA + pitch.rollB * sp) * dt);
       b.vx *= ns / sp;
       b.vz *= ns / sp;
     }
@@ -151,7 +214,7 @@ function loftSpeed(d: number, ang: number, y0 = BALL_R) {
 
 // Speed a ground pass needs to cover `d` metres and still be moving at `arrive` m/s
 function groundSpeed(d: number, arrive: number) {
-  const dist = (v0: number) => (v0 - arrive) / ROLL_B - (ROLL_A / (ROLL_B * ROLL_B)) * Math.log((ROLL_A + ROLL_B * v0) / (ROLL_A + ROLL_B * arrive));
+  const dist = (v0: number) => (v0 - arrive) / pitch.rollB - (pitch.rollA / (pitch.rollB * pitch.rollB)) * Math.log((pitch.rollA + pitch.rollB * v0) / (pitch.rollA + pitch.rollB * arrive));
   let lo = arrive, hi = 34;
   for (let i = 0; i < 24; i++) {
     const mid = (lo + hi) / 2;
@@ -210,6 +273,9 @@ export class Player {
   // how he carries the ball: 'close' (little touches), 'knock' (push it into space and race onto
   // it) or 'balanced'. Can be set per player in teams.json.
   readonly style: DribbleStyle;
+  readonly footed: Footed; // his better foot (teams.json "foot"), or both
+  striking: Footed.Left | Footed.Right = Footed.Right; // the foot this kick is with
+  strikeKind: Strike = 'kick'; // a kick or a pass (which strike the model plays)
   human: Human | null = null;
 
   x = 0; z = 0; vx = 0; vz = 0;
@@ -227,7 +293,9 @@ export class Player {
   holdT = 0; gatherT = 0; // keeper: holding the ball / gathering it into the gloves
   frozen = false; // taking a set piece
   runup: { fn: () => void } | null = null;
-  windup: { t: number; fn: () => void; reachable?: boolean } | null = null;
+  // A strike on its way: `started` once he's on the ball and facing near enough where it's going (`to`),
+  // and then the ball goes `t` s later, as the boot meets it
+  windup: { t: number; fn: () => void; reachable?: boolean; again?: boolean; started: boolean; to: Point | null; waitT: number } | null = null;
   wall: Point | null = null; // his place in a free-kick wall
   wallJumping = false;
   jumpT = 0; jumpY = 0;
@@ -251,11 +319,47 @@ export class Player {
     this.style = data.style || (data.dribbling >= 86 ? 'close' : data.pace >= 86 ? 'knock' : 'balanced');
     this.model = new PlayerModel({ kit, number: data.number, name: data.name, gk: this.role === 'GK', seed: idx * 7 + team.idx * 31 + data.number * 3 + data.name.length });
     this.mass = 72 * this.model.build ** 3 * (0.88 + 0.24 * (data.tackling ?? 60) / 100);
+    this.footed = data.foot ?? footedFor(data.name, data.number);
   }
   get role() { return this.slot.role; }
   get dirX() { return Math.sin(this.facing); }
   get dirZ() { return Math.cos(this.facing); }
   stat(k: Stat) { return (this.data[k] ?? 60) / 100; }
+
+  // Which foot to strike with: the one on the side the ball is, if it's clearly to one side;
+  // otherwise his better foot. A one-footed player still opens up his body to use his good foot
+  // some of the time, rather than his weak one.
+  pickFoot(bx: number, bz: number): Footed.Left | Footed.Right {
+    const strong = this.footed === Footed.Left ? Footed.Left : Footed.Right;
+    // (his right, facing `facing`, is (-cos, sin))
+    const side = (bx - this.x) * -Math.cos(this.facing) + (bz - this.z) * Math.sin(this.facing);
+    if (Math.abs(side) < FOOT.middle) return strong;
+    const natural = side > 0 ? Footed.Right : Footed.Left;
+    if (natural === strong || this.footed === Footed.Both) return natural;
+    return Math.random() < FOOT.wrapAround ? strong : natural;
+  }
+
+  // How much worse this kick is than with his best foot: the error grows, the power drops
+  get footError() { return this.footed === Footed.Both ? FOOT.bothError : this.striking === this.footed ? 1 : FOOT.weakError; }
+  get footPower() { return this.footed === Footed.Both || this.striking === this.footed ? 1 : FOOT.weakPower; }
+}
+
+// The weaker foot: how much it costs, and when a player uses it
+const FOOT = {
+  middle: 0.12, // m: the ball nearer his middle than this, he uses his good foot
+  wrapAround: 0.45, // the ball on his weak side: how often he wraps his good foot round it anyway
+  weakError: 1.8, // × the error in a pass or shot with the weaker foot
+  weakPower: 0.88, // × the pace on it
+  bothError: 1.08, // a two-footed player is nearly as good with either
+};
+
+// A player with no foot given in teams.json: about three in four right-footed, one in five left,
+// a few with both, the same every time for the same player
+function footedFor(name: string, number: number): Footed {
+  let h = number * 2654435761;
+  for (const ch of name) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  const r = ((h >>> 0) % 1000) / 1000;
+  return r < 0.06 ? Footed.Both : r < 0.28 ? Footed.Left : Footed.Right;
 }
 
 // How a side lines up: its shape, its instructions and who starts in goal (a name; else the first keeper)
@@ -294,6 +398,7 @@ export class Match {
 
   clock = 0; // match time played (seconds)
   simT = 0; // time since the match was created
+  private weather: Weather | null = null; // none: a dry day
   state: MatchState = 'play';
   stateT = 0;
   secondHalf = false;
@@ -317,6 +422,7 @@ export class Match {
   private gkPress = false; // goal kicks: does the other side push up to press it?
   private gkLongAnyway = false;
   private kickT = 0;
+  private curlBy: { human: Human; t: number } | null = null; // who can still bend the ball they've just struck
   private switchT = 0;
   private path: (Point & { t: number; y: number })[] = []; // where the loose ball will be
   private chasers = new Set<Player>();
@@ -485,6 +591,16 @@ export class Match {
     const ctl = this.controls;
     c.pressing = !teamHas && ctl.held(c, 'defend', 'teammatePress');
 
+    // aftertouch: just after you strike it, the stick held across its line bends it that way
+    const cb = this.curlBy;
+    if (cb && cb.human === c && !b.owner && this.simT - cb.t < CURL.window && mag > 0.25) {
+      const sp = Math.hypot(b.vx, b.vz);
+      if (sp > 2) {
+        const across = (sx * (b.vz / sp) - -sy * (b.vx / sp)) / Math.max(1, mag); // the stick along the ball's right
+        b.curl = clamp((b.curl ?? 0) + across * CURL.rate * dt, -CURL.most, CURL.most);
+      }
+    }
+
     // pass receiver assist: run onto the ball if the stick is idle
     if (mag <= 0.12 && this.passTo === p && !b.owner) this.receive(p);
     if (this.state !== 'play') {
@@ -521,7 +637,7 @@ export class Match {
         // shot released
         if (b.owner === p) {
           const pw = Math.min(1, c.charge / 0.9);
-          this.act(p, () => this.shoot(p, aim, pw));
+          this.act(p, () => this.shoot(p, aim, pw), 'kick', this.goalOf(p));
         }
         c.charge = -1;
       }
@@ -537,10 +653,10 @@ export class Match {
     const b = this.ball;
     const has = b.owner === p;
     switch (action) {
-      case 'pass': if (has) this.act(p, () => this.pass(p, aim, false)); break;
-      case 'longPass': if (has) this.act(p, () => this.pass(p, aim, true)); break;
-      case 'throughBall': if (has) this.act(p, () => this.throughBall(p, aim, false)); break;
-      case 'loftedThroughBall': if (has) this.act(p, () => this.throughBall(p, aim, true)); break;
+      case 'pass': if (has) this.act(p, () => this.pass(p, aim, false), 'pass', this.aimPoint(p, aim)); break;
+      case 'longPass': if (has) this.act(p, () => this.pass(p, aim, true), 'kick', this.aimPoint(p, aim)); break;
+      case 'throughBall': if (has) this.act(p, () => this.throughBall(p, aim, false), 'pass', this.aimPoint(p, aim, true)); break;
+      case 'loftedThroughBall': if (has) this.act(p, () => this.throughBall(p, aim, true), 'kick', this.aimPoint(p, aim, true)); break;
       case 'shoot': if (has) { c.charge = 0; c.chargeBit = bit; } break; // hold for power, fires on release
       case 'shortThrow': if (has) this.act(p, () => this.throwIn(p, aim, false), 'throw'); break;
       case 'longThrow': if (has) this.act(p, () => this.throwIn(p, aim, true), 'throw'); break;
@@ -626,24 +742,41 @@ export class Match {
     this.onEvent({ type: 'skill', kind, player: p });
   }
 
-  // Start a kick or throw: the animation winds up, the ball leaves a moment later
-  act(p: Player, fn: () => void, anim: 'kick' | 'throw' = 'kick') {
+  // Start a kick, a pass or a throw: the animation winds up, the ball leaves a moment later
+  // `to`: where it's going, if known: he turns to face it first
+  act(p: Player, fn: () => void, anim: Strike | 'throw' = 'kick', to: Point | null = null) {
     if (this.ball.owner !== p || p.windup || p.runup) return;
     // dead-ball kicks are taken with a run-up: he jogs in from a few paces back and strikes it on the move
-    if (anim === 'kick' && p.frozen && this.setPieceKind && RUN_UP.includes(this.setPieceKind)) {
+    if (anim !== 'throw' && p.frozen && this.setPieceKind && RUN_UP.includes(this.setPieceKind)) {
       p.runup = { fn };
+      p.strikeKind = 'kick';
+      p.striking = p.footed === Footed.Left ? Footed.Left : Footed.Right; // (a dead ball: his better foot)
       return;
     }
-    p.windup = { t: anim === 'throw' ? 0.17 : 0.13, fn };
-    if (anim === 'throw') p.model.throwBall();
-    else p.model.kick();
+    const throwing = anim === 'throw';
+    p.windup = { t: throwing ? 0.17 : KICK_CONTACT, fn, started: throwing, to, waitT: 0 };
+    if (throwing) p.model.throwBall();
+    else {
+      // (the strike itself starts once he's on the ball: see the windup in step)
+      p.strikeKind = anim;
+      p.striking = p.pickFoot(this.ball.x, this.ball.z);
+    }
   }
+
+  // The weather for this match (none: dry). In the snow the ball is orange, so it can be seen.
+  setWeather(w: Weather | null) {
+    this.weather = w;
+    (this.ballMesh.material as THREE.MeshStandardMaterial).color.set(w?.snow ? SNOW_BALL : '#ffffff');
+  }
+  get weatherNow() { return this.weather; }
 
   // ------------------------------------------------------------ main loop --
   update(dt: number) {
     const b = this.ball;
     this.stateT += dt;
     this.simT += dt;
+    this.weather?.step(this.simT, dt);
+    setPitch(this.weather); // (every step: another match may have left the pitch wet)
 
     if (this.state === 'play' && !this.demo && !this.anyFrozen()) {
       this.clock += dt;
@@ -779,18 +912,48 @@ export class Match {
     }
     if (!(p.jumpT > 0)) p.wallJumping = false;
     if (p.downT <= 0) p.diveDir = 0;
-    if (p.windup) {
+    if (p.windup && !p.windup.started) {
+      // Getting to it and lining up: the swing only starts once the ball is at his feet (it may be a
+      // stride ahead after a touch) and he's turned near enough to where it's going, so nobody kicks
+      // thin air, and a pass back is played after turning with the ball, not by spinning on the spot
+      const w = p.windup, b = this.ball;
+      w.waitT += dt;
+      const spot = this.strikeSpot(p);
+      const reachable = b.owner !== p || this.inHands(p) || Math.hypot(b.x - spot.x, b.z - spot.z) < CONTACT.set;
+      w.reachable = reachable;
+      const off = w.to ? Math.abs(angDiff(Math.atan2(w.to.x - p.x, w.to.z - p.z), p.facing)) : 0;
+      const hurry = p.human ? BALANCE.hurry.human : BALANCE.hurry.ai;
+      if (reachable && (off < BALANCE.turned || w.waitT > hurry)) {
+        w.started = true;
+        w.t = KICK_CONTACT;
+        p.model.kick(p.striking, p.strikeKind);
+      } else if (w.waitT > BALANCE.giveUp) p.windup = null; // couldn't get there: no kick
+    } else if (p.windup) {
       p.windup.t -= dt;
-      // you can only strike it once you've got to it (it may be a stride ahead after a touch)
-      const b = this.ball;
-      const reachable = b.owner !== p || p.frozen || p.role === 'GK' ||
-        Math.hypot(b.x - p.x - p.dirX * 0.4, b.z - p.z - p.dirZ * 0.4) < 0.7;
+      // it's struck when the swinging foot meets it: not before, and never from a distance
+      const b = this.ball, spot = this.strikeSpot(p);
+      const reachable = b.owner !== p || p.frozen || p.role === 'GK' || Math.hypot(b.x - spot.x, b.z - spot.z) < CONTACT.again;
       p.windup.reachable = reachable;
       if (p.windup.t < -0.6 && !reachable) p.windup = null; // couldn't get there: no kick
       else if (p.windup.t <= 0 && reachable) {
-        const fn = p.windup.fn;
-        p.windup = null;
-        if (this.ball.owner === p && this.state === 'play') fn();
+        const foot = p.model.strikingFootWorld(tmpV);
+        const gap = Math.hypot(foot.x - b.x, foot.z - b.z);
+        if (gap > CONTACT.foot && gap < CONTACT.again && !p.windup.again && !p.frozen) {
+          // not there yet: he steps onto it and swings again, meeting it this time
+          p.windup.again = true;
+          p.windup.t = KICK_CONTACT;
+          p.model.kick(p.striking, p.strikeKind);
+        } else {
+          const fn = p.windup.fn;
+          p.windup = null;
+          // the ball sits against the boot as it's struck (the last few centimetres)
+          if (gap > BALL_R && b.owner === p) {
+            const k = Math.min(gap - BALL_R, CONTACT.snap) / gap;
+            b.x += (foot.x - b.x) * k;
+            b.z += (foot.z - b.z) * k;
+          }
+          if (this.ball.owner === p && this.state === 'play') fn();
+        }
       }
     }
     const owner = this.ball.owner === p;
@@ -807,17 +970,28 @@ export class Match {
       p.vx *= 0.85;
       p.vz = p.diveDir * p.diveSpeed;
     } else if (p.runup && this.spot) {
-      // run up to the dead ball; the strike starts as he arrives
-      const dx = this.spot.x - p.x, dz = this.spot.z - p.z, d = Math.hypot(dx, dz);
-      const sp = Math.min(5.2, Math.hypot(p.vx, p.vz) + 9 * dt);
+      // run up to the dead ball, to where his standing foot goes beside it; the strike starts as he
+      // arrives (he slows to a stop through it, so it starts a little before)
+      const at = p.model.strikeSpot(p.strikeKind, p.striking);
+      const fx = p.dirX, fz = p.dirZ;
+      const tx = this.spot.x - (fx * at.z + fz * at.x), tz = this.spot.z - (fz * at.z - fx * at.x);
+      const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz);
+      const sp = Math.min(5.2, Math.hypot(p.vx, p.vz) + 9 * dt, d * 4 + 0.6);
       p.vx = (dx / (d || 1)) * sp;
       p.vz = (dz / (d || 1)) * sp;
-      p.facing += clamp(angDiff(Math.atan2(dx, dz), p.facing), -6 * dt, 6 * dt);
-      if (d < 0.75) {
-        p.windup = { t: 0.12, fn: p.runup.fn };
+      p.facing += clamp(angDiff(Math.atan2(this.spot.x - p.x, this.spot.z - p.z), p.facing), -6 * dt, 6 * dt);
+      if (d < Math.max(0.15, sp * KICK_CONTACT * 0.35)) {
+        p.windup = { t: KICK_CONTACT, fn: p.runup.fn, started: true, to: null, waitT: 0 };
         p.runup = null;
-        p.model.kick();
+        p.model.kick(p.striking, p.strikeKind);
       }
+    } else if (p.frozen && p.windup && !p.windup.started && this.ball.owner === p && !this.inHands(p)) {
+      // a dead ball with no run-up (a kick-off, a short free kick): a step to put it beside his standing foot
+      const spot = this.strikeSpot(p), b = this.ball;
+      const dx = b.x - spot.x, dz = b.z - spot.z, d = Math.hypot(dx, dz);
+      const sp = Math.min(2, d * 5);
+      p.vx = d > 0.01 ? (dx / d) * sp : 0;
+      p.vz = d > 0.01 ? (dz / d) * sp : 0;
     } else if (p.downT > 0 || p.frozen || this.state === 'fulltime' || this.state === 'halftime') {
       p.vx *= Math.max(0, 1 - dt * 8);
       p.vz *= Math.max(0, 1 - dt * 8);
@@ -829,10 +1003,10 @@ export class Match {
       // tired legs: slower, and a spent player can barely sprint
       const fresh = 0.8 + 0.2 * p.energy;
       const canSprint = p.wantSprint && p.energy > 0.12;
-      let max = p.maxSpeed * (canSprint ? 1 : 0.68) * fresh;
+      let max = p.maxSpeed * (canSprint ? 1 : 0.68) * fresh * (0.6 + 0.4 * pitch.footing);
       // with the ball: dribbling decides how much pace you keep (knock-and-run types lose least)
       if (owner) max *= (0.78 + 0.2 * p.stat('dribbling')) * (p.style === 'knock' ? 1.06 : p.style === 'close' ? 0.97 : 1);
-      if (p.windup && p.windup.reachable !== false) max *= 0.45;
+      if (p.windup && p.windup.reachable !== false) max *= p.windup.started ? 0.3 : 0.45;
       if (p.skillT > 0) max = p.skillKind === 'stepover' ? Math.min(max, 2.2) : Math.min(max, 1.2);
       if (p.staggerT > 0) max = Math.min(max, 1.5); // wrong-footed
       if (p.burstT > 0) max *= 1.06;
@@ -849,7 +1023,13 @@ export class Match {
         // straight; the stick only decides where the next touch sends it
         const bs = Math.hypot(b.vx, b.vz);
         const ux = bs > 0.5 ? b.vx / bs : ix, uz = bs > 0.5 ? b.vz / bs : iz;
-        const tx = b.x + b.vx * 0.15 - ux * 0.3, tz = b.z + b.vz * 0.15 - uz * 0.3;
+        let tx = b.x + b.vx * 0.15 - ux * 0.3, tz = b.z + b.vz * 0.15 - uz * 0.3;
+        if (p.windup) {
+          // lining up a strike: step in so the ball is beside the standing foot
+          const at = p.model.strikeSpot(p.strikeKind, p.striking);
+          tx = b.x - (p.dirX * at.z + p.dirZ * at.x);
+          tz = b.z - (p.dirZ * at.z - p.dirX * at.x);
+        }
         const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz);
         const urge = d > 0.8 ? 1 : Math.max(Math.min(1, im), d / 0.8);
         mx = d > 0.05 ? (dx / d) * urge : 0;
@@ -876,7 +1056,7 @@ export class Match {
       const at = Math.abs(turn);
       if (at > 2.2) want *= H ? 0.5 : 0.1; // reversing: stop, turn, go
       else if (at > 0.6) want *= 1 - (H ? 0.3 : 0.55) * ((at - 0.6) / 1.6);
-      const accel = (H ? 12 : 6) * (0.75 + 0.5 * p.stat('pace')) * (0.8 + 0.2 * p.energy) * (p.burstT > 0 ? 1.6 : 1);
+      const accel = (H ? 12 : 6) * (0.75 + 0.5 * p.stat('pace')) * (0.8 + 0.2 * p.energy) * (p.burstT > 0 ? 1.6 : 1) * pitch.footing;
       const decel = H ? 16 : 9;
       const spd = want > cSpeed ? Math.min(want, cSpeed + accel * dt) : Math.max(want, cSpeed - decel * dt);
       p.vx = Math.sin(dir) * spd;
@@ -894,11 +1074,14 @@ export class Match {
       const toBall = Math.atan2(this.ball.x - p.x, this.ball.z - p.z);
       p.faceMove = p.faceMove ? sp > 3.0 : sp > 4.0; // hysteresis so nobody flickers between the two
       let target = null;
-      if (owner) target = sp > 0.3 ? Math.atan2(p.vx, p.vz) : null;
+      const lining = p.windup && !p.windup.started ? p.windup.to : null;
+      if (p.windup?.started && !p.frozen) target = null; // mid-swing: the body's committed
+      else if (lining) target = Math.atan2(lining.x - p.x, lining.z - p.z); // turning to strike it
+      else if (owner) target = sp > 0.3 ? Math.atan2(p.vx, p.vz) : null;
       else if (p.faceMove || (p.human && p.wantSprint && sp > 0.4)) target = Math.atan2(p.vx, p.vz);
       else target = toBall;
       if (target !== null) {
-        const rate = owner ? 7 : p.faceMove ? 7 : 5;
+        const rate = lining ? BALANCE.turn : owner ? 7 : p.faceMove ? 7 : 5;
         p.facing += clamp(angDiff(target, p.facing), -rate * dt, rate * dt);
       }
     }
@@ -1072,9 +1255,13 @@ export class Match {
     if (!b.inNet && Math.abs(px) <= L / 2 && Math.abs(b.x) > L / 2 && Math.abs(b.z) < GW / 2 && b.y < GH) b.inNet = true;
     if (b.inNet) {
       const back = L / 2 + 1.8;
-      if (Math.abs(b.x) > back) { b.x = Math.sign(b.x) * back; b.vx *= -0.2; b.vz *= 0.5; }
-      if (b.y > GH - BALL_R) { b.y = GH - BALL_R; b.vy = -Math.abs(b.vy) * 0.2; }
-      if (Math.abs(b.z) > GW / 2 - BALL_R) { b.z = Math.sign(b.z) * (GW / 2 - BALL_R); b.vz *= -0.2; }
+      const sp = Math.hypot(b.vx, b.vy, b.vz);
+      let hit = false;
+      if (Math.abs(b.x) > back) { b.x = Math.sign(b.x) * back; b.vx *= -0.2; b.vz *= 0.5; hit = true; }
+      if (b.y > GH - BALL_R) { b.y = GH - BALL_R; b.vy = -Math.abs(b.vy) * 0.2; hit = true; }
+      if (Math.abs(b.z) > GW / 2 - BALL_R) { b.z = Math.sign(b.z) * (GW / 2 - BALL_R); b.vz *= -0.2; hit = true; }
+      if (hit && sp > NET_FELT) this.onEvent({ type: 'net', x: b.x, y: b.y, z: b.z, speed: sp });
+      b.curl = 0;
     }
     this.checkLines();
   }
@@ -1089,7 +1276,7 @@ export class Match {
     b.z += b.vz * dt;
     const bs = Math.hypot(b.vx, b.vz);
     if (bs > 0) {
-      const ns = Math.max(0, bs - (ROLL_A + ROLL_B * bs) * dt);
+      const ns = Math.max(0, bs - (pitch.rollA + pitch.rollB * bs) * dt);
       b.vx *= ns / bs;
       b.vz *= ns / bs;
     }
@@ -1099,7 +1286,13 @@ export class Match {
     let wx = p.wantX, wz = p.wantZ;
     const wm = Math.hypot(wx, wz);
     if (wm < 0.2) { wx = fx; wz = fz; } else { wx /= wm; wz /= wm; }
-    const footX = p.x + fx * 0.35, footZ = p.z + fz * 0.35;
+    let footX = p.x + fx * 0.35, footZ = p.z + fz * 0.35;
+    if (p.windup && !p.frozen) {
+      // setting it for a strike: where the boot will meet it, beside the standing foot
+      const at = p.model.strikeSpot(p.strikeKind, p.striking);
+      footX = p.x + fx * at.z + fz * at.x;
+      footZ = p.z + fz * at.z - fx * at.x;
+    }
     const dFoot = Math.hypot(b.x - footX, b.z - footZ);
     const ahead = (b.x - p.x) * fx + (b.z - p.z) * fz;
     const ballAng = bs > 0.8 ? Math.abs(angDiff(Math.atan2(b.vx, b.vz), Math.atan2(wx, wz))) : 0;
@@ -1107,8 +1300,9 @@ export class Match {
     const skill = p.stat('dribbling');
     let touchFoot: Foot | null = null;
 
-    if (wm < 0.2 && sp < 1.2) {
-      // standing on it / shielding: the ball settles at the feet (cushioned, not snapped)
+    if ((wm < 0.2 && sp < 1.2) || (p.windup && dFoot < 2.5)) {
+      // standing on it / shielding, or setting it for a strike: the ball settles at the feet
+      // (cushioned, not snapped)
       if (dFoot < 1.0) {
         b.vx = b.vx * 0.85 + (footX - b.x) * 3;
         b.vz = b.vz * 0.85 + (footZ - b.z) * 3;
@@ -1295,9 +1489,13 @@ export class Match {
     for (const p of this.all) {
       if (p.role === 'GK' || p.kickCd > 0 || p.downT > 0 || p.frozen || p.tackleT > 0 || p.aerialCd > 0) continue;
       if (rel && p.team !== rel.gk.team && this.simT - rel.t < 0.4 && Math.hypot(p.x - rel.gk.x, p.z - rel.gk.z) < 2.5) continue;
-      const d = Math.hypot(b.x - p.x, b.z - p.z);
-      const reach = this.passTo === p ? 0.95 : 0.75;
-      if (d < reach && d < bd) { bd = d; best = p; }
+      // it has to reach the head, the chest or the thigh itself, not just come near him
+      const d = Math.hypot(b.x - p.x, b.z - p.z), tall = p.model.build;
+      const extra = this.passTo === p ? CONTACT.reachReceiver : 0;
+      for (const part of Object.keys(PARTS) as (keyof typeof PARTS)[]) {
+        const g = Math.hypot(d - PARTS[part].fwd * tall, b.y - PARTS[part].up * tall);
+        if (g < CONTACT[part] + extra && g < bd) { bd = g; best = p; }
+      }
     }
     if (!best) return;
     const p = best;
@@ -1414,13 +1612,15 @@ export class Match {
     function dist(a: Player | null, q: Player) { return a ? Math.hypot(a.x - q.x, a.z - q.z) : 999; }
   }
 
-  kickBall(p: Player, vx: number, vy: number, vz: number, keepPos = false) {
+  kickBall(p: Player, vx: number, vy: number, vz: number, keepPos = false, curl = 0) {
     const b = this.ball;
     const fromHands = this.inHands(p);
     b.owner = null; // the ball is struck from wherever it is: it never jumps to the foot
     b.vx = vx;
     b.vy = vy;
     b.vz = vz;
+    b.curl = curl;
+    this.curlBy = p.human ? { human: p.human, t: this.simT } : null;
     if (fromHands) this.gkRelease = { t: this.simT, gk: p };
     // back-pass rule: a deliberate kick (or throw-in) by a teammate means the keeper can't handle it
     b.footBy = !keepPos && p.role !== 'GK' ? p.team : null;
@@ -1443,6 +1643,35 @@ export class Match {
     this.onEvent({ type: 'kick', power: Math.hypot(vx, vy, vz) });
   }
 
+  // Where the ball should be for the strike he's lining up (world x, z): beside his standing foot
+  strikeSpot(p: Player): Point {
+    const at = p.model.strikeSpot(p.strikeKind, p.striking);
+    return { x: p.x + p.dirX * at.z + p.dirZ * at.x, z: p.z + p.dirZ * at.z - p.dirX * at.x };
+  }
+
+  // The goal he's attacking (its middle)
+  goalOf(p: Player): Point { return { x: p.team.side * this.L / 2, z: 0 }; }
+
+  // Where a pass the player you control is about to play will go: along the stick if it's held, or
+  // to whoever the pass would pick (through balls: ahead of the runner)
+  aimPoint(p: Player, aim: Aim, through = false): Point | null {
+    if (aim) return { x: p.x + aim.x * 10, z: p.z + aim.z * 10 };
+    if (through) return { x: p.x + p.team.side * 10, z: p.z };
+    const m = this.passTarget(p, null);
+    return m ? { x: m.x, z: m.z } : null;
+  }
+
+  // How well he can strike it this way (`dir`) from the way he's facing: an error multiplier, extra
+  // spread (rad), and how much of the pace he gets on it. A really awkward one leaves him stumbling.
+  // He turns as far into it as the hips allow.
+  balance(p: Player, dir: number) {
+    const off = Math.abs(angDiff(dir, p.facing));
+    const k = clamp((off - BALANCE.free) / (Math.PI - BALANCE.free), 0, 1);
+    if (k > BALANCE.stumble) p.staggerT = Math.max(p.staggerT, BALANCE.stumbleT);
+    p.facing += clamp(angDiff(dir, p.facing), -BALANCE.free, BALANCE.free);
+    return { error: 1 + BALANCE.error * k, spread: BALANCE.spread * k * rand(-1, 1), power: 1 - BALANCE.power * k };
+  }
+
   // Kick to a point on the ground, rolled or lofted
   kickTo(p: Player, tx: number, tz: number, lob: boolean, tgt: Player | null, errScale = 1, opts: KickOptions = {}) {
     // passes are aimed to stay on the pitch
@@ -1450,19 +1679,19 @@ export class Match {
     tz = clamp(tz, -this.W / 2 + 2.5, this.W / 2 - 2.5);
     let dx = tx - p.x, dz = tz - p.z;
     const d = Math.max(1, Math.hypot(dx, dz));
-    const miss = (1 - p.stat('passing')) * errScale;
-    const ang = Math.atan2(dx, dz) + miss * 0.15 * rand(-1, 1);
+    const bal = this.balance(p, Math.atan2(dx, dz));
+    const miss = (1 - p.stat('passing')) * errScale * p.footError * bal.error;
+    const ang = Math.atan2(dx, dz) + miss * 0.15 * rand(-1, 1) + bal.spread;
     dx = Math.sin(ang);
     dz = Math.cos(ang);
-    p.facing = ang;
     if (lob) {
       // chips go up steeply, long balls are driven flatter; aim to land just short of the man
       const el = opts.angle ?? (d < 15 ? 0.62 : d < 30 ? 0.5 : 0.42);
-      const v = loftSpeed(d * 0.95, el) * (1 + miss * 0.12 * rand(-1, 1));
+      const v = loftSpeed(d * 0.95, el) * (1 + miss * 0.12 * rand(-1, 1)) * (0.5 + 0.5 * p.footPower) * bal.power;
       this.kickBall(p, dx * v * Math.cos(el), v * Math.sin(el), dz * v * Math.cos(el));
     } else {
       // longer passes are struck harder so they still arrive with zip
-      const v = Math.min(30, groundSpeed(d, opts.arrive ?? Math.min(12, 7 + d * 0.15)));
+      const v = Math.min(30, groundSpeed(d, opts.arrive ?? Math.min(12, 7 + d * 0.15))) * bal.power;
       this.kickBall(p, dx * v, 0, dz * v);
     }
     this.passTo = tgt;
@@ -1495,7 +1724,7 @@ export class Match {
       for (let i = 0; i < 400 && sDone < d; i++) {
         const st = 0.03;
         sDone += v * st;
-        v = Math.max(0.5, v - (ROLL_A + ROLL_B * v) * st);
+        v = Math.max(0.5, v - (pitch.rollA + pitch.rollB * v) * st);
         t += st;
         if (sDone >= next) { samples.push([Math.min(sDone, d), t]); next += 1.5; }
       }
@@ -1526,7 +1755,7 @@ export class Match {
     else {
       const arrive = Math.min(12, 7 + d0 * 0.15);
       const v0 = Math.min(30, groundSpeed(d0, arrive));
-      T = Math.log((ROLL_A + ROLL_B * v0) / (ROLL_A + ROLL_B * arrive)) / ROLL_B;
+      T = Math.log((pitch.rollA + pitch.rollB * v0) / (pitch.rollA + pitch.rollB * arrive)) / pitch.rollB;
     }
     return [m.x + m.vx * T * 0.7, m.z + m.vz * T * 0.7];
   }
@@ -1682,17 +1911,25 @@ export class Match {
     const dx = gx - p.x, dz = tz - p.z;
     const d = Math.hypot(dx, dz);
     const sk = p.stat('shooting');
-    const speed = 15 + power * 15 * (0.65 + 0.35 * sk);
+    const speed0 = (15 + power * 15 * (0.65 + 0.35 * sk)) * p.footPower;
     // finishing isn't perfect: error grows with distance, pressure and blasting it
     const pressure = this.openness(p.team, p.x, p.z) < 2.5 ? 0.035 : 0;
-    const err = 0.05 + (1 - sk) * 0.3 + pressure + Math.max(0, power - 0.8) * 0.2 + Math.min(0.05, d / 700);
-    const ang = Math.atan2(dx, dz) + (rand(-1, 1) + rand(-1, 1)) * 0.5 * err * (penalty ? 0.5 : 1);
+    const bal = penalty ? { error: 1, spread: 0, power: 1 } : this.balance(p, Math.atan2(dx, dz));
+    const err = (0.05 + (1 - sk) * 0.3 + pressure + Math.max(0, power - 0.8) * 0.2 + Math.min(0.05, d / 700)) * p.footError * bal.error;
+    // the computer sometimes bends one round the keeper: aimed outside the post and curled in
+    let curl = 0, aimAng = Math.atan2(dx, dz);
+    if (!p.human && !penalty && Math.abs(tz) > 1 && Math.random() < CURL.aiChance) {
+      curl = CURL.ai * Math.sign(tz * Math.sin(aimAng));
+      const T = d / (15 + power * 15), drift = 0.5 * CURL.ai * T * T; // how far it bends on the way
+      aimAng -= Math.sign(curl) * drift / d; // (aimed that far out the other way)
+    }
+    const ang = aimAng + (rand(-1, 1) + rand(-1, 1)) * 0.5 * err * (penalty ? 0.5 : 1) + bal.spread;
     // height as it reaches the goal: driven low by default, rising with power (and over the bar if you lean back on it)
     let h = 0.25 + power * 1.4 + rand(-0.3, 0.3) + Math.max(0, power - 0.85) * 3;
     h = Math.max(0.15, h);
+    const speed = speed0 * bal.power;
     const vy = Math.min(9, shotVy(d, speed, h));
-    p.facing = ang;
-    this.kickBall(p, Math.sin(ang) * speed, vy, Math.cos(ang) * speed);
+    this.kickBall(p, Math.sin(ang) * speed, vy, Math.cos(ang) * speed, false, curl);
     this.passTo = null;
     this.onEvent({ type: 'shot' });
     this.planSave(p.team.opp, penalty);
@@ -1707,7 +1944,7 @@ export class Match {
     const gx = -defTeam.side * this.L / 2;
     if (Math.abs(b.vx) < 1 || (gx - b.x) * b.vx <= 0) return;
     // fly the ball forward: where does it pass the keeper, and where does it cross the line?
-    const sim = { x: b.x, y: b.y, z: b.z, vx: b.vx, vy: b.vy, vz: b.vz };
+    const sim = { x: b.x, y: b.y, z: b.z, vx: b.vx, vy: b.vy, vz: b.vz, curl: b.curl };
     const dirX = Math.sign(b.vx);
     let t = 0, atKeeper = null, atLine = null;
     for (let i = 0; i < 200 && !atLine; i++) {
@@ -2452,7 +2689,7 @@ export class Match {
     const s = p.team.side, gx = s * this.L / 2;
     const kind = this.setPieceKind;
     const dGoal = Math.hypot(gx - p.x, p.z);
-    if (kind === 'corner') return this.act(p, () => this.cross(p));
+    if (kind === 'corner') return this.act(p, () => this.cross(p), 'kick', { x: this.goalOf(p).x - p.team.side * 8, z: 0 });
     if (kind === 'goalkick') {
       // wait for the defenders to get into position (a few seconds at most)
       const defs = p.team.players.filter((m) => m.role === 'DEF');
@@ -2467,32 +2704,32 @@ export class Match {
           const open = this.openness(p.team, m.x, m.z);
           if (open > 5 && open > bd && this.passSafety(p, m.x, m.z, false, m) > 0.25) { bd = open; best = m; }
         }
-        if (best) return this.act(p, () => this.kickTo(p, best.x, best.z, false, best));
+        if (best) return this.act(p, () => this.kickTo(p, best.x, best.z, false, best), 'pass', best);
       }
       // long: toward a forward or midfielder in the middle third
       const fwd = p.team.players.filter((m) => m.role === 'FWD' || m.role === 'MID').sort((a, c) => (c.x - a.x) * s)[0];
       const tx = fwd ? fwd.x : p.x + s * 45, tz = fwd ? fwd.z : rand(-12, 12);
-      return this.act(p, () => this.kickTo(p, tx, tz, true, fwd, 1.5, { angle: 0.45 }));
+      return this.act(p, () => this.kickTo(p, tx, tz, true, fwd, 1.5, { angle: 0.45 }), 'kick', { x: tx, z: tz });
     }
     if (kind === 'throw') return this.act(p, () => this.throwIn(p, null, false), 'throw');
     if (kind === 'penalty') {
-      return this.act(p, () => this.shoot(p, { x: 0, z: Math.random() < 0.5 ? rand(-1, -0.45) : rand(0.45, 1) }, rand(0.55, 0.8)));
+      return this.act(p, () => this.shoot(p, { x: 0, z: Math.random() < 0.5 ? rand(-1, -0.45) : rand(0.45, 1) }, rand(0.55, 0.8)), 'kick', this.goalOf(p));
     }
     if (kind === 'freekick') {
       const set = p.team.opp.players.every((q) => !q.wall || Math.hypot(q.x - q.wall.x, q.z - q.wall.z) < 0.8);
       if (!set && this.stateT < 6.5) return;
     }
     if (kind === 'freekick' && dGoal < 30 && Math.abs(p.z) < 20) {
-      return this.act(p, () => this.shoot(p, { x: 0, z: Math.random() < 0.5 ? rand(-1, -0.5) : rand(0.5, 1) }, rand(0.6, 0.85)));
+      return this.act(p, () => this.shoot(p, { x: 0, z: Math.random() < 0.5 ? rand(-1, -0.5) : rand(0.5, 1) }, rand(0.6, 0.85)), 'kick', this.goalOf(p));
     }
     if (kind === 'kickoff') {
       const mate = p.team.players.filter((m) => m !== p && m.role !== 'GK').sort((a, c) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(c.x - p.x, c.z - p.z))[0];
-      if (mate) return this.act(p, () => this.kickTo(p, mate.x, mate.z, false, mate, 0.2));
+      if (mate) return this.act(p, () => this.kickTo(p, mate.x, mate.z, false, mate, 0.2), 'pass', mate);
     }
     this.passTarget(p, null);
     const plan = this.passPlan;
-    if (plan) return this.act(p, () => this.playPass(p, plan));
-    this.act(p, () => this.clear(p));
+    if (plan) return this.act(p, () => this.playPass(p, plan), 'pass', plan ? { x: plan.tx, z: plan.tz } : null);
+    this.act(p, () => this.clear(p), 'kick', { x: p.x + p.team.side * 30, z: p.z });
   }
 
   aiCarrier(p: Player) {
@@ -2547,7 +2784,7 @@ export class Match {
 
     const dGoal = Math.hypot(gx - p.x, p.z);
     if (dGoal < 9 && Math.abs(p.z) < 8 && p.kickCd <= 0) {
-      return this.act(p, () => this.shoot(p, { x: 0, z: Math.random() < 0.5 ? rand(-0.8, -0.3) : rand(0.3, 0.8) }, rand(0.3, 0.55)));
+      return this.act(p, () => this.shoot(p, { x: 0, z: Math.random() < 0.5 ? rand(-0.8, -0.3) : rand(0.3, 0.8) }, rand(0.3, 0.55)), 'kick', this.goalOf(p));
     }
     if (p.aiT > 0) return;
     p.aiT = rand(0.25, 0.45);
@@ -2556,43 +2793,43 @@ export class Match {
     if (toLine > L * 0.72 && nd < 3.5 && (p.role === 'DEF' || Math.random() < 0.3)) {
       this.passTarget(p, null);
       const plan = this.passPlan;
-      if (plan && plan.margin > 0.2) return this.act(p, () => this.playPass(p, plan));
-      return this.act(p, () => this.clear(p));
+      if (plan && plan.margin > 0.2) return this.act(p, () => this.playPass(p, plan), 'pass', plan ? { x: plan.tx, z: plan.tz } : null);
+      return this.act(p, () => this.clear(p), 'kick', { x: p.x + p.team.side * 30, z: p.z });
     }
     // shoot (how far out, and how keen, depends on how we're told to play)
     if (dGoal < tu.shootRange && Math.abs(p.z) < 18) {
       const pShoot = Math.min(0.95, (dGoal < 11 ? 0.9 : dGoal < 17 ? 0.4 : 0.1) * tu.shootKeen);
       if (Math.random() < pShoot) {
         const aimZ = Math.random() < 0.5 ? rand(-0.85, -0.2) : rand(0.2, 0.85);
-        return this.act(p, () => this.shoot(p, { x: 0, z: aimZ }, clamp(0.35 + dGoal / 40 + rand(0, 0.2), 0.3, 0.92)));
+        return this.act(p, () => this.shoot(p, { x: 0, z: aimZ }, clamp(0.35 + dGoal / 40 + rand(0, 0.2), 0.3, 0.92)), 'kick', this.goalOf(p));
       }
     }
     // cross from wide in the final third
-    if (toLine < 24 && Math.abs(p.z) > W * 0.26 && Math.random() < 0.55) return this.act(p, () => this.cross(p));
+    if (toLine < 24 && Math.abs(p.z) > W * 0.26 && Math.random() < 0.55) return this.act(p, () => this.cross(p), 'kick', { x: this.goalOf(p).x - p.team.side * 8, z: 0 });
     // pressed: find a pass that will actually get there; if there isn't one, keep the ball
     if (nd < 2.4 && Math.random() < 0.6) {
       this.passTarget(p, null);
       const plan = this.passPlan;
-      if (plan && plan.margin > 0.2) return this.act(p, () => this.playPass(p, plan));
+      if (plan && plan.margin > 0.2) return this.act(p, () => this.playPass(p, plan), 'pass', plan ? { x: plan.tx, z: plan.tz } : null);
     }
     // a forward pass when one is clearly on (on the break, look for it first)
     if (Math.random() < (breaking ? 0.45 : tu.forwardPass)) {
       this.passTarget(p, null, { forwardOnly: true });
       const plan = this.passPlan;
-      if (plan && plan.margin > (breaking ? 0.15 : tu.forwardMargin)) return this.act(p, () => this.playPass(p, plan));
+      if (plan && plan.margin > (breaking ? 0.15 : tu.forwardMargin)) return this.act(p, () => this.playPass(p, plan), 'pass', plan ? { x: plan.tx, z: plan.tz } : null);
     }
     // outside the final third, keep the ball moving with simple safe passes
     if (toLine > 30 && !breaking && Math.random() < tu.safePass) {
       this.passTarget(p, null);
       const plan = this.passPlan;
-      if (plan && plan.margin > 0.35) return this.act(p, () => this.playPass(p, plan));
+      if (plan && plan.margin > 0.35) return this.act(p, () => this.playPass(p, plan), 'pass', plan ? { x: plan.tx, z: plan.tz } : null);
     }
     // blocked in front: recycle it to someone free
     const ahead = p.team.opp.players.some((o) => (o.x - p.x) * s > 0 && (o.x - p.x) * s < 5 && Math.abs(o.z - p.z) < 3);
     if (ahead && Math.random() < 0.25) {
       this.passTarget(p, null);
       const plan = this.passPlan;
-      if (plan && plan.margin > 0.35) return this.act(p, () => this.playPass(p, plan));
+      if (plan && plan.margin > 0.35) return this.act(p, () => this.playPass(p, plan), 'pass', plan ? { x: plan.tx, z: plan.tz } : null);
     }
   }
 
@@ -2610,7 +2847,7 @@ export class Match {
         const pressed = this.openness(p.team, p.x, p.z) < 6;
         this.passTarget(p, null);
         const plan = this.passPlan;
-        if (plan && plan.margin > 0.3 && !pressed) this.act(p, () => this.playPass(p, plan));
+        if (plan && plan.margin > 0.3 && !pressed) this.act(p, () => this.playPass(p, plan), 'pass', plan ? { x: plan.tx, z: plan.tz } : null);
         else this.act(p, () => this.kickTo(p, p.x + s * rand(35, 50), rand(-18, 18), true, null, 2));
       }
       return;
@@ -2624,7 +2861,7 @@ export class Match {
         if (tgt && this.openness(p.team, tgt.x, tgt.z) > 6 && Math.hypot(tgt.x - p.x, tgt.z - p.z) < 26) {
           this.act(p, () => this.throwTo(p, tgt.x + tgt.vx * 0.5, tgt.z + tgt.vz * 0.5, tgt, true), 'throw');
         } else if (tgt && this.openness(p.team, tgt.x, tgt.z) > 6) {
-          this.act(p, () => this.kickTo(p, tgt.x, tgt.z, true, tgt));
+          this.act(p, () => this.kickTo(p, tgt.x, tgt.z, true, tgt), 'kick', tgt);
         } else {
           this.act(p, () => this.kickTo(p, p.x + s * rand(35, 50), rand(-15, 15), true, null, 2));
         }

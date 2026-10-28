@@ -1,56 +1,60 @@
 # Space Shooter
 
-Co-op shoot-em-up: waves, bosses, power-ups · 1–4 players · Arcade · **coming soon**
+Co-op side-scrolling shooter: waves, bosses, power-ups · 1–4 players · Arcade · **playable** (in progress)
 
-A vertical shooter you play together on one screen. Waves of raiders, power-ups that change your shot, and a boss at the end of each stage.
+Up to four of you fly together across three stages, with a boss at the end of each, sharing your spare ships and
+your score. Clear all three and they come round again, faster and tougher.
 
-## Controls (a first plan)
-
-Every game uses the same phone pad: a stick (pushed past its ring = sprint), Bolt, Drop, Leaf, Star, L1, R1, and a swipe
-across a button. This is what each does here; it goes into `controls.json` once the game exists, and the
-phone dims the buttons a situation doesn't use.
+## Playing
 
 | Button | Flying |
 |---|---|
+| Stick | Fly |
 | Bolt | Fire (hold) |
-| Drop | Bomb (clears bullets) |
-| Leaf | Focus: slow, precise movement |
-| Stick | Move |
+| Leaf | Focus (hold): slower, and your fire tightens up, for slipping between shots |
+| Drop | Bomb: clears every enemy shot and hits everything it sweeps over |
 
-## Competition
+The lobby sets the difficulty (Easy, Normal, Hard), how many computer wingmen fly with you (0 to 3; they don't use
+the team's ships) and the stage to start at. Bindings are in `controls.json`.
 
-**Arcade** · **Score attack**
+- **Weapons.** Blaster (more streams as it powers up), Spread (a fan), Laser (a beam through everything in a line)
+  and Missiles (homing, alongside the blaster). Pickups: P powers up what you have; S, L and M change it (or power it
+  up if it's the one you have); ◆ a shield that takes one hit; B a bomb; + a spare ship for the team.
+- **Getting hit.** Only the middle of your ship counts, not the wings. When you're shot down you lose a weapon level
+  (it floats there to be grabbed again) and fly back in while the team has ships left.
+- **Bosses.** Armoured until their guns are shot off; then the core opens and fights back harder.
+- **Score.** Kills close together build a chain: every five adds one to the multiplier, up to ×8. A stage clear
+  pays a bonus to everyone still flying. Out of ships, you get ten seconds to continue; the high score table
+  (`high-scores` in the game's saves) notes the continues, the stage reached and the difficulty.
+- **More ships, more to shoot.** Bosses take 40% more for each ship after the first (a lone pilot gets them 20%
+  easier), and the rest of the enemies a little more. Joining mid-game takes over a wingman's ship.
 
-Credits and continues; a high-score table with initials.
+## How it's made
 
-The formats (and how standings, brackets and seasons work in every game) are in
-[COMPETITIONS.md](../COMPETITIONS.md).
+| File | |
+|---|---|
+| `stages.ts` | The data: the enemies, the three stages (their waves, their look) and their bosses, the pickups, the difficulties. |
+| `sim.ts` | The rules, no graphics: ships and weapons, enemy paths and fire, bosses, hits, pickups, lives, the chain, and the computer pilot (wingmen and the demo). |
+| `scene.ts` | three.js: the models turned to face the camera (the field is a flat plane facing it), a moving nebula, layers of stars, a planet and scenery drifting past behind, glowing shots, beams, explosions (sparks, smoke, shockwaves, a flash), screen shake and bloom. |
+| `sound.ts` | Synthesised shots, explosions, pickups, bombs, the boss warning and an engine hum. |
+| `main.ts` | The flow: lobby (with the demo), stage intros, the boss warning, stage clear, continue, results, the high score table, saved records, stars, the phones. |
+
+`?stage=2&at=96` starts a game at the second stage's boss (for testing). The rules can be run without a browser
+(the AI flies every ship), which is how the stages were balanced.
+
+## Art
+
+Ships, enemies, bosses and scenery are [Kenney's Space Kit](https://kenney.nl/assets/space-kit) (CC0): the models
+the game uses are in `models/`, the whole pack as downloaded in `source/` (not shipped). Each ship's trim is its
+pilot's colour; the shop (`shop.json`) sells hull paint jobs.
 
 ## Originality
 
-Space shooters are a whole genre (*Space Invaders*, 1978, onwards). No marching rows of invader-style aliens, no shields-and-bunkers layout; our own enemies, stages and bosses. See [Originality](../README.md#originality).
-
-## First playable
-
-What it needs before `index.html` goes in and it shows up as playable on the game select page:
-
-- [ ] One stage and a boss
-- [ ] Enemy waves and bullet patterns
-- [ ] Power-ups and bombs
-- [ ] Shared lives, high score
-- [ ] Phones show what each button does (`input.show`); Drop in the lobby goes back to the games (`backToHub`)
-- [ ] A manual (`manual.json`): what it is, how you win, how to play, tips
-- [ ] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
-- [ ] Two keyboard players can play it too (they come free with `Input`)
+Side-scrolling shooters are a whole genre (from the early 1980s on). Our own enemies, stages and bosses, no
+borrowed names, layouts or patterns. See [Originality](../README.md#originality).
 
 ## Later
 
-- More stages
-- Revive a fallen partner
+- More stages and bosses
+- Revive a fallen partner by flying through their wreck
 - Versus mode: send enemies to the other side
-
-## Notes
-
-2D canvas is fine; pixel-art or flat vector, in brand colours.
-
-See [Building a game](../README.md) for how a game folder works and how to run it while you work on it.

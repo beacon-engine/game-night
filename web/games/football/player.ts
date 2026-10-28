@@ -1,15 +1,14 @@
-// Footballer: a realistic base body with face and hair (Quaternius Universal Base Characters, CC0),
-// animated with motion capture (Quaternius Universal Animation Library, CC0).
-// Locomotion (idle / walk / jog / sprint) comes from the motion capture, with the leg cycle synced
-// to how fast the player is really moving. Football actions (kicks, tackles, slides, falls, dives,
-// throw-ins, controls...) are posed procedurally on the same skeleton and blended in while they last.
-// Kits are painted onto the body by region.
+// Footballer: a real person (built with MakeHuman from free-licensed parts: web/people/), in a real kit
+// (shirt, shorts, socks and boots, coloured for the team, the number printed on the back), moving
+// with motion capture (CMU's and Quaternius', baked onto the same skeleton: web/people/).
+// Locomotion (idle / walk / jog / run / sprint) is captured cycles, blended by speed, with the stride
+// in step with how fast the player is really moving. Kicks and passes are captured strikes with
+// either foot, timed so the boot meets the ball when the game strikes it. Other football actions
+// (tackles, slides, falls, dives, throw-ins, controls...) are posed on the same skeleton and blended
+// in while they last.
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
-import type { GLTF } from 'three/addons/loaders/GLTFLoader.js';
-import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
-import type { Kit } from './types.ts';
+import { loadCast, loadMoves, fit, Person, type Cast, type Moves } from '@people/people.ts';
+import { Footed, type Kit } from './types.ts';
 
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -19,6 +18,10 @@ const pair = <T>(make: () => T): [T, T] => [make(), make()];
 export type SkillKind = 'stepover' | 'dragback';
 export type ControlKind = 'head' | 'chest' | 'thigh';
 export type Card = 'yellow' | 'red';
+// A kick: 0.34 s from the backswing to the follow-through, the foot meeting the ball half way
+// through the forward swing (the game strikes the ball then: match.ts uses KICK_CONTACT)
+export const KICK_CONTACT = 0.28; // the last stride and the backswing
+export const KICK_TIME = KICK_CONTACT + 0.4; // and the follow-through
 export type Foot = 0 | 1; // 0 = the -X side leg, 1 = the +X side
 
 // On the floor: 'trip' (stumbles forward, lies there, gets up) or 'side' (after a slide)
@@ -71,41 +74,41 @@ const LEG = ['leg0', 'leg1'] as const;
 const ARM = ['arm0', 'arm1'] as const;
 const noWeights = (): Weights => ({ hips: 0, spine: 0, neck: 0, leg0: 0, leg1: 0, arm0: 0, arm1: 0 });
 
-// speeds (m/s) the motion-captured cycles were recorded at, roughly
-// speeds (m/s) each cycle is played at its natural rate; `phase` lines its stride up with the others;
-// `bob` scales the hip bounce (the jog was captured as a big bounding run: 24 cm of bounce per stride,
-// where footballers move with about 6-10 cm)
-interface Loco { clip: string; speed: number; phase: number; bob: number; thigh: number; calf: number }
-const LOCO: Loco[] = [
-// `thigh`/`calf` scale how far the legs swing and the knee bends (the jog lifts its knees like a
-// high-knees drill; a footballer's stride is lower and more economical)
-  { clip: 'Walk_Loop', speed: 1.5, phase: 0.083, bob: 1, thigh: 1, calf: 1 },
-  { clip: 'Jog_Fwd_Loop', speed: 3.4, phase: 0, bob: 0.33, thigh: 0.68, calf: 0.62 },
-  { clip: 'Sprint_Loop', speed: 6.0, phase: 0, bob: 0.62, thigh: 0.88, calf: 0.78 },
-];
+// The captured cycles, slowest first, each played at its natural rate at the speed it was captured at
+// (moves.json), faster or slower in between. `phase` (worked out on loading) lines each stride up with
+// the others, so blending between them never crosses the legs.
+interface Loco { clip: string; speed: number; phase: number }
+const LOCO_CLIPS = ['walk', 'jog', 'run'];
+let LOCO: Loco[] = [];
+const IDLE = 'idle';
+// How much faster than captured a cycle plays, running k times as fast as it was captured at. Above
+// the captured run (4.8 m/s: the capture room was small) a footballer at 8 m/s doesn't turn his legs
+// over nearly twice as fast but takes longer strides, so the rate rises more slowly there.
+const FASTER = 0.5;
+const cadence = (k: number) => (k <= 1 ? k : Math.pow(k, FASTER));
+
+// Strikes: a captured kick (a shot, a long ball) and a pass, for each foot. The clip starts KICK_CONTACT
+// before its foot meets the ball, and fades back into running over the follow-through.
+const STRIKES = { kick: { [Footed.Right]: 'kick_r', [Footed.Left]: 'kick_l' }, pass: { [Footed.Right]: 'pass_r', [Footed.Left]: 'pass_l' } } as const;
+export type Strike = keyof typeof STRIKES;
+const STRIKE_FADE = { in: 0.06, out: 0.22 }; // s
 
 // ------------------------------------------------------------------ assets --
-type SkinTone = 'dark' | 'light';
-type HairMesh = THREE.Mesh | THREE.SkinnedMesh;
 interface Assets {
-  scene: THREE.Group;
-  clips: Record<string, THREE.AnimationClip>;
+  cast: Cast;
+  moves: Moves;
+  spots: Map<string, { x: number; z: number; height: number }>; // where each strike meets the ball (see strikeSpot)
   facing: number;
   c2s: THREE.Quaternion; // character space (X left, Y up, Z forward) -> the rig's space
-  bodyGeo: THREE.BufferGeometry;
-  bodyMat: THREE.MeshStandardMaterial;
-  skinMaps: Record<SkinTone, THREE.Texture>;
-  hair: Record<'buzz' | 'parted' | 'beard' | 'brows', HairMesh | null>;
 }
 let ASSET: Assets; // set by loadPlayerAssets(), before any PlayerModel is made
-const MODELS = 'models/ubc/';
 
-// the body itself (the hair, brows... are separate, much smaller meshes)
-const isBody = (o: THREE.SkinnedMesh) => o.geometry.attributes.position.count > 3000;
+// Who in the cast plays whom: outfield players, keepers (in gloves) and the referee
+const OUTFIELD = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10'];
+const KEEPERS = ['gk1', 'gk2'];
+const REFEREE = 'ref';
 
 const isBone = (o: THREE.Object3D): o is THREE.Bone => o instanceof THREE.Bone;
-const isMesh = (o: THREE.Object3D): o is THREE.Mesh => o instanceof THREE.Mesh;
-const isSkinned = (o: THREE.Object3D): o is THREE.SkinnedMesh => o instanceof THREE.SkinnedMesh;
 
 function collect<T extends THREE.Object3D>(root: THREE.Object3D, is: (o: THREE.Object3D) => o is T) {
   const out: T[] = [];
@@ -117,323 +120,62 @@ function collect<T extends THREE.Object3D>(root: THREE.Object3D, is: (o: THREE.O
 const bonesOf = (root: THREE.Object3D) => Object.fromEntries(collect(root, isBone).map((b) => [norm(b.name), b]));
 
 export async function loadPlayerAssets() {
-  const gl = new GLTFLoader();
-  const [ch, fbx, buzz, parted, beard, brows] = await Promise.all([
-    gl.loadAsync(MODELS + 'Superhero_Male_FullBody.gltf'),
-    new FBXLoader().loadAsync('models/ual_ue.fbx'),
-    gl.loadAsync(MODELS + 'Hair_Buzzed.gltf'),
-    gl.loadAsync(MODELS + 'Hair_SimpleParted.gltf'),
-    gl.loadAsync(MODELS + 'Hair_Beard.gltf'),
-    gl.loadAsync(MODELS + 'Eyebrows_Regular.gltf'),
-  ]);
-  const scene = ch.scene;
-  scene.updateMatrixWorld(true);
-  const bones = bonesOf(scene);
-  const restPelvis = bones.pelvis.position.z;
-
-  // The motion capture was made on a slightly smaller mannequin with the same skeleton:
-  // use only its joint rotations (plus pelvis height, rescaled) so each body keeps its own proportions.
-  const clips: Record<string, THREE.AnimationClip> = {};
-  for (const c of fbx.animations) {
-    const name = c.name.replace(/^.*\|/, '');
-    const tracks = [];
-    for (const t of c.tracks) {
-      const [bone, prop] = t.name.split('.');
-      // the root carries each file's own Z-up correction (on a parent node in the FBX, on the bone in
-      // the glTF), so never animate it
-      if (!bones[norm(bone)] || norm(bone) === 'root') continue;
-      if (prop === 'quaternion') {
-        // tone down knee lift: pull each key toward the clip's average leg pose
-        const loco = LOCO.find((l) => l.clip === name);
-        const nb = norm(bone);
-        const f = !loco ? 1 : nb.startsWith('thigh') ? loco.thigh : nb.startsWith('calf') ? loco.calf : 1;
-        if (f === 1) { tracks.push(t); continue; }
-        const v = t.values, n = v.length / 4;
-        const mean = new THREE.Quaternion(0, 0, 0, 0), q = new THREE.Quaternion();
-        for (let i = 0; i < n; i++) {
-          q.fromArray(v, i * 4);
-          const sgn = i && mean.dot(q) < 0 ? -1 : 1;
-          mean.x += q.x * sgn; mean.y += q.y * sgn; mean.z += q.z * sgn; mean.w += q.w * sgn;
-        }
-        mean.normalize();
-        const out = new Float32Array(v.length);
-        for (let i = 0; i < n; i++) {
-          q.fromArray(v, i * 4);
-          new THREE.Quaternion().copy(mean).slerp(q, f).toArray(out, i * 4);
-        }
-        tracks.push(new THREE.QuaternionKeyframeTrack(t.name, t.times, out));
-      }
-      else if (prop === 'position' && norm(bone) === 'pelvis') {
-        const v = t.values.slice();
-        const k = restPelvis / 0.917;
-        // calm the vertical bounce (Z is up in the rig) around its average height
-        const bob = LOCO.find((l) => l.clip === name)?.bob ?? 1;
-        let mean = 0;
-        for (let i = 2; i < v.length; i += 3) mean += v[i];
-        mean /= v.length / 3;
-        for (let i = 0; i < v.length; i++) {
-          if (i % 3 === 2) v[i] = mean + (v[i] - mean) * bob;
-          v[i] *= k;
-        }
-        tracks.push(new THREE.VectorKeyframeTrack(t.name, t.times, v));
-      }
-    }
-    clips[name] = new THREE.AnimationClip(name, c.duration, tracks);
-  }
-
+  const [cast, moves] = await Promise.all([loadCast('footballers'), loadMoves('football-moves')]);
+  // which way the bodies face (heel -> toe), from one of them at rest
+  const one = new Person(cast, OUTFIELD[0]);
+  one.root.updateMatrixWorld(true);
+  const bones = bonesOf(one.root);
   const wp = (n: string) => new THREE.Vector3().setFromMatrixPosition(bones[n].matrixWorld);
-  const f = wp('balll').sub(wp('footl')).setY(0).normalize(); // heel -> toe: which way he faces
+  const f = wp('balll').sub(wp('footl')).setY(0).normalize();
   const facing = Math.atan2(f.x, f.z);
   const c2s = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), facing);
-
-  // skin textures: the pack ships dark and light; tints give more variety
-  const body = collect(scene, isSkinned).find(isBody)!;
-  const bodyMat = body.material as THREE.MeshStandardMaterial;
-  const loadTex = (url: string) => new Promise<THREE.Texture>((res) => new THREE.TextureLoader().load(url, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; res(t); }));
-  const light = await loadTex(MODELS + 'T_Superhero_Male_Ligh.png');
-  const skinMaps = { dark: bodyMat.map!, light };
-
-  const hairMesh = (g: GLTF): HairMesh | null => collect(g.scene, isMesh)[0] ?? null;
-  ASSET = {
-    scene, clips, facing, c2s, bodyGeo: body.geometry, bodyMat, skinMaps,
-    hair: { buzz: hairMesh(buzz), parted: hairMesh(parted), beard: hairMesh(beard), brows: hairMesh(brows) },
-  };
+  ASSET = { cast, moves, facing, c2s, spots: new Map() };
+  for (const kind of Object.values(STRIKES)) for (const name of Object.values(kind)) ASSET.spots.set(name, strikePoint(one, name));
+  LOCO = LOCO_CLIPS.filter((c) => moves.clips.has(c)).map((clip) => ({ clip, speed: moves.info[clip].speed, phase: stridePhase(one, clip) }));
 }
 
-// --------------------------------------------------------------- kit paint --
-const SKINS = ['#4a2e1f', '#5b3a26', '#6b4430', '#7c5236', '#3b2417', '#8d5e3c', '#a87250', '#2f1d13'];
+// Where the striking boot is, over the ground, at the moment a strike meets the ball: in character
+// space (x to his left, z ahead), measured on one body (its height given, to scale to others).
+// A real kick meets the ball beside the standing foot, well to the side of the body's middle.
+function strikePoint(p: Person, clip: string) {
+  const c = fit(ASSET.moves, p.root).get(clip);
+  const at = ASSET.moves.info[clip]?.contact;
+  if (!c || at === undefined) return { x: 0, z: 0.35, height: p.height };
+  const mixer = new THREE.AnimationMixer(p.root);
+  mixer.clipAction(c).play();
+  mixer.setTime(at);
+  p.root.updateMatrixWorld(true);
+  const toe = p.bones.get(clip.endsWith('_l') ? 'ball_l' : 'ball_r')!.getWorldPosition(new THREE.Vector3());
+  toe.applyQuaternion(_q2.copy(ASSET.c2s).invert());
+  mixer.stopAllAction();
+  return { x: toe.x, z: toe.z, height: p.height };
+}
+
+// Where in its cycle a clip has the left foot furthest forward (about when it lands), 0..1
+function stridePhase(p: Person, clip: string) {
+  const c = fit(ASSET.moves, p.root).get(clip)!;
+  const mixer = new THREE.AnimationMixer(p.root);
+  mixer.clipAction(c).play();
+  const foot = p.bones.get('foot_l')!, hips = p.bones.get('pelvis')!;
+  const a = new THREE.Vector3(), b = new THREE.Vector3();
+  let best = -Infinity, at = 0;
+  const N = 60;
+  for (let i = 0; i < N; i++) {
+    mixer.setTime((i / N) * c.duration);
+    p.root.updateMatrixWorld(true);
+    const ahead = foot.getWorldPosition(a).sub(hips.getWorldPosition(b)).applyQuaternion(_q2.copy(ASSET.c2s).invert()).z;
+    if (ahead > best) { best = ahead; at = i / N; }
+  }
+  mixer.stopAllAction();
+  return at;
+}
+
 const BOOTS = ['#111111', '#111111', '#f5f5f5', '#e11d48', '#facc15', '#22c55e', '#2563eb'];
-const geoCache = new Map<string, THREE.BufferGeometry>();
-const matCache = new Map<string, THREE.MeshStandardMaterial>();
+const HAIR = ['#0d0a08', '#15100c', '#1e1610', '#2a1d14'];
+const SKIN = [1, 0.94, 0.88, 0.82, 0.76]; // (darker or lighter than the body's own texture)
+const GLOVES = '#e2e8f0';
 
-interface BodyColors { boots: string; shirt: string; shorts: string; socks: string; glove: string }
-
-// Mark every vertex with the kit colour of the body part it belongs to (most influential bone + height).
-// Skin areas get mask 0 and keep the skin texture.
-function paintedGeometry(geo: THREE.BufferGeometry, skeleton: THREE.Skeleton, colors: BodyColors, gk: boolean) {
-  const key = `${geo.uuid}|${JSON.stringify(colors)}|${gk}`;
-  const cached = geoCache.get(key);
-  if (cached) return cached;
-  const g = geo.clone();
-  const pos = g.attributes.position, si = g.attributes.skinIndex, sw = g.attributes.skinWeight;
-  const kit = new Float32Array(pos.count * 4);
-  const C = Object.fromEntries(Object.entries(colors).map(([k, v]) => [k, new THREE.Color(v)])) as Record<keyof BodyColors, THREE.Color>;
-  const names = skeleton.bones.map((b) => norm(b.name));
-  const finger = /index|middle|ring|pinky|thumb/;
-  for (let i = 0; i < pos.count; i++) {
-    let best = 0, bw = -1;
-    for (let k = 0; k < 4; k++) { const w = sw.getComponent(i, k); if (w > bw) { bw = w; best = si.getComponent(i, k); } }
-    const n = names[best] || '';
-    const x = Math.abs(pos.getX(i)), y = pos.getY(i);
-    let c: THREE.Color | null = null;
-    if (n.startsWith('spine') || n.startsWith('clavicle')) c = C.shirt;
-    else if (n.startsWith('upperarm')) c = gk || x < 0.43 ? C.shirt : null;
-    else if (n.startsWith('lowerarm')) c = gk ? C.shirt : null;
-    else if (n.startsWith('hand') || finger.test(n)) c = gk ? C.glove : null;
-    else if (n === 'pelvis') c = C.shorts;
-    else if (n.startsWith('thigh')) c = y > 0.66 ? C.shorts : null;
-    else if (n.startsWith('calf')) c = y > 0.46 ? null : C.socks;
-    else if (n.startsWith('foot') || n.startsWith('ball')) c = y > 0.15 && n.startsWith('foot') ? C.socks : C.boots;
-    // neck lower edge is still shirt collar
-    else if (n.startsWith('neck') && y < 1.52) c = C.shirt;
-    if (c) { kit[i * 4] = c.r; kit[i * 4 + 1] = c.g; kit[i * 4 + 2] = c.b; kit[i * 4 + 3] = 1; }
-  }
-  g.setAttribute('kit', new THREE.BufferAttribute(kit, 4));
-  geoCache.set(key, g);
-  return g;
-}
-
-// ---------------------------------------------------------------- garments --
-// A shirt and shorts made from the body itself: take the triangles of that region, smooth away the
-// muscle detail and puff them out a couple of centimetres, so they read as loose fabric over the body.
-// They're skinned to the same skeleton, so they move with the player.
-type ShellKind = 'shirt' | 'shirtLong' | 'shorts';
-const shellCache = new Map<ShellKind, THREE.BufferGeometry>();
-function inShirt(n: string, x: number, y: number, long: boolean) {
-  if (n.startsWith('spine') || n.startsWith('clavicle')) return true;
-  if (n.startsWith('upperarm')) return long || x < 0.45;
-  if (n.startsWith('lowerarm')) return long;
-  if (n.startsWith('neck')) return y < 1.52;
-  if (n === 'pelvis') return y > 0.86; // the shirt hangs over the waistband
-  return false;
-}
-function inShorts(n: string, _x: number, y: number) {
-  if (n === 'pelvis') return y < 0.95;
-  if (n.startsWith('thigh')) return y > 0.62;
-  return false;
-}
-function buildShell(geo: THREE.BufferGeometry, skeleton: THREE.Skeleton, kind: ShellKind) {
-  const cached = shellCache.get(kind);
-  if (cached) return cached;
-  const pos = geo.attributes.position, nor = geo.attributes.normal, si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight;
-  const names = skeleton.bones.map((b) => norm(b.name));
-  const inside = new Uint8Array(pos.count);
-  for (let i = 0; i < pos.count; i++) {
-    let best = 0, bw = -1;
-    for (let k = 0; k < 4; k++) { const w = sw.getComponent(i, k); if (w > bw) { bw = w; best = si.getComponent(i, k); } }
-    const n = names[best] || '', x = Math.abs(pos.getX(i)), y = pos.getY(i);
-    inside[i] = Number(kind === 'shorts' ? inShorts(n, x, y) : inShirt(n, x, y, kind === 'shirtLong'));
-  }
-  const idx = geo.index!.array;
-  const remap = new Int32Array(pos.count).fill(-1);
-  const kept: number[] = [];
-  let nv = 0;
-  for (let t = 0; t < idx.length; t += 3) {
-    const a = idx[t], b = idx[t + 1], c = idx[t + 2];
-    if (!(inside[a] && inside[b] && inside[c])) continue;
-    for (const v of [a, b, c]) if (remap[v] < 0) remap[v] = nv++;
-    kept.push(remap[a], remap[b], remap[c]);
-  }
-  const P = new Float32Array(nv * 3), SI = new Uint16Array(nv * 4), SW = new Float32Array(nv * 4);
-  for (let i = 0; i < pos.count; i++) {
-    const r = remap[i];
-    if (r < 0) continue;
-    P[r * 3] = pos.getX(i); P[r * 3 + 1] = pos.getY(i); P[r * 3 + 2] = pos.getZ(i);
-    for (let k = 0; k < 4; k++) { SI[r * 4 + k] = si.getComponent(i, k); SW[r * 4 + k] = sw.getComponent(i, k); }
-  }
-  // neighbours and open edges (hems, collar, sleeve ends)
-  const nb = Array.from({ length: nv }, () => new Set<number>());
-  const edges = new Map<number, number>();
-  for (let t = 0; t < kept.length; t += 3) {
-    const tri = [kept[t], kept[t + 1], kept[t + 2]];
-    for (let e = 0; e < 3; e++) {
-      const u = tri[e], v = tri[(e + 1) % 3];
-      nb[u].add(v); nb[v].add(u);
-      const key = u < v ? u * nv + v : v * nv + u;
-      edges.set(key, (edges.get(key) || 0) + 1);
-    }
-  }
-  const boundary = new Uint8Array(nv);
-  for (const [key, count] of edges) if (count === 1) { boundary[Math.floor(key / nv)] = 1; boundary[key % nv] = 1; }
-  // smooth away the sculpted muscles (fabric doesn't follow every bump)
-  const tmp = new Float32Array(P.length);
-  for (let it = 0; it < 6; it++) {
-    for (let i = 0; i < nv; i++) {
-      let sx = 0, sy = 0, sz = 0, c = 0;
-      for (const j of nb[i]) { sx += P[j * 3]; sy += P[j * 3 + 1]; sz += P[j * 3 + 2]; c++; }
-      const k = boundary[i] ? 0.25 : 0.6;
-      tmp[i * 3] = c ? P[i * 3] + (sx / c - P[i * 3]) * k : P[i * 3];
-      tmp[i * 3 + 1] = c ? P[i * 3 + 1] + (sy / c - P[i * 3 + 1]) * k : P[i * 3 + 1];
-      tmp[i * 3 + 2] = c ? P[i * 3 + 2] + (sz / c - P[i * 3 + 2]) * k : P[i * 3 + 2];
-    }
-    P.set(tmp);
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(P, 3));
-  g.setIndex(kept);
-  g.computeVertexNormals();
-  // puff it out: shirts a little, shorts more and flaring toward the hem
-  const N = g.attributes.normal;
-  for (let i = 0; i < nv; i++) {
-    const y = P[i * 3 + 1];
-    // the shirt's bottom stands off the body more, so it hangs outside the shorts
-    const out = kind === 'shorts' ? 0.03 + clamp((0.8 - y) * 0.12, 0, 0.025) : 0.024 + clamp((1.04 - y) * 0.2, 0, 0.03);
-    P[i * 3] += N.getX(i) * out; P[i * 3 + 1] += N.getY(i) * out; P[i * 3 + 2] += N.getZ(i) * out;
-  }
-  g.attributes.position.needsUpdate = true;
-  g.computeVertexNormals();
-  g.setAttribute('skinIndex', new THREE.BufferAttribute(SI, 4));
-  g.setAttribute('skinWeight', new THREE.BufferAttribute(SW, 4));
-  // contrasting trim on the collar and sleeve ends (not the bottom hem)
-  const trim = new Float32Array(nv);
-  for (let i = 0; i < nv; i++) if (boundary[i] && (kind === 'shorts' ? P[i * 3 + 1] < 0.75 : P[i * 3 + 1] > 1.3)) {
-    trim[i] = 1;
-    for (const j of nb[i]) trim[j] = Math.max(trim[j], 0.45);
-  }
-  g.setAttribute('trim', new THREE.BufferAttribute(trim, 1));
-  shellCache.set(kind, g);
-  return g;
-}
-
-const shellMatCache = new Map<string, THREE.MeshStandardMaterial>();
-function shellMaterial(kind: ShellKind, kit: Kit) {
-  const key = `${kind}|${JSON.stringify(kit)}`;
-  const cached = shellMatCache.get(key);
-  if (cached) return cached;
-  const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, metalness: 0 });
-  const pattern = kind === 'shorts' ? 0 : kit.pattern === 'stripes' ? 1 : kit.pattern === 'hoops' ? 2 : 0;
-  const U = {
-    uMain: { value: new THREE.Color(kind === 'shorts' ? kit.shorts : kit.shirt) },
-    uSecond: { value: new THREE.Color(kit.second || kit.shirt) },
-    uTrim: { value: new THREE.Color(kind === 'shorts' ? kit.shirt : kit.trim || kit.number) },
-    uPattern: { value: pattern },
-  };
-  m.onBeforeCompile = (sh) => {
-    Object.assign(sh.uniforms, U);
-    sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float trim;\nvarying float vTrim;\nvarying vec3 vBind;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTrim = trim;\nvBind = position;');
-    sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform vec3 uMain, uSecond, uTrim;\nuniform float uPattern;\nvarying float vTrim;\nvarying vec3 vBind;')
-      .replace('#include <color_fragment>', `#include <color_fragment>
-        vec3 kc = uMain;
-        if (uPattern > 0.5 && uPattern < 1.5 && mod(floor((vBind.x + 2.0) / 0.075), 2.0) > 0.5) kc = uSecond;
-        if (uPattern > 1.5 && mod(floor(vBind.y / 0.11), 2.0) > 0.5) kc = uSecond;
-        diffuseColor.rgb = mix(kc, uTrim, clamp(vTrim, 0.0, 1.0));`);
-  };
-  m.customProgramCacheKey = () => 'shell';
-  shellMatCache.set(key, m);
-  return m;
-}
-
-// The body's own material (skin texture, normal and roughness maps) with the kit painted over it
-function kitMaterial(tone: SkinTone, tint: number) {
-  const key = `${tone}|${tint}`;
-  const cached = matCache.get(key);
-  if (cached) return cached;
-  const m = ASSET.bodyMat.clone();
-  m.map = ASSET.skinMaps[tone];
-  m.color = new THREE.Color(tint, tint, tint);
-  m.onBeforeCompile = (sh) => {
-    sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute vec4 kit;\nvarying vec4 vKit;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvKit = kit;');
-    sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying vec4 vKit;')
-      .replace('#include <map_fragment>', '#include <map_fragment>\n diffuseColor.rgb = mix(diffuseColor.rgb, vKit.rgb, vKit.a);');
-  };
-  m.customProgramCacheKey = () => 'kitpaint';
-  matCache.set(key, m);
-  return m;
-}
-
-const hairMatCache = new Map<string, THREE.MeshStandardMaterial>();
-function hairMaterial(src: THREE.Material | THREE.Material[], shade: number) {
-  const base = (Array.isArray(src) ? src[0] : src) as THREE.MeshStandardMaterial;
-  const key = `${base.uuid}|${shade}`;
-  let m = hairMatCache.get(key);
-  if (!m) {
-    m = base.clone();
-    m.color = new THREE.Color(shade, shade * 0.95, shade * 0.9);
-    hairMatCache.set(key, m);
-  }
-  return m;
-}
-
-// the brand's display face (web/brand), loaded by the page before any texture is drawn
 export const DISPLAY_FONT = '"Big Shoulders Display", "Arial Narrow", Impact, sans-serif';
-
-const numberCache = new Map<string, THREE.CanvasTexture>();
-function numberTexture(color: string, number: number) {
-  const key = `${color}|${number}`;
-  const cached = numberCache.get(key);
-  if (cached) return cached;
-  const c = document.createElement('canvas');
-  c.width = c.height = 128;
-  const g = c.getContext('2d')!;
-  g.font = `900 104px ${DISPLAY_FONT}`;
-  g.textAlign = 'center';
-  g.textBaseline = 'middle';
-  g.lineWidth = 8;
-  g.strokeStyle = 'rgba(0,0,0,0.35)';
-  g.strokeText(String(number), 64, 70);
-  g.fillStyle = color;
-  g.fillText(String(number), 64, 70);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  numberCache.set(key, t);
-  return t;
-}
 
 function nameTexture(text: string, color = '#ffffff', bg?: string) {
   const c = document.createElement('canvas');
@@ -537,7 +279,8 @@ export interface ModelOptions {
 export class PlayerModel {
   readonly root = new THREE.Group(); // place this in the scene
   readonly tag: THREE.Sprite; // name above the head
-  readonly build: number; // body size, ~0.95..1.03
+  readonly build: number; // how tall, for reaching (1 = 1.80 m)
+  readonly height: number; // m
   private readonly body = new THREE.Group();
   private readonly j: Record<'hips' | 'spine1' | 'spine2' | 'spine3' | 'neck' | 'head', Joint>;
   private readonly legs: [Leg, Leg];
@@ -551,6 +294,12 @@ export class PlayerModel {
   private cycle: number;
   private time: number;
   private kickT = 0;
+  private readonly clips: Map<string, THREE.AnimationClip>;
+  private strike: THREE.AnimationAction | null = null; // a captured kick or pass, playing
+  private strikeT = 0;
+  private strikeEnd = 0;
+  private kickLeg: Foot = 1; // the leg swinging at the ball
+  private readonly rightLeg: Foot; // which of the two (by side) is his right
   private touchT = 0;
   private touchFoot: Foot = 1;
   private touchReach = 0;
@@ -568,55 +317,20 @@ export class PlayerModel {
 
   constructor({ kit, number, name, gk, seed = 0, referee = false }: ModelOptions) {
     const rnd = mulberry(seed * 9301 + 49297);
-    const colors: BodyColors = {
-      boots: BOOTS[Math.floor(rnd() * BOOTS.length)],
-      shirt: kit.shirt, shorts: kit.shorts, socks: kit.socks, glove: '#f1f5f9',
-    };
-    // mostly darker skin tones (these are West African clubs), with tints for variety
-    const tone: SkinTone = referee ? 'light' : rnd() < 0.85 ? 'dark' : 'light';
-    // the dark texture is a medium-brown base: shade it for a range of deep to medium skin tones
-    const tint = tone === 'dark' ? [0.42, 0.5, 0.58, 0.68, 0.8][Math.floor(rnd() * 5)] : [0.85, 0.95][Math.floor(rnd() * 2)];
-    const build = 0.95 + rnd() * 0.08;
-
-    const scene = SkeletonUtils.clone(ASSET.scene);
+    const pick = <T>(xs: readonly T[]) => xs[Math.floor(rnd() * xs.length)];
+    const who = referee ? REFEREE : gk ? pick(KEEPERS) : pick(OUTFIELD);
+    const person = new Person(ASSET.cast, who);
+    person.dress({
+      shirt: kit.shirt, second: kit.second, pattern: kit.pattern, shorts: kit.shorts, socks: kit.socks,
+      boots: pick(BOOTS), gloves: GLOVES, number, numberColor: kit.number,
+    });
+    person.tint('hair', pick(HAIR));
+    person.tint('brows', pick(HAIR));
+    const shade = pick(SKIN);
+    person.tint('skin', new THREE.Color(shade, shade, shade));
+    const build = person.height / 1.8; // (how tall, for reaching: 1 = 1.80 m)
+    const scene = person.root;
     const bones = bonesOf(scene);
-    const skinned = collect(scene, isSkinned);
-    for (const o of skinned) {
-      o.castShadow = true;
-      o.frustumCulled = false;
-    }
-    const bodyMesh = skinned.find(isBody)!;
-    const bodyParent = bodyMesh.parent!;
-    bodyMesh.geometry = paintedGeometry(ASSET.bodyGeo, bodyMesh.skeleton, colors, gk);
-    bodyMesh.material = kitMaterial(tone, tint);
-    // shirt and shorts as garments over the (kit-painted) body
-    for (const kind of [gk ? 'shirtLong' : 'shirt', 'shorts'] as const) {
-      const g = new THREE.SkinnedMesh(buildShell(ASSET.bodyGeo, bodyMesh.skeleton, kind), shellMaterial(kind, kit));
-      bodyParent.add(g);
-      g.bind(bodyMesh.skeleton, bodyMesh.bindMatrix);
-      g.castShadow = true;
-      g.frustumCulled = false;
-    }
-    // hair, beard and eyebrows are rigged to the head: rebind them to this player's skeleton
-    const hairShade = [0.05, 0.08, 0.12][Math.floor(rnd() * 3)]; // black to very dark brown
-    const parts = [ASSET.hair.brows, rnd() < 0.6 ? ASSET.hair.buzz : ASSET.hair.parted];
-    if (!referee && rnd() < 0.3) parts.push(ASSET.hair.beard);
-    for (const src of parts) {
-      if (!src) continue;
-      let mesh: THREE.Mesh;
-      if (src instanceof THREE.SkinnedMesh) {
-        const skinnedHair = new THREE.SkinnedMesh(src.geometry, hairMaterial(src.material, hairShade));
-        const sk = new THREE.Skeleton(src.skeleton.bones.map((b) => bones[norm(b.name)]), src.skeleton.boneInverses);
-        bodyParent.add(skinnedHair);
-        skinnedHair.bind(sk, src.bindMatrix);
-        mesh = skinnedHair;
-      } else {
-        mesh = new THREE.Mesh(src.geometry, hairMaterial(src.material, hairShade));
-        bodyParent.add(mesh);
-      }
-      mesh.castShadow = true;
-      mesh.frustumCulled = false;
-    }
     scene.updateMatrixWorld(true);
     const c2s = ASSET.c2s;
     const J = (n: string) => new Joint(bones[n], c2s);
@@ -641,46 +355,39 @@ export class PlayerModel {
     };
     const [legL, legR, armL, armR] = [leg('l'), leg('r'), arm('l'), arm('r')];
     this.legs = legL.side < 0 ? [legL, legR] : [legR, legL];
+    this.rightLeg = legL.side < 0 ? 1 : 0;
     this.feet = legL.side < 0 ? [bones.balll, bones.ballr] : [bones.ballr, bones.balll];
     this.arms = armL.side < 0 ? [armL, armR] : [armR, armL];
     this.restHipsHeight = this.j.hips.restPos.z; // the rig's root is Z-up
 
     // motion capture
+    const clips = fit(ASSET.moves, scene);
+    this.clips = clips;
     this.mixer = new THREE.AnimationMixer(scene);
-    this.idle = this.mixer.clipAction(ASSET.clips.Idle_Loop);
+    this.idle = this.mixer.clipAction(clips.get(IDLE)!);
     this.idle.play();
     this.loco = LOCO.map((l) => {
-      const a = this.mixer.clipAction(ASSET.clips[l.clip]);
+      const c = clips.get(l.clip)!;
+      const a = this.mixer.clipAction(c);
       a.play();
       a.setEffectiveWeight(0);
       a.timeScale = 0; // we drive their time ourselves so the cycles stay in step
-      return { ...l, action: a, dur: ASSET.clips[l.clip].duration };
+      return { ...l, action: a, dur: c.duration };
     });
-    this.idle.time = rnd() * ASSET.clips.Idle_Loop.duration;
+    this.idle.time = rnd() * this.idle.getClip().duration;
     this.cycle = rnd();
 
     this.body.rotation.y = -ASSET.facing; // face +Z
     this.body.add(scene);
-    this.root.scale.setScalar(build);
     this.build = build;
+    this.height = person.height;
     this.root.add(this.body);
     const blob = new THREE.Mesh(shadowGeo, shadowMat);
     blob.position.y = 0.015;
     this.root.add(blob);
 
-    // shirt number on the back, stuck to the upper spine
-    if (number !== '') {
-      const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.24), new THREE.MeshBasicMaterial({ map: numberTexture(kit.number, number), transparent: true, depthWrite: false }));
-      const sp = bones.spine03;
-      const back = new THREE.Vector3(0, 1.36, 0).add(new THREE.Vector3(0, 0, -0.205).applyQuaternion(c2s));
-      const m = new THREE.Matrix4().compose(back, c2s.clone().multiply(qAxis(AY, Math.PI)), new THREE.Vector3(1, 1, 1));
-      const local = new THREE.Matrix4().copy(sp.matrixWorld).invert().multiply(m);
-      local.decompose(plate.position, plate.quaternion, plate.scale);
-      sp.add(plate);
-    }
-
     this.tag = makeLabel(name.toUpperCase(), { height: 0.011, opacity: 0.9 });
-    this.tag.position.y = 2.12 / build;
+    this.tag.position.y = person.height + 0.32;
     this.root.add(this.tag);
 
     if (referee) {
@@ -691,15 +398,44 @@ export class PlayerModel {
     this.time = rnd() * 10;
   }
 
-  kick() { this.kickT = 0.34; }
+  // A strike with this foot: 'kick' (a shot, a clearance, a long ball) or 'pass'. The captured strike
+  // starts KICK_CONTACT before the boot meets the ball (when the game strikes it).
+  kick(foot: Footed.Left | Footed.Right = Footed.Right, kind: Strike = 'kick') {
+    this.kickT = KICK_TIME;
+    this.kickLeg = foot === Footed.Right ? this.rightLeg : this.rightLeg ? 0 : 1;
+    const name = STRIKES[kind][foot];
+    const clip = this.clips.get(name);
+    if (!clip) return;
+    this.strike?.stop();
+    const a = this.mixer.clipAction(clip);
+    a.reset();
+    a.setLoop(THREE.LoopOnce, 1);
+    a.clampWhenFinished = true;
+    a.time = Math.max(0, (ASSET.moves.info[name].contact ?? 0) - KICK_CONTACT);
+    a.timeScale = 0; // (stepped by update)
+    a.play();
+    this.strike = a;
+    this.strikeT = 0;
+    this.strikeEnd = clip.duration - a.time;
+  }
   // reach: 0 = ball at the foot, up to 1 = stretching for it (the leg extends further toward it)
   touch(foot: Foot = this.touchFoot ? 0 : 1, reach = 0) { this.touchT = 0.2; this.touchFoot = foot; this.touchReach = reach; }
+
+  // Where the ball wants to be for this strike, relative to him: x to his left, z ahead (m)
+  strikeSpot(kind: Strike, foot: Footed.Left | Footed.Right) {
+    const s = ASSET.spots.get(STRIKES[kind][foot]);
+    if (!s) return { x: 0, z: 0.35 };
+    const k = this.height / s.height;
+    return { x: s.x * k, z: s.z * k };
+  }
 
   // where each foot is (index 0 = the -X side leg, 1 = the +X side), in world space
   footWorld(i: Foot, out: THREE.Vector3) {
     this.root.updateMatrixWorld(true);
     return this.feet[i].getWorldPosition(out);
   }
+  // the foot swinging at the ball right now, in world space
+  strikingFootWorld(out: THREE.Vector3) { return this.footWorld(this.kickLeg, out); }
   throwBall() { this.throwT = 0.36; }
   skill(kind: SkillKind, side = 1) {
     this.skillKind = kind;
@@ -730,22 +466,40 @@ export class PlayerModel {
     const strafe = sp < 4.5 ? clamp((Math.abs(vl) - Math.abs(vf) * 0.7) / 1.2, 0, 1) : 0;
     const back = vf < -0.3 && strafe < 0.5;
 
-    // ---- motion capture locomotion: blend idle / walk / jog / sprint by speed, cycles in step
+    // ---- motion capture locomotion: blend idle / walk / jog / run / sprint by speed, cycles in step
     const runSp = sp * (1 - strafe * 0.6);
+    const n = this.loco.length;
+    const lw = new Array<number>(n).fill(0);
     let wIdle = 1, rate = 0;
-    const lw = [0, 0, 0];
-    if (runSp > 0.25) {
-      if (runSp < LOCO[0].speed) { const k = (runSp - 0.25) / (LOCO[0].speed - 0.25); wIdle = 1 - k; lw[0] = k; }
-      else if (runSp < LOCO[1].speed) { const k = (runSp - LOCO[0].speed) / (LOCO[1].speed - LOCO[0].speed); wIdle = 0; lw[0] = 1 - k; lw[1] = k; }
-      else if (runSp < LOCO[2].speed) { const k = (runSp - LOCO[1].speed) / (LOCO[2].speed - LOCO[1].speed); wIdle = 0; lw[1] = 1 - k; lw[2] = k; }
-      else { wIdle = 0; lw[2] = 1; }
+    const START = 0.25; // m/s: below this, standing
+    if (runSp > START && n) {
+      const first = this.loco[0].speed;
+      if (runSp < first) { const k = (runSp - START) / (first - START); wIdle = 1 - k; lw[0] = k; }
+      else {
+        wIdle = 0;
+        let i = 0;
+        while (i < n - 1 && runSp >= this.loco[i + 1].speed) i++;
+        if (i === n - 1) lw[i] = 1;
+        else { const k = (runSp - this.loco[i].speed) / (this.loco[i + 1].speed - this.loco[i].speed); lw[i] = 1 - k; lw[i + 1] = k; }
+      }
     }
-    for (let i = 0; i < 3; i++) rate += lw[i] * (Math.max(runSp, 0.6) / LOCO[i].speed) / this.loco[i].dur;
+    for (let i = 0; i < n; i++) rate += lw[i] * cadence(Math.max(runSp, 0.6) / this.loco[i].speed) / this.loco[i].dur;
     this.cycle = (this.cycle + dt * rate * (back ? -1 : 1) + 1) % 1;
-    this.idle.setEffectiveWeight(wIdle);
+
+    // ---- a captured strike over the top, fading in fast and out over the follow-through
+    let ws = 0;
+    if (this.strike) {
+      this.strikeT += dt;
+      this.strike.time = Math.min(this.strike.getClip().duration, this.strike.time + dt);
+      const left = this.strikeEnd - this.strikeT;
+      ws = Math.min(1, this.strikeT / STRIKE_FADE.in, Math.max(0, left / STRIKE_FADE.out), Math.max(0, (KICK_TIME + STRIKE_FADE.out - this.strikeT) / STRIKE_FADE.out));
+      if (ws <= 0 && this.strikeT > STRIKE_FADE.in) { this.strike.stop(); this.strike = null; ws = 0; }
+      else this.strike.setEffectiveWeight(ws);
+    }
+    this.idle.setEffectiveWeight(wIdle * (1 - ws));
     this.idle.time = (this.idle.time + dt) % this.idle.getClip().duration;
     this.loco.forEach((l, i) => {
-      l.action.setEffectiveWeight(lw[i]);
+      l.action.setEffectiveWeight(lw[i] * (1 - ws));
       l.action.time = ((this.cycle + l.phase) % 1) * l.dur;
     });
     this.mixer.update(0);
@@ -784,7 +538,7 @@ export class PlayerModel {
     const legs = (v = 1) => { W.leg0 = Math.max(W.leg0, v); W.leg1 = Math.max(W.leg1, v); };
     const arms = (v = 1) => { W.arm0 = Math.max(W.arm0, v); W.arm1 = Math.max(W.arm1, v); };
     if (st.slide || st.fall || st.down || st.dive || st.wallJump || st.gkReady || st.reach === 'low') all();
-    if (this.kickT > 0) { legs(); arms(); W.spine = Math.max(W.spine, 0.7); W.hips = Math.max(W.hips, 0.6); }
+    if (this.kickT > 0 && !this.strike) { legs(); arms(); W.spine = Math.max(W.spine, 0.7); W.hips = Math.max(W.hips, 0.6); }
     if (this.touchT > 0) W[LEG[this.touchFoot]] = Math.max(W[LEG[this.touchFoot]], 0.45 + 0.5 * this.touchReach);
     if (this.skillT > 0) { legs(); arms(0.6); W.hips = 1; W.spine = Math.max(W.spine, 0.6); }
     if (st.tackle) { legs(); arms(); W.hips = 1; W.spine = 1; }
@@ -850,15 +604,17 @@ export class PlayerModel {
       T.hipsY = 0.88; T.spineX = 0.2;
       for (const A of T.arms) { A.z = 0.35; A.elbow = -0.6; }
     }
-    if (this.kickT > 0) {
-      this.kickT -= dt;
-      const p = 1 - Math.max(0, this.kickT) / 0.34;
-      const R = T.legs[1], Lg = T.legs[0];
+    if (this.kickT > 0) this.kickT -= dt;
+    if (this.kickT > 0 && !this.strike) {
+      const p = 1 - Math.max(0, this.kickT) / KICK_TIME;
+      const R = T.legs[this.kickLeg], Lg = T.legs[this.kickLeg ? 0 : 1];
       if (p < 0.3) { const k = p / 0.3; R.hip = lerp(0.1, 0.75, k); R.knee = lerp(0.3, 1.5, k); }
       else if (p < 0.6) { const k = (p - 0.3) / 0.3; R.hip = lerp(0.75, -1.2, k); R.knee = lerp(1.5, 0.05, k); }
       else { const k = (p - 0.6) / 0.4; R.hip = lerp(-1.2, -0.3, k); R.knee = lerp(0.05, 0.35, k); }
       Lg.hip = -0.15; Lg.knee = 0.4; R.z = Lg.z = 0;
-      T.arms[0].x = -0.35; T.arms[0].z = 0.9; T.arms[1].x = 0.3; T.arms[1].z = 0.6;
+      // (the arm on the kicking side swings back, the other one out for balance)
+      const [back, out] = this.kickLeg ? [T.arms[0], T.arms[1]] : [T.arms[1], T.arms[0]];
+      back.x = -0.35; back.z = 0.9; out.x = 0.3; out.z = 0.6;
       T.spineX = -0.08; T.hipsY = 0.9;
     }
     if (this.touchT > 0) {

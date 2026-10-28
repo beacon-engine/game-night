@@ -9,7 +9,9 @@ import { Match, newHuman, type Human, type MatchEvent, type Player, type Team, t
 import { loadPlayerAssets, makeLabel } from './player.ts';
 import { buildStadium } from './stadium.ts';
 import { cleanTactics, cycleTactic, DEFAULT_TACTICS, shapesFor, TACTIC_KEYS, tacticName, TACTICS, type Tactic, type Tactics } from './tactics.ts';
-import type { CameraMode, Club, Formations, PlayerData, Settings, TagMode, TimeOfDay } from './types.ts';
+import { GRASS_DARKENS, WeatherLook } from '@world/precipitation.ts';
+import { FORECASTS, Forecast, Weather } from '@world/weather.ts';
+import { Footed, type CameraMode, type Club, type Formations, type PlayerData, type Settings, type TagMode, type TimeOfDay } from './types.ts';
 
 // a heavy game: check this screen can take it before loading anything big (see game.json "needs")
 const device = await requireDevice();
@@ -126,6 +128,12 @@ input.onLeave = (c) => {
 input.onRename = () => refreshLobby();
 input.onPause = (c) => togglePause(c);
 
+// The weather, chosen in the lobby (the match behind the menu has it too)
+const SKIES = [Forecast.Dry, Forecast.Showers, Forecast.Rain, Forecast.Snow];
+let forecast = Forecast.Dry;
+const look = new WeatherLook(scene);
+look.venue(stadium.grass, GRASS_DARKENS);
+
 function newMatch(demo: boolean) {
   app.match?.dispose();
   const setup = (p: Plan): TeamSetup => ({ shape: shapes[p.shape].slots, tactics: p.tactics, keeper: p.keeper });
@@ -135,6 +143,9 @@ function newMatch(demo: boolean) {
     clubs: [clubs[app.home], clubs[app.away]],
     humans: demo ? [] : input.list,
   });
+  const length = (settings.matchMinutes || 5) * 60;
+  app.match.setWeather(forecast === Forecast.Dry ? null : new Weather(forecast, demo ? length * 4 : length));
+  stadium.setSnow(forecast === Forecast.Snow);
 }
 
 function startMatch() {
@@ -267,6 +278,7 @@ function onEvent(e: MatchEvent) {
   switch (e.type) {
     case 'kick': sfx.kick(e.power); break;
     case 'post': sfx.clang(); break;
+    case 'net': stadium.netHit(e.x, e.y, e.z, e.speed); break;
     case 'save': sfx.ooh(); break;
     case 'foul': {
       sfx.whistle(e.penalty ? 2 : 1);
@@ -378,7 +390,7 @@ function updateChips() {
     part('.sta > div').style.width = `${Math.round(e * 100)}%`;
     part('.sta > div').style.background = energyColor(e);
     part('.stats').textContent = pl
-      ? `PAC ${pl.data.pace} SHO ${pl.data.shooting} PAS ${pl.data.passing} DRI ${pl.data.dribbling} TAC ${pl.data.tackling}`
+      ? `PAC ${pl.data.pace} SHO ${pl.data.shooting} PAS ${pl.data.passing} DRI ${pl.data.dribbling} TAC ${pl.data.tackling} · ${FOOT_TAG[pl.footed]}`
       : '';
     part('.bar > div').style.width = c.charge >= 0 ? `${Math.min(1, c.charge / 0.9) * 100}%` : '0';
   });
@@ -431,8 +443,16 @@ $('howto').addEventListener('click', howTo);
 $('tod').addEventListener('click', () => {
   timeOfDay = timeOfDay === 'day' ? 'night' : 'day';
   stadium.setTimeOfDay(timeOfDay);
+  look.venue(stadium.grass, GRASS_DARKENS); // (the cloud starts again from the new light)
   $('tod').textContent = timeOfDay === 'day' ? 'Day' : 'Night';
 });
+$('sky').addEventListener('click', () => {
+  forecast = SKIES[(SKIES.indexOf(forecast) + 1) % SKIES.length];
+  $('sky').textContent = FORECASTS[forecast].name;
+  if (app.mode === 'lobby') newMatch(true);
+});
+
+const FOOT_TAG: Record<Footed, string> = { [Footed.Right]: 'R foot', [Footed.Left]: 'L foot', [Footed.Both]: 'Both feet' };
 
 function refreshLobby() {
   const h = clubs[app.home], a = clubs[app.away];
@@ -582,7 +602,7 @@ function controlsTable() {
       const [btn, mod] = key.split('+') as [Button, string?];
       return `<div class="ctl-row">${glyph(btn)}${mod ? '<span class="swipe">swipe</span>' : ''}<span>${escapeHtml(controls.name(a))}</span></div>`;
     }).join('')}</div>`).join('')}</div>
-    <div class="ctl-note">Stick: move · push past the ring: sprint. Remap in <code>games/football/controls.json</code></div>`;
+    <div class="ctl-note">Stick: move · push past the ring: sprint · to the side just after a kick: bend it. Remap in <code>games/football/controls.json</code></div>`;
 }
 
 function renderPause() {
@@ -913,6 +933,7 @@ function frame(now: number) {
     acc -= STEP;
   }
   stadium.update(dt, app.match.state === 'goal' ? 1 : 0);
+  look.update(dt, app.match.weatherNow);
   updateCamera(dt);
   updateMarkers();
   hudT += dt;

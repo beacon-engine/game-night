@@ -1,18 +1,22 @@
-// The 3D world for a Grand Prix: the circuit built from the track's numbers (Stock Cars' track.ts),
-// with the pit lane and its garages alongside the main straight; the cars (Stock Cars' cars.ts);
-// sparks, flames and smoke; and the cameras: a chase camera per person (the screen splits for 2
+// The 3D world for a Grand Prix: the circuit built from the track's numbers (@racing/track.ts),
+// with the pit lane and its garages alongside the main straight; the cars (@racing/cars.ts);
+// sparks, flames and smoke; rain and spray; and the cameras: a chase camera per person (the screen splits for 2
 // to 4), a TV camera when nobody's driving, and a turntable for each person while they pick.
 // It follows Stock Cars' scene.ts, with a road circuit's venue in place of an oval's.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { carLights, carMesh, disposeCar, rollWheels, steerWheels, type CarModel } from '../stock-cars/cars.ts';
-import { canvas, DISPLAY_FONT, seeded, speckle, texture } from '../stock-cars/draw.ts';
-import { TOP, type Car } from '../stock-cars/race.ts';
-import { buildScenery, Land } from '../stock-cars/scenery.ts';
-import type { Track } from '../stock-cars/track.ts';
+import { carLights, carMesh, disposeCar, fitTyres, rollWheels, steerWheels, type CarModel } from '@racing/cars.ts';
+import { canvas, checkerTexture, DISPLAY_FONT, seeded, speckle, texture } from '@world/draw.ts';
+import { glowTexture, Particles } from '@world/particles.ts';
+import { WeatherLook } from '@world/precipitation.ts';
+import { layout, type Rect } from '@world/screen.ts';
+import { reflections, sky } from '@world/sky.ts';
+import { crowdTexture, kerbTexture, place, strip, surfaceUp, UP } from '@racing/venue.ts';
+import { TOP, type Car } from '@racing/race.ts';
+import { buildScenery, Land } from '@racing/scenery.ts';
+import type { Track } from '@racing/track.ts';
+import type { Weather } from '@world/weather.ts';
 import type { PitLane } from './pits.ts';
-
-const STEP = 4; // m between the rings of the track's meshes
 
 const TIMES = {
   day: { sky: ['#4f8fdc', '#cfe5fb'], fog: 0xc9e0f6, hemi: [0xe6f0ff, 0x56703f, 1.9], sun: [0xfff2dc, 2.8], sunAt: [250, 420, 300], dim: 1, lamps: false, env: 1, carLights: 0 },
@@ -20,8 +24,6 @@ const TIMES = {
   night: { sky: ['#04060b', '#151b2b'], fog: 0x0a0c12, hemi: [0xc4cee6, 0x1d2618, 1.6], sun: [0xfff1dc, 1.6], sunAt: [150, 400, 260], dim: 0.4, lamps: true, env: 0.6, carLights: 2 },
 } as const;
 type Time = (typeof TIMES)[keyof typeof TIMES];
-
-export interface Rect { x: number; y: number; w: number; h: number }
 
 export interface View {
   car: Car | null; // whose chase camera; null: the TV camera
@@ -45,6 +47,7 @@ export class World {
   private cars = new Map<Car, THREE.Group>();
   private extras: THREE.Object3D[] = [];
   private sparks = new Particles(400, 0xffc46b, 0.22, THREE.AdditiveBlending);
+  private weather = new WeatherLook(this.scene);
   private flames = new Particles(600, 0xff8a2a, 0.9, THREE.AdditiveBlending);
   private smoke = new Particles(500, 0x2a2b30, 2.2, THREE.NormalBlending, 0.55);
   private shown: THREE.Group[] = [];
@@ -60,7 +63,10 @@ export class World {
 
   lowerDetail(level: number) {
     if (level === 1) this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1) * 0.75);
-    else for (const o of this.extras) o.visible = false;
+    else {
+      for (const o of this.extras) o.visible = false;
+      this.weather.fewer();
+    }
   }
 
   resize() {
@@ -91,6 +97,7 @@ export class World {
     this.lightsOn = time.carLights;
     for (const g of [...this.cars.values(), ...this.shown]) carLights(g, this.lightsOn);
     buildVenue((o, extra) => { this.venue.add(o); if (extra) this.extras.push(o); }, track, pits, time);
+    this.weather.venue(((this.venue.children.find((o) => o.userData.road) as THREE.Mesh | undefined)?.material as THREE.MeshStandardMaterial) ?? null);
   }
 
   // --- the cars ----------------------------------------------------------------------------------
@@ -135,14 +142,18 @@ export class World {
     for (const v of this.views) if (v.car === c) v.shake = Math.max(v.shake, Math.min(0.7, strength * 0.05));
   }
 
-  render(dt: number, follow: Car | null, look: Look) {
-    const t = this.track!;
+  render(dt: number, follow: Car | null, look: Look, weather: Weather | null = null) {
+    const t = this.track!, wet = weather?.wet ?? 0;
     const at = new THREE.Vector3();
+    this.weather.update(dt, weather);
     for (const [c, g] of this.cars) {
       const before = g.position.clone();
       place(t, g, c.dist, c.d, c.yaw);
       rollWheels(g, Math.min(10, before.distanceTo(g.position)));
       steerWheels(g, c.spinning > 0 || look.inPits(c) || look.out(c) ? 0 : c.steer);
+      fitTyres(g, c.tyre);
+      // spray off the back wheels (a cloud the car behind drives into)
+      if (wet > 0.15 && !look.inPits(c)) { const p = t.point(c.dist - c.stats.length * 0.55, c.d); this.weather.splash(at.set(p.x, p.y + 0.5, p.z), c.v, wet); }
       if (c.scraping) {
         const p = t.point(c.dist, c.d + c.scraping * c.stats.width * 0.5);
         this.sparks.emit(at.set(p.x, p.y + 0.4, p.z), 2, 14, 6);
@@ -179,10 +190,6 @@ export class World {
     }
   }
 }
-
-const layout = (n: number): Rect[] => n <= 1 ? [{ x: 0, y: 0, w: 1, h: 1 }]
-  : n === 2 ? [{ x: 0, y: 0, w: 1, h: 0.5 }, { x: 0, y: 0.5, w: 1, h: 0.5 }]
-  : [{ x: 0, y: 0, w: 0.5, h: 0.5 }, { x: 0.5, y: 0, w: 0.5, h: 0.5 }, { x: 0, y: 0.5, w: 0.5, h: 0.5 }, { x: 0.5, y: 0.5, w: 0.5, h: 0.5 }];
 
 const view = (rect: Rect, car: Car | null): View => ({
   car, show: null, rect, lookBack: false, shake: 0, d: car?.d ?? 0, aim: new THREE.Vector3(),
@@ -246,7 +253,9 @@ function buildVenue(add: Add, t: Track, pits: PitLane, time: Time) {
   const land = new Land(t, t.spec.scenery);
   buildScenery(add, land, time.dim);
   const at = (d: number, up = 0) => (s: number) => { const p = t.point(s, d); return new THREE.Vector3(p.x, p.y + up, p.z); };
-  add(new THREE.Mesh(strip(t, at(-W / 2), at(W / 2), 24), new THREE.MeshStandardMaterial({ map: asphaltTexture(), roughness: 0.9 })));
+  const road = new THREE.Mesh(strip(t, at(-W / 2), at(W / 2), 24), new THREE.MeshStandardMaterial({ map: asphaltTexture(), roughness: 0.9 }));
+  road.userData.road = true; // (it shines when it's wet)
+  add(road);
   kerbs(add, t);
 
   // the barriers: a wall each side, with a catch fence on the outside; on the inside it stands back
@@ -293,6 +302,55 @@ function pitLane(add: Add, t: Track, pits: PitLane, time: Time) {
   const g = (d: number, y: number) => (s: number) => { const p = t.point(s, d); return new THREE.Vector3(p.x, y, p.z); };
   add(new THREE.Mesh(strip(t, g(back - 0.2, 0), g(back - 0.2, 6), 24, a - 10, b + 10), new THREE.MeshLambertMaterial({ map: garageTexture(time.lamps), side: THREE.DoubleSide })));
   add(new THREE.Mesh(strip(t, g(back - 12, 7), g(back - 0.2, 6.5), 12, a - 10, b + 10), new THREE.MeshLambertMaterial({ color: 0x2a2f3d, side: THREE.DoubleSide })));
+
+  // finding the way in: a dashed line down the left of the straight for the last 250 m before the
+  // entry (keep left of it to box), PIT IN painted on the slip road, and a board over the entry
+  const dash = new THREE.MeshBasicMaterial({ map: dashTexture(), transparent: true, polygonOffset: true, polygonOffsetFactor: -3 });
+  add(new THREE.Mesh(strip(t, at(-W / 2 + 4.6, 0.03), at(-W / 2 + 5, 0.03), 6, pits.from - 250, pits.from), dash));
+  const word = (text: string, s: number, d: number) => {
+    const p = t.point(s, d), m = new THREE.Mesh(new THREE.PlaneGeometry(6, 2.2), new THREE.MeshBasicMaterial({ map: wordTexture(text), transparent: true, polygonOffset: true, polygonOffsetFactor: -3 }));
+    m.rotation.set(-Math.PI / 2, 0, Math.atan2(p.p.hx, p.p.hz) + Math.PI);
+    m.position.set(p.x, p.y + 0.04, p.z);
+    add(m);
+  };
+  word('PIT IN', pits.from + 30, -W / 2 - 4);
+  word('PIT OUT', pits.to - 30, -W / 2 - 4);
+  const sign = t.point(pits.from - 60, -W / 2 - 2), board = new THREE.Mesh(new THREE.BoxGeometry(0.3, 2.2, 5), new THREE.MeshBasicMaterial({ map: pitBoardTexture() }));
+  board.position.set(sign.x, sign.y + 5.5, sign.z);
+  board.rotation.y = -Math.atan2(sign.p.hz, sign.p.hx);
+  add(board);
+  const pole = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.4, 0.3), new THREE.MeshLambertMaterial({ color: 0x20242f }));
+  pole.position.set(sign.x, sign.y + 2.2, sign.z);
+  add(pole);
+}
+
+function dashTexture() {
+  const c = canvas(8, 64), g = c.getContext('2d')!;
+  g.fillStyle = '#f3f0e8';
+  g.fillRect(0, 0, 8, 36);
+  return texture(c);
+}
+
+function wordTexture(text: string) {
+  const c = canvas(512, 192), g = c.getContext('2d')!;
+  g.font = `900 150px ${DISPLAY_FONT}`;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillStyle = 'rgba(243,240,232,0.85)';
+  g.fillText(text, 256, 104);
+  return texture(c, false);
+}
+
+function pitBoardTexture() {
+  const c = canvas(512, 224), g = c.getContext('2d')!;
+  g.fillStyle = '#0e1016';
+  g.fillRect(0, 0, 512, 224);
+  g.font = `900 150px ${DISPLAY_FONT}`;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillStyle = '#d7ff3b';
+  g.fillText('◀ PIT', 256, 118);
+  return texture(c, false);
 }
 
 function gantry(add: Add, t: Track, inside: number) {
@@ -337,119 +395,6 @@ function lights(add: Add, t: Track, on: boolean, stand: number) {
   add(new THREE.Mesh(mergeGeometries(heads), on ? new THREE.MeshBasicMaterial({ color: 0xfff3d6 }) : new THREE.MeshLambertMaterial({ color: 0x8a8f9c })));
 }
 
-// What the cars' paint reflects: this sky, this ground, and bright panels where the light comes from
-function reflections(time: Time, ground: string) {
-  const env = new THREE.Scene();
-  const c = canvas(4, 256), g = c.getContext('2d')!, grad = g.createLinearGradient(0, 0, 0, 256);
-  const earth = '#' + new THREE.Color(ground).multiplyScalar(time.dim * 0.5).getHexString();
-  grad.addColorStop(0, time.sky[0]);
-  grad.addColorStop(0.48, time.sky[1]);
-  grad.addColorStop(0.52, earth);
-  grad.addColorStop(1, earth);
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 4, 256);
-  env.add(new THREE.Mesh(new THREE.SphereGeometry(100, 32, 16), new THREE.MeshBasicMaterial({ map: texture(c, false), side: THREE.BackSide })));
-  const panel = (p: THREE.Vector3, w: number, h: number, color: number, power: number) => {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(power), side: THREE.DoubleSide }));
-    m.position.copy(p);
-    m.lookAt(0, 0, 0);
-    env.add(m);
-  };
-  panel(new THREE.Vector3(...time.sunAt).normalize().multiplyScalar(80), 30, 30, time.sun[0], 6);
-  panel(new THREE.Vector3(0, 90, 0), 120, 20, 0xffffff, time.lamps ? 2.5 : 1.5);
-  if (time.lamps) for (const a of [0.6, 2.2, 3.8, 5.4]) panel(new THREE.Vector3(Math.cos(a) * 75, 40, Math.sin(a) * 75), 14, 8, 0xfff1d0, 5);
-  return env;
-}
-
-function sky(top: string, horizon: string) {
-  const c = canvas(4, 256), g = c.getContext('2d')!, grad = g.createLinearGradient(0, 0, 0, 256);
-  grad.addColorStop(0, top);
-  grad.addColorStop(0.75, horizon);
-  grad.addColorStop(1, horizon);
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 4, 256);
-  return new THREE.Mesh(new THREE.SphereGeometry(5000, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2 + 0.1),
-    new THREE.MeshBasicMaterial({ map: texture(c, false), side: THREE.BackSide, fog: false, depthWrite: false }));
-}
-
-// --- sparks, flames, smoke: a pool of points each, reused round and round ------------------------------
-class Particles {
-  private pos: Float32Array;
-  private vel: Float32Array;
-  private life: Float32Array;
-  private next = 0;
-  readonly points: THREE.Points;
-
-  constructor(private n: number, color: number, size: number, blending: THREE.Blending, opacity = 1) {
-    this.pos = new Float32Array(n * 3).fill(-1e4);
-    this.vel = new Float32Array(n * 3);
-    this.life = new Float32Array(n);
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(this.pos, 3));
-    this.points = new THREE.Points(g, new THREE.PointsMaterial({ color, size, map: glowTexture(), blending, transparent: true, opacity, depthWrite: false }));
-    this.points.frustumCulled = false;
-  }
-
-  // `spread`: sideways speed; `rise`: upward speed; `life`: seconds (plus a little at random)
-  emit(at: THREE.Vector3, count: number, spread: number, rise: number, life = 0.3) {
-    for (let i = 0; i < count; i++) {
-      const k = this.next++ % this.n;
-      this.pos.set([at.x + (Math.random() - 0.5) * 0.6, at.y, at.z + (Math.random() - 0.5) * 0.6], k * 3);
-      this.vel.set([(Math.random() - 0.5) * spread, rise * (0.5 + Math.random()), (Math.random() - 0.5) * spread], k * 3);
-      this.life[k] = life + Math.random() * life;
-    }
-  }
-
-  update(dt: number, gravity: number) {
-    for (let k = 0; k < this.n; k++) {
-      if (this.life[k] <= 0) continue;
-      this.life[k] -= dt;
-      if (this.life[k] <= 0) { this.pos[k * 3 + 1] = -1e4; continue; }
-      this.vel[k * 3 + 1] += gravity * dt;
-      for (let j = 0; j < 3; j++) this.pos[k * 3 + j] += this.vel[k * 3 + j] * dt;
-    }
-    (this.points.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
-  }
-}
-
-// --- placing things on the track ------------------------------------------------------------------------
-const UP = new THREE.Vector3(0, 1, 0);
-const X = new THREE.Vector3(1, 0, 0);
-const basis = new THREE.Matrix4(), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion();
-
-function surfaceUp(t: Track, s: number, d: number) {
-  const p = t.at(s), b = Math.atan(t.slope(s, d));
-  return new THREE.Vector3(p.hz * Math.sin(b), Math.cos(b), -p.hx * Math.sin(b));
-}
-
-function place(t: Track, o: THREE.Object3D, s: number, d: number, yaw: number) {
-  const p = t.point(s, d);
-  const f = new THREE.Vector3(p.p.hx, 0, p.p.hz), right = new THREE.Vector3(-p.p.hz, 0, p.p.hx);
-  basis.makeBasis(f, UP, right);
-  o.quaternion.setFromRotationMatrix(basis)
-    .multiply(q1.setFromAxisAngle(X, -Math.atan(t.slope(s, d))))
-    .multiply(q2.setFromAxisAngle(UP, -yaw));
-  o.position.set(p.x, p.y, p.z);
-}
-
-// A ribbon along the lap (or part of it) between two edges: inner edge first, so it faces up / inwards.
-// u0..u1: the part of the texture across it.
-function strip(t: Track, a: (s: number) => THREE.Vector3, b: (s: number) => THREE.Vector3, tile: number, s0 = 0, s1 = t.length, u0 = 0, u1 = 1) {
-  const n = Math.max(1, Math.ceil((s1 - s0) / STEP)), pos: number[] = [], uv: number[] = [], index: number[] = [];
-  for (let i = 0; i <= n; i++) {
-    const s = s0 + ((s1 - s0) * i) / n, p = a(s), q = b(s), v = (s - s0) / tile;
-    pos.push(p.x, p.y, p.z, q.x, q.y, q.z);
-    uv.push(u0, v, u1, v);
-    if (i < n) { const k = i * 2; index.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  g.setIndex(index);
-  g.computeVertexNormals();
-  return g;
-}
-
 // --- textures, drawn here so there's nothing to download ---------------------------------------------------
 function asphaltTexture() {
   const c = canvas(512, 512), g = c.getContext('2d')!, rnd = seeded(12);
@@ -492,15 +437,6 @@ function garageTexture(lit: boolean) {
   return texture(c);
 }
 
-function kerbTexture() {
-  const c = canvas(16, 64), g = c.getContext('2d')!;
-  for (let y = 0; y < 64; y += 16) {
-    g.fillStyle = y % 32 ? '#f3f0e8' : '#c8323a';
-    g.fillRect(0, y, 16, 16);
-  }
-  return texture(c);
-}
-
 function wallTexture() {
   const c = canvas(64, 64), g = c.getContext('2d')!;
   g.fillStyle = '#e8e6df';
@@ -525,15 +461,6 @@ function fenceTexture() {
   return texture(c);
 }
 
-function checkerTexture() {
-  const c = canvas(64, 64), g = c.getContext('2d')!;
-  for (let y = 0; y < 2; y++) for (let x = 0; x < 16; x++) {
-    g.fillStyle = (x + y) % 2 ? '#111' : '#f3f0e8';
-    g.fillRect(x * 4, y * 32, 4, 32);
-  }
-  return texture(c, false);
-}
-
 function gantryTexture() {
   const c = canvas(512, 64), g = c.getContext('2d')!;
   g.fillStyle = '#0e1016';
@@ -546,32 +473,3 @@ function gantryTexture() {
   return texture(c, false);
 }
 
-function crowdTexture() {
-  const c = canvas(256, 512), g = c.getContext('2d')!, rnd = seeded(23);
-  g.fillStyle = '#1d2029';
-  g.fillRect(0, 0, 256, 512);
-  const shirts = ['#d8d4cb', '#c4505a', '#4a74c4', '#d0a640', '#38a07a', '#b45aa0', '#7d7b85', '#a6c043', '#c47a45', '#2a2e3a'];
-  for (let row = 0; row < 32; row++) {
-    g.fillStyle = '#12141b';
-    g.fillRect(row * 8 + 6, 0, 2, 512);
-    for (let y = 0; y < 512; y += 4) {
-      if (rnd() < 0.15) continue;
-      g.fillStyle = shirts[Math.floor(rnd() * shirts.length)];
-      g.fillRect(row * 8 + 2, y + rnd(), 4, 3);
-      g.fillStyle = '#8d6e5a';
-      g.fillRect(row * 8, y + rnd(), 2, 2);
-    }
-  }
-  return texture(c);
-}
-
-function glowTexture() {
-  const c = canvas(64, 64), g = c.getContext('2d')!;
-  const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-  r.addColorStop(0, 'rgba(255,255,255,1)');
-  r.addColorStop(0.35, 'rgba(255,255,255,0.35)');
-  r.addColorStop(1, 'rgba(255,255,255,0)');
-  g.fillStyle = r;
-  g.fillRect(0, 0, 64, 64);
-  return texture(c, false);
-}

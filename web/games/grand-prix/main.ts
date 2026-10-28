@@ -1,6 +1,7 @@
 // Grand Prix: the game flow. Lobby (with a race going on behind it), picking paint, the grid, the
 // race with its pit stops, results, saved records. The circuits and cars are data (circuits.json,
-// cars.json). The racing itself is Stock Cars' (../stock-cars/race.ts, track.ts, cars.ts, sound.ts);
+// cars.json). The racing itself is shared with Stock Cars (@racing: race.ts, track.ts, cars.ts,
+// weather.ts, sound.ts);
 // what a Grand Prix adds is in gp.ts (the race), damage.ts (health, tyres, fuel, fire), pits.ts
 // (the pit lane) and scene.ts (the circuit with its pits, flames and smoke).
 import {
@@ -8,11 +9,13 @@ import {
   manualPadInput, manualScreen, ownedItems, PerformanceGuard, playerKey, requireDevice, shopItems, showManual, starsLabel,
   type EarnFor, type Earned, type Pad, type PadScreen,
 } from '@platform';
-import { loadCars, type CarType } from '../stock-cars/cars.ts';
-import { TICK, type Car, type CarSpec, type Hit } from '../stock-cars/race.ts';
-import { Engines, type Driving, type Others } from '../stock-cars/sound.ts';
-import { Track, type TrackSpec } from '../stock-cars/track.ts';
-import { OUT_LABEL } from './damage.ts';
+import { loadCars, type CarType } from '@racing/cars.ts';
+import { TICK, TOP, type Car, type CarSpec, type Hit } from '@racing/race.ts';
+import { Engines, type Driving, type Others } from '@racing/sound.ts';
+import { Track, type TrackSpec } from '@racing/track.ts';
+import { TYRE_NAME } from '@racing/tyres.ts';
+import { FORECASTS, Forecast, Weather } from '@world/weather.ts';
+import { OUT_LABEL, type PitPlan } from './damage.ts';
 import { GrandPrix, type Call } from './gp.ts';
 import { World } from './scene.ts';
 
@@ -44,16 +47,19 @@ interface Driver {
   lapRecord: boolean;
   earned: Earned | null;
   told: Call | null; // the last pit call their screen showed
+  pitRow: PitRow; // the line of the pit menu they're on
 }
-const input = new Input({ state: (): Driver => ({ record: null, pick: 0, ready: false, paints: [], paint: 0, lapRecord: false, earned: null, told: null }) });
+const input = new Input({ state: (): Driver => ({ record: null, pick: 0, ready: false, paints: [], paint: 0, lapRecord: false, earned: null, told: null, pitRow: PitRow.Tyres }) });
 type Player = Pad<Driver>;
 const paintOf = (c: Player) => c.paints[c.paint - 1] ?? { id: '', name: 'Your colour', color: c.color };
 
 // --- settings, chosen in the lobby --------------------------------------------------------------
 const LAPS = [5, 10, 15];
 const LEVELS = [{ name: 'Easy', skill: 0.94 }, { name: 'Medium', skill: 0.975 }, { name: 'Hard', skill: 1 }];
-const settings = { circuit: 0, rivals: 9, laps: 10, level: 1 };
-const ROWS = ['circuit', 'rivals', 'laps', 'level'] as const;
+// (circuits race in the rain on wet tyres, but not in snow)
+const SKIES = [Forecast.Dry, Forecast.Showers, Forecast.Rain];
+const settings = { circuit: 0, rivals: 9, laps: 10, level: 1, weather: Forecast.Dry };
+const ROWS = ['circuit', 'weather', 'rivals', 'laps', 'level'] as const;
 let row = 0;
 
 type Stage = 'lobby' | 'garage' | 'grid' | 'racing' | 'results' | 'paused';
@@ -111,7 +117,9 @@ function field(withPeople: boolean): CarSpec[] {
 }
 
 function newRace(withPeople: boolean, laps: number) {
-  gp = new GrandPrix(track(), field(withPeople), laps, straight(), withPeople);
+  // the weather, spread over about as long as the race will take (the one behind the menu runs on)
+  const w = settings.weather === Forecast.Dry ? null : new Weather(settings.weather, (Math.min(laps, 20) * track().length) / (TOP * 0.7));
+  gp = new GrandPrix(track(), field(withPeople), laps, straight(), withPeople, w);
   world.setTrack(track(), gp.pits);
   world.setCars(gp.all, models);
   const slot = (c: Car) => input.list.find((p) => p.id === c.id)?.slot ?? 99;
@@ -321,6 +329,10 @@ function change(d: number) {
     settings.circuit = (settings.circuit + d + CIRCUITS.length) % CIRCUITS.length;
     return toLobby();
   }
+  if (key === 'weather') {
+    settings.weather = cycle(SKIES, settings.weather);
+    return toLobby(); // (the race behind the menu gets it too)
+  }
   if (key === 'rivals') settings.rivals = Math.max(0, Math.min(11, settings.rivals + d));
   else if (key === 'laps') settings.laps = cycle(LAPS, settings.laps);
   else settings.level = (settings.level + d + LEVELS.length) % LEVELS.length;
@@ -339,8 +351,42 @@ function back() {
 }
 
 // Steer with the slider (or the arrow keys); gas and brake are held; the box button calls you in
+// --- the pit stop: on the way down the pit lane, choose what the crew does --------------------------
+enum PitRow { Tyres, Fuel, Repair }
+const PIT_ROWS = [PitRow.Tyres, PitRow.Fuel, PitRow.Repair];
+const PIT_ROW_NAME: Record<PitRow, string> = { [PitRow.Tyres]: 'Tyres', [PitRow.Fuel]: 'Fuel', [PitRow.Repair]: 'Repairs' };
+
+function pitValue(car: Car, plan: PitPlan, row: PitRow) {
+  const k = gp.cond.get(car)!;
+  switch (row) {
+    case PitRow.Tyres: return plan.tyres ? `New ${TYRE_NAME[plan.tyres].toLowerCase()}` : `Keep (${Math.round((1 - k.tyres) * 100)}% left)`;
+    case PitRow.Fuel: {
+      const finish = Math.abs(plan.fuel - gp.fuelToFinish(car)) < 0.05;
+      return plan.fuel ? `+${plan.fuel.toFixed(1)} laps${finish ? ' (to the flag)' : ''}` : 'None';
+    }
+    case PitRow.Repair: return k.health >= 100 ? 'Nothing to mend' : plan.repair ? `Mend (${Math.round(k.health)}% now)` : 'Leave it';
+  }
+}
+
+function pitInput(c: Player, car: Car, plan: PitPlan) {
+  c.drain();
+  const fy = c.flickY(), fx = c.flickX();
+  if (fy) c.pitRow = PIT_ROWS[(PIT_ROWS.indexOf(c.pitRow) - fy + PIT_ROWS.length) % PIT_ROWS.length]; // (▲ = the one above)
+  if (!fx) return;
+  const cycle = <T>(list: T[], v: T) => list[(Math.max(0, list.indexOf(v)) + fx + list.length) % list.length];
+  if (c.pitRow === PitRow.Tyres) plan.tyres = cycle(gp.tyreChoices(), plan.tyres);
+  else if (c.pitRow === PitRow.Fuel) {
+    const list = gp.fuelChoices(car);
+    plan.fuel = list[(nearest(list, plan.fuel) + fx + list.length) % list.length];
+  } else if (gp.cond.get(car)!.health < 100) plan.repair = !plan.repair;
+}
+
+const nearest = (list: number[], v: number) => list.reduce((best, x, i) => (Math.abs(x - v) < Math.abs(list[best] - v) ? i : best), 0);
+
 function driveInput(c: Player) {
   const car = gp.all.find((x) => x.id === c.id);
+  const plan = car && !car.spec.ai ? gp.openPlan(car) : null;
+  if (car && plan) return pitInput(c, car, plan); // (the limiter drives down the pit lane)
   for (const ev of c.drain()) {
     if (!ev.down || !car || controls.action('drive', ev.bit) !== 'box') continue;
     toggleBox(car);
@@ -357,7 +403,7 @@ function driveInput(c: Player) {
 function toggleBox(car: Car) {
   if (stage !== 'racing' || gp.inPits(car) || gp.isOut(car) || car.finish !== null) return;
   if (gp.boxCall.has(car)) { gp.boxCall.delete(car); flash(car, 'Staying out'); }
-  else { gp.boxCall.add(car); flash(car, 'Box this lap: keep left'); }
+  else { gp.boxCall.add(car); flash(car, 'Box this lap: keep left for the pit lane'); }
 }
 
 addEventListener('keydown', (e) => {
@@ -388,12 +434,17 @@ function padScreen(c: Player): PadScreen {
       const pos = ordinal(gp.standings().indexOf(car) + 1), k = gp.cond.get(car)!;
       if (k.out) return { ...base, labels: {}, hint: `${OUT_LABEL[k.out]}. Watch the rest` };
       if (car.finish !== null) return { ...base, labels: {}, hint: `You finished ${pos}` };
+      const plan = gp.openPlan(car);
+      if (plan) {
+        return { ...base, layout: 'dpad', labels: {},
+          hint: `Pit stop · ▲▼ ${PIT_ROW_NAME[c.pitRow]}: ${pitValue(car, plan, c.pitRow)} ◀▶ · ${k.time(plan).toFixed(1)} s stopped` };
+      }
       const wait = gp.pits.waiting(car);
       const status = k.burning ? 'ON FIRE: box now' : wait !== null ? `In the box: ${wait.toFixed(1)} s`
         : gp.inPits(car) ? 'Pit lane' : gp.boxCall.has(car) ? 'Boxing this lap: keep left' : gp.call(car) ? `Box this lap: ${gp.call(car)}` : '';
       return {
         ...base, layout: 'racing', labels: controls.labels('drive'),
-        hint: `${pos} · lap ${Math.min(car.laps + 1, gp.laps)}/${gp.laps} · car ${Math.round(k.health)}% · tyres ${Math.round((1 - k.tyres) * 100)}% · fuel ${k.fuel.toFixed(1)} laps${status ? ` · ${status}` : ''}`,
+        hint: `${pos} · lap ${Math.min(car.laps + 1, gp.laps)}/${gp.laps} · car ${Math.round(k.health)}% · ${gp.weather ? `${gp.weather.conditions}, ${TYRE_NAME[k.tyre].toLowerCase()}` : 'tyres'} ${Math.round((1 - k.tyres) * 100)}% · fuel ${k.fuel.toFixed(1)} laps${status ? ` · ${status}` : ''}`,
       };
     }
   }
@@ -409,12 +460,12 @@ function renderLobby() {
   $('drivers').innerHTML = list.length
     ? list.map((c) => `<div class="driver">${chip(c)}<span class="caption faint">${escapeHtml(recordLine(c.record))}</span></div>`).join('')
     : '<p class="muted" style="margin:0">Join with your phone to drive. On your own? Race the computer drivers.</p>';
-  const value = { circuit: circuit().name, rivals: String(settings.rivals), laps: `${settings.laps} laps`, level: LEVELS[settings.level].name };
-  const label = { circuit: 'Circuit', rivals: 'Computer drivers', laps: 'Race', level: 'Their pace' };
+  const value = { circuit: circuit().name, weather: FORECASTS[settings.weather].name, rivals: String(settings.rivals), laps: `${settings.laps} laps`, level: LEVELS[settings.level].name };
+  const label = { circuit: 'Circuit', weather: 'Weather', rivals: 'Computer drivers', laps: 'Race', level: 'Their pace' };
   $('settings').innerHTML = ROWS.map((r, i) => `<div class="setting ${i === row ? 'sel' : ''} ${r}">
       <span>${label[r]}</span><span class="value"><span class="glyph glyph-key">◀</span><b>${escapeHtml(value[r])}</b><span class="glyph glyph-key">▶</span></span></div>`).join('');
   const rec = lapRecord(), stops = Math.max(0, Math.ceil(settings.laps / 7) - 1);
-  $('trackAbout').textContent = circuit().about;
+  $('trackAbout').textContent = `${circuit().about} ${FORECASTS[settings.weather].about}${settings.weather === Forecast.Showers ? ' Box for wets when it comes, and for slicks when it dries.' : ''}`;
   $('record').textContent = `${rec ? `Lap record: ${fmt(rec.time)} by ${rec.name}.` : 'No lap record here yet. Set one.'} ${settings.laps} laps: ${stops ? `at least ${plural(stops, 'stop', 'stops')} for fuel` : 'no stop needed for fuel'}.`;
 }
 
@@ -448,16 +499,30 @@ function buildHud() {
     const who = v.car ? playerOf(v.car) ?? input.list.find((c) => c.id === v.car!.id) : undefined;
     return `<div class="view ${v.car ? '' : 'tv'}" id="view${i}" style="${at}">
       <div class="pos"><b></b><span></span></div>${who ? `<div class="who">${chip(who)}</div>` : ''}
-      <div class="lap"></div><div class="speed"></div>
+      <div class="lap"></div><div class="sky"></div><div class="speed"></div>
       ${v.car ? `<div class="state panel"><div class="meter health"><span>Car</span><i><b></b></i></div>
         <div class="meter tyres"><span>Tyres</span><i><b></b></i></div><div class="meter fuel"><span>Fuel</span><i><b></b></i><em></em></div>
-        <div class="box"></div></div>` : ''}
+        <div class="box"></div></div><div class="pitplan panel"></div>` : ''}
       <div class="flash"></div></div>`;
   }).join('');
   $('tower').classList.toggle('hidden', world.views.length > 1);
 }
 
 const tone = (v: number) => (v > 0.6 ? 'var(--chalk)' : v > 0.3 ? '#ffc23d' : '#ff4d4d');
+
+// The pit menu, over the driver's view while they're in the pit lane: what the crew will do (they
+// change it on their phone, or with the arrows), and then the crew at work
+function renderPitPlan(el: HTMLElement, car: Car) {
+  const plan = gp.plans.get(car), open = gp.openPlan(car), wait = gp.pits.waiting(car), who = playerOf(car);
+  const show = !!plan && (!!open || wait !== null);
+  el.classList.toggle('show', show);
+  if (!show || !plan) return;
+  const k = gp.cond.get(car)!, row = who?.pitRow;
+  el.innerHTML = `<span class="eyebrow">${open ? 'Pit stop · ▲▼ choose · ◀▶ change' : 'The crew is on it'}</span>
+    ${PIT_ROWS.map((r) => `<div class="pitrow ${open && r === row ? 'sel' : ''}"><span>${PIT_ROW_NAME[r]}</span><b>${escapeHtml(pitValue(car, plan, r))}</b></div>`).join('')}
+    ${k.burning ? '<div class="pitrow alert"><span>Fire</span><b>Putting it out</b></div>' : ''}
+    <div class="pittime">${open ? `${k.time(plan).toFixed(1)} s in the box · ${Math.round(gp.pits.toBox(car))} m to go` : `${(wait ?? 0).toFixed(1)} s`}</div>`;
+}
 
 function updateHud() {
   const order = gp.standings(), leader = order[0];
@@ -478,11 +543,15 @@ function updateHud() {
     const meter = (cls: string, v: number) => { const b = q(`.${cls} b`); b.style.width = `${Math.round(v * 100)}%`; b.style.background = tone(v); };
     meter('health', k.health / 100);
     meter('tyres', 1 - k.tyres);
+    q('.tyres span').textContent = gp.weather ? TYRE_NAME[k.tyre] : 'Tyres';
+    q('.sky').textContent = gp.weather?.conditions ?? '';
     meter('fuel', k.fuel / 7);
     q('.fuel em').textContent = `${k.fuel.toFixed(1)} laps`;
     const wait = gp.pits.waiting(car), call = gp.call(car);
+    const entry = gp.toPitEntry(car);
     q('.box').textContent = k.out ? '' : k.burning ? 'On fire: box now' : wait !== null ? `Box · ${wait.toFixed(1)} s` : gp.inPits(car) ? 'Pit lane'
-      : gp.boxCall.has(car) ? 'Boxing: keep left' : call ? `Box this lap? ${call}` : '';
+      : gp.boxCall.has(car) ? (entry > 0 && entry < 600 ? `Pit entry ${Math.round(entry)} m: keep left` : 'Boxing this lap') : call ? `Box this lap? ${call}` : '';
+    renderPitPlan(q('.pitplan'), car);
     q('.box').classList.toggle('alert', k.burning || (!!call && !gp.boxCall.has(car)));
     // the pit wall's call, once, when it changes
     const who = playerOf(car);
@@ -513,7 +582,7 @@ function gapText(c: Car, leader: Car, i: number) {
 function renderResults() {
   const order = gp.standings(), win = order[0];
   $('winner').innerHTML = `<span style="color:${win.spec.ai ? 'var(--chalk)' : win.spec.color}">${escapeHtml(win.spec.name)}</span> wins`;
-  $('resultsTrack').textContent = `${gp.track.name} · ${plural(gp.laps, 'lap', 'laps')}`;
+  $('resultsTrack').textContent = `${gp.track.name} · ${plural(gp.laps, 'lap', 'laps')}${gp.weather ? ` · ${FORECASTS[gp.weather.forecast].name}` : ''}`;
   $('standings').innerHTML = order.map((c, i) => {
     const human = playerOf(c), k = gp.cond.get(c)!;
     const who = human ? chip(human) : `<span class="chip" style="--pc:${c.spec.color}"><b>${c.spec.number}</b>${escapeHtml(c.spec.name)}</span>`;
@@ -603,10 +672,12 @@ function frame(now: number) {
     acc += dt;
     while (acc >= TICK) { tick(); acc -= TICK; }
   }
-  world.render(dt, tvFocus(dt), look);
+  world.render(dt, tvFocus(dt), look, gp.weather);
   const racing = stage === 'racing' || stage === 'grid';
-  if (racing) engines.update(people().filter((c) => c.finish === null && !gp.isOut(c)).map(driving), pack());
-  else engines.update([]);
+  if (racing) {
+    engines.update(people().filter((c) => c.finish === null && !gp.isOut(c)).map(driving), pack());
+    engines.weather(gp.weather?.rain ?? 0, gp.weather?.wet ?? 0);
+  } else engines.update([]);
   hudT += dt;
   if (hudT > 0.1 && (racing || stage === 'paused')) { hudT = 0; updateHud(); }
   padT += dt;

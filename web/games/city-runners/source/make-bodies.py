@@ -1,12 +1,12 @@
 # Makes models/people/: the two bodies, the hairstyles and the eyebrows from Quaternius' Universal Base
-# Characters (CC0; the originals are in ../../football/source/characters/), with only their colour
+# Characters (CC0; the originals are in characters/, next to this), with only their colour
 # textures, shrunk to 512 px, so a TV can load half a dozen runners. (Uses macOS's `sips` to resize.)
 #
 #   python3 web/games/city-runners/source/make-bodies.py
 import json, os, shutil, subprocess
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SRC = os.path.join(HERE, '../../football/source/characters')
+SRC = os.path.join(HERE, 'characters')
 OUT = os.path.join(HERE, '../models/people')
 BODIES = os.path.join(SRC, 'Base Characters/Godot - UE')
 HAIR = os.path.join(SRC, 'Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)')
