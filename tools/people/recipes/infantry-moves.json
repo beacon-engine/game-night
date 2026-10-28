@@ -1,0 +1,21 @@
+{
+ "about": "A modern infantryman's moves. The legs and body: Quaternius' game-made walk, jog and sprint (a man's stride, steady through the hips), crouched idle and walk, an idle; the game puts the arms on the weapon itself (two-bone IK), so these clips' arms are overridden except for the knife, the throw, hits and falls. Whole body: a knife strike, a grenade throw, hit, falling dead, getting up, a combat roll.",
+ "fps": 30,
+ "body": {"gender": 1.0, "age": 0.5, "muscle": 0.75, "weight": 0.55, "height": 0.6, "proportions": 0.5},
+ "moves": [
+  {"name": "idle", "ual1": "Idle_Loop", "cyclic": true},
+  {"name": "walk", "ual1": "Walk_Loop", "cyclic": true},
+  {"name": "jog", "ual1": "Jog_Fwd_Loop", "cyclic": true},
+  {"name": "run", "ual1": "Sprint_Loop", "cyclic": true},
+  {"name": "crouch", "ual1": "Crouch_Idle_Loop", "cyclic": true},
+  {"name": "crouch_walk", "ual1": "Crouch_Fwd_Loop", "cyclic": true},
+  {"name": "pistol", "ual1": "Pistol_Idle_Loop", "cyclic": true},
+  {"name": "knife", "ual1": "Sword_Attack"},
+  {"name": "throw", "ual2": "OverhandThrow"},
+  {"name": "hit", "ual1": "Hit_Chest"},
+  {"name": "die", "ual1": "Death01"},
+  {"name": "die_face", "cmu": "90_16", "end": 2.2},
+  {"name": "getup", "ual2": "LayToIdle"},
+  {"name": "roll", "ual1": "Roll"}
+ ]
+}

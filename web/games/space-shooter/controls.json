@@ -1,0 +1,13 @@
+{
+  "_help": "Which pad button does what while flying. Moving is the stick (or the keyboard's arrows/WASD). Actions: fire (hold), bomb, focus (hold: slower and tighter).",
+  "fly": {
+    "bolt": "fire",
+    "drop": "bomb",
+    "leaf": "focus"
+  },
+  "labels": {
+    "fire": "Fire",
+    "bomb": "Bomb",
+    "focus": "Focus"
+  }
+}

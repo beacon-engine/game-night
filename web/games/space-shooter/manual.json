@@ -1,0 +1,24 @@
+{
+  "intro": "Up to four of you fly together across three stages of raiders, rocks and mines, with a boss at the end of each. You share the ships and the score.",
+  "inspiredBy": "Side-scrolling shooters go back to the arcades of the early 1980s, and the genre grew through the 80s and 90s with ships that power up and bosses that fill the screen. Space Shooter is our own take: our own enemies, stages and bosses.",
+  "goal": "Get as far as you can and score as much as you can as a team. Clear all three stages and they come round again, faster and tougher.",
+  "howToPlay": [
+    "Join with your phone. In the lobby choose the difficulty, how many computer wingmen fly with you, and where to start, then press {bolt} to launch.",
+    "Fly with the stick. Hold {bolt} to fire. Hold {leaf} to focus: you move slower (for slipping between shots) and your fire tightens up.",
+    "Press {drop} to drop a bomb: it clears every enemy shot off the screen and hits everything it sweeps over. You start with two.",
+    "Shoot things down to make them drop pickups. P powers up your weapon, S, L and M change it (pick up the one you have to power it up), the diamond is a shield that takes a hit for you, B is a bomb, and + is a spare ship for the team.",
+    "Your ship is hit only in its middle, not on its wings, so you can slip closer to fire than it looks.",
+    "The team shares its spare ships. When one of you is shot down you lose a level of your weapon (it floats there for anyone to grab) and fly back in, as long as the team has ships left.",
+    "At the end of each stage comes a boss. Shoot off its guns first: its core is armoured until they're gone.",
+    "Out of ships? You have ten seconds to continue. The score carries on, but the high score table notes how many continues it took.",
+    "Press ❚❚ on your phone to pause."
+  ],
+  "steering": "Fly with the stick",
+  "tips": [
+    "Kill things quickly, one after another, to build a chain: every five kills in a row adds one to the multiplier (up to times eight). Wait too long and it's gone.",
+    "The laser goes straight through everything in a line; the spread covers the screen; missiles find their own way. Share them out so the team covers everything.",
+    "Save a bomb for the boss: it clears the screen when the bullets get thick.",
+    "Mines drift toward you and burst into a ring when they go: shoot them from a distance.",
+    "Rocks break in two. Big ones soak up a lot of fire."
+  ]
+}

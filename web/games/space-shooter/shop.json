@@ -1,0 +1,9 @@
+{
+  "_comment": "Hull paint jobs bought with stars: the colour of the ship's hull (its trim stays your player colour). Looks only: every ship flies and fires the same.",
+  "items": [
+    { "id": "hull-gold", "name": "Gold Hull", "price": 80, "color": "#e8c66a", "about": "Polished gold, top to tail" },
+    { "id": "hull-stealth", "name": "Stealth Hull", "price": 60, "color": "#2a2f3a", "about": "Matt black, for night runs" },
+    { "id": "hull-arctic", "name": "Arctic Hull", "price": 40, "color": "#f4f8ff", "about": "Bright white, easy to spot" },
+    { "id": "hull-crimson", "name": "Crimson Hull", "price": 60, "color": "#a3202f", "about": "Deep red all over" }
+  ]
+}

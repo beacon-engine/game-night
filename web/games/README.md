@@ -33,6 +33,7 @@ Pick one and go.
 | 🏙️ | [Street Racing](street-racing) | 1–4 | Exhibition, Cup, Career | coming soon |
 | ⛰️ | [Rally](rally) | 1–4 | Race (rallycross), stage records (Stage, Rally next) | **playable** (in progress) |
 | | **Action** | | | |
+| 🎖️ | [Fireteam](fireteam) | 1–4 | Mission (co-op) | **playable** (in progress) |
 | 🥋 | [Fighters](fighters) | 1–2 | Arcade ladder, Tournament, Ranked | coming soon |
 | 👊 | [Brawlers](brawler) | 1–4 | Story, Score attack | coming soon |
 | 🪖 | [Tanks](tanks) | 2–8 | Exhibition, League, Party | coming soon |
@@ -45,7 +46,7 @@ Pick one and go.
 | 🏙️ | [Rooftop Brawl](rooftop-brawl) | 2–4 | Exhibition, Tournament, Ranked | coming soon |
 | 🕵️ | [Heist](heist) | 2–4 | Campaign, Score attack | coming soon |
 | | **Arcade** | | | |
-| 👾 | [Space Shooter](space-shooter) | 1–4 | Arcade, Score attack | coming soon |
+| 🚀 | [Space Shooter](space-shooter) | 1–4 | Arcade, Score attack | **playable** (in progress) |
 | 🧱 | [Bricks](bricks) | 1–4 | Arcade, Versus | coming soon |
 | 🐍 | [Snake Battle](snake-battle) | 2–8 | Party, Cup | coming soon |
 | 👻 | [Cat and Mouse](cat-and-mouse) | 1–5 | Party, Score attack | coming soon |

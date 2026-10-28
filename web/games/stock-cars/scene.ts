@@ -4,13 +4,18 @@
 // Plain three.js with cheap materials, so it runs on modest screens.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { carLights, carMesh, disposeCar, rollWheels, steerWheels, type CarModel } from './cars.ts';
-import { TOP, type Car } from './race.ts';
-import type { Track } from './track.ts';
-import { canvas, DISPLAY_FONT, seeded, speckle, texture } from './draw.ts';
-import { buildScenery, Land } from './scenery.ts';
-
-const STEP = 4; // m between the rings of the track's meshes
+import { carLights, carMesh, disposeCar, fitTyres, rollWheels, steerWheels, type CarModel } from '@racing/cars.ts';
+import { TOP, type Car } from '@racing/race.ts';
+import type { Track } from '@racing/track.ts';
+import { canvas, checkerTexture, DISPLAY_FONT, seeded, speckle, texture } from '@world/draw.ts';
+import { glowTexture, Particles } from '@world/particles.ts';
+import { WeatherLook } from '@world/precipitation.ts';
+import { layout, type Rect } from '@world/screen.ts';
+import { reflections, sky, stars } from '@world/sky.ts';
+import { crowdTexture, kerbTexture, place, strip, surfaceUp, UP } from '@racing/venue.ts';
+import { Tyre } from '@racing/tyres.ts';
+import type { Weather } from '@world/weather.ts';
+import { buildScenery, Land } from '@racing/scenery.ts';
 
 // The light of each time of day. `env`: how strongly the cars reflect the sky; `carLights`: how
 // bright their headlights and tail lights are.
@@ -22,8 +27,6 @@ const TIMES = {
 type Time = (typeof TIMES)[keyof typeof TIMES];
 
 // A rectangle of the screen, as fractions from the top left
-export interface Rect { x: number; y: number; w: number; h: number }
-
 export interface View {
   car: Car | null; // whose chase camera; null: the TV camera
   show: THREE.Object3D | null; // or a car on a turntable
@@ -42,7 +45,8 @@ export class World {
   private track: Track | null = null;
   private cars = new Map<Car, THREE.Group>();
   private extras: THREE.Object3D[] = []; // what goes first when the screen struggles
-  private sparks = new Sparks();
+  private sparks = new Particles(400, 0xffc46b, 0.22, THREE.AdditiveBlending);
+  private weather = new WeatherLook(this.scene);
   private shown: THREE.Group[] = []; // the cars on turntables
   private lightsOn = 0; // the cars' lights, for the time of day
   views: View[] = [];
@@ -57,7 +61,10 @@ export class World {
   // Lower the detail when the screen can't keep up: first the resolution, then the scenery
   lowerDetail(level: number) {
     if (level === 1) this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1) * 0.75);
-    else for (const o of this.extras) o.visible = false;
+    else {
+      for (const o of this.extras) o.visible = false;
+      this.weather.fewer();
+    }
   }
 
   resize() {
@@ -89,6 +96,7 @@ export class World {
     this.lightsOn = time.carLights;
     for (const g of [...this.cars.values(), ...this.shown]) carLights(g, this.lightsOn);
     buildVenue((o, extra) => { this.venue.add(o); if (extra) this.extras.push(o); }, track, time);
+    this.weather.venue(((this.venue.children.find((o) => o.userData.road) as THREE.Mesh | undefined)?.material as THREE.MeshStandardMaterial) ?? null);
   }
 
   // --- the cars ----------------------------------------------------------------------------------
@@ -110,11 +118,12 @@ export class World {
   }
 
   // Picking cars: each person's choice on a turntable in the infield, in their part of the screen
-  showroom(picks: { model: CarModel; color: string; number: number }[]) {
+  showroom(picks: { model: CarModel; color: string; number: number; tyre?: Tyre }[]) {
     this.clearShowroom();
     this.views = layout(picks.length).slice(0, picks.length).map((rect, i) => {
       const g = carMesh(picks[i].model, picks[i].color, picks[i].number);
       carLights(g, this.lightsOn);
+      fitTyres(g, picks[i].tyre ?? Tyre.Slick);
       g.position.set((i - (picks.length - 1) / 2) * 18, 0.1, 0);
       g.rotation.y = 0.6 + i;
       this.scene.add(g);
@@ -131,25 +140,29 @@ export class World {
   // A hit: sparks where it happened, and a jolt for that driver's camera
   hit(c: Car, side: number, strength: number) {
     const p = this.track!.point(c.dist, c.d + side * c.stats.width * 0.5);
-    this.sparks.emit(new THREE.Vector3(p.x, p.y + 0.5, p.z), Math.min(40, 6 + strength * 2));
+    this.sparks.emit(new THREE.Vector3(p.x, p.y + 0.5, p.z), Math.min(40, 6 + strength * 2), 14, 5, 0.35);
     for (const v of this.views) if (v.car === c) v.shake = Math.max(v.shake, Math.min(0.7, strength * 0.05));
   }
 
-  // Place everything and draw each view. `follow`: who the TV camera watches.
-  render(dt: number, follow: Car | null) {
-    const t = this.track!;
+  // Place everything and draw each view. `follow`: who the TV camera watches; `weather`: the rain, if any.
+  render(dt: number, follow: Car | null, weather: Weather | null = null) {
+    const t = this.track!, wet = weather?.wet ?? 0;
+    this.weather.update(dt, weather);
     for (const [c, g] of this.cars) {
       const before = g.position.clone();
       place(t, g, c.dist, c.d, c.yaw);
       rollWheels(g, Math.min(10, before.distanceTo(g.position)));
       steerWheels(g, c.spinning > 0 ? 0 : c.steer);
+      fitTyres(g, c.tyre);
+      // spray off the back wheels (a cloud the car behind drives into)
+      if (wet > 0.15) { const p = t.point(c.dist - c.stats.length * 0.55, c.d); this.weather.splash(new THREE.Vector3(p.x, p.y + 0.5, p.z), c.v, wet); }
       if (c.scraping) {
         const p = t.point(c.dist, c.d + c.scraping * c.stats.width * 0.5);
-        this.sparks.emit(new THREE.Vector3(p.x, p.y + 0.4, p.z), 2);
+        this.sparks.emit(new THREE.Vector3(p.x, p.y + 0.4, p.z), 2, 14, 5, 0.35);
       }
     }
     for (const g of this.shown) g.rotation.y += dt * 0.5;
-    this.sparks.update(dt);
+    this.sparks.update(dt, -20);
 
     const r = this.renderer, canvas = r.domElement;
     const W = canvas.clientWidth, H = canvas.clientHeight;
@@ -170,10 +183,6 @@ export class World {
     }
   }
 }
-
-const layout = (n: number): Rect[] => n <= 1 ? [{ x: 0, y: 0, w: 1, h: 1 }]
-  : n === 2 ? [{ x: 0, y: 0, w: 1, h: 0.5 }, { x: 0, y: 0.5, w: 1, h: 0.5 }]
-  : [{ x: 0, y: 0, w: 0.5, h: 0.5 }, { x: 0.5, y: 0, w: 0.5, h: 0.5 }, { x: 0, y: 0.5, w: 0.5, h: 0.5 }, { x: 0.5, y: 0.5, w: 0.5, h: 0.5 }];
 
 const view = (rect: Rect, car: Car | null): View => ({
   car, show: null, rect, lookBack: false, shake: 0, d: car?.d ?? 0, aim: new THREE.Vector3(),
@@ -242,7 +251,9 @@ function buildVenue(add: Add, t: Track, time: Time) {
   // (in strips across, so it follows an oval's banking as it steepens up the track)
   const across = t.road ? 1 : 8, lanes = Array.from({ length: across }, (_, i) =>
     strip(t, at(-W / 2 + (W * i) / across), at(-W / 2 + (W * (i + 1)) / across), 24, 0, t.length, i / across, (i + 1) / across));
-  add(new THREE.Mesh(mergeGeometries(lanes), new THREE.MeshStandardMaterial({ map: asphaltTexture(W, t.road), roughness: 0.9 })));
+  const road = new THREE.Mesh(mergeGeometries(lanes), new THREE.MeshStandardMaterial({ map: asphaltTexture(W, t.road), roughness: 0.9 }));
+  road.userData.road = true; // (it shines when it's wet)
+  add(road);
   // the earth banked up behind the outside wall, so the turns don't float
   const top = (s: number) => { const p = t.point(s, W / 2 + 0.1); return new THREE.Vector3(p.x, p.y, p.z); };
   const foot = (s: number) => { const p = t.point(s, W / 2 + 0.1 + Math.max(1, t.point(s, W / 2).y * 1.6)); return new THREE.Vector3(p.x, -0.05, p.z); };
@@ -326,7 +337,6 @@ function lights(add: Add, t: Track, on: boolean, stand: number) {
   add(new THREE.Mesh(mergeGeometries(heads), on ? new THREE.MeshBasicMaterial({ color: 0xfff3d6 }) : new THREE.MeshLambertMaterial({ color: 0x8a8f9c })));
 }
 
-
 // Our name painted on the infield grass, sized to fit, readable from the grandstand side
 function infieldName(add: Add, t: Track) {
   let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
@@ -350,136 +360,7 @@ function infieldName(add: Add, t: Track) {
   add(name);
 }
 
-// What the cars' paint and glass reflect: the sky, the ground, and bright panels where the light
-// comes from (the sun by day, the floodlights after dark), like a photographer's softboxes
-function reflections(time: Time, ground: string) {
-  const env = new THREE.Scene();
-  const c = canvas(4, 256), g = c.getContext('2d')!, grad = g.createLinearGradient(0, 0, 0, 256);
-  const earth = '#' + new THREE.Color(ground).multiplyScalar(time.dim * 0.5).getHexString();
-  grad.addColorStop(0, time.sky[0]);
-  grad.addColorStop(0.48, time.sky[1]);
-  grad.addColorStop(0.52, earth);
-  grad.addColorStop(1, earth);
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 4, 256);
-  env.add(new THREE.Mesh(new THREE.SphereGeometry(100, 32, 16), new THREE.MeshBasicMaterial({ map: texture(c, false), side: THREE.BackSide })));
-  const panel = (at: THREE.Vector3, w: number, h: number, color: number, power: number) => {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(power), side: THREE.DoubleSide }));
-    m.position.copy(at);
-    m.lookAt(0, 0, 0);
-    env.add(m);
-  };
-  const sun = new THREE.Vector3(...time.sunAt).normalize().multiplyScalar(80);
-  panel(sun, 30, 30, time.sun[0], 6);
-  panel(new THREE.Vector3(0, 90, 0), 120, 20, 0xffffff, time.lamps ? 2.5 : 1.5); // a long strip overhead: the line along the roof
-  if (time.lamps) for (const a of [0.6, 2.2, 3.8, 5.4]) panel(new THREE.Vector3(Math.cos(a) * 75, 40, Math.sin(a) * 75), 14, 8, 0xfff1d0, 5);
-  return env;
-}
-
-// A dome with the sky's colours, from the top down to the horizon
-function sky(top: string, horizon: string) {
-  const c = canvas(4, 256), g = c.getContext('2d')!, grad = g.createLinearGradient(0, 0, 0, 256);
-  grad.addColorStop(0, top);
-  grad.addColorStop(0.75, horizon);
-  grad.addColorStop(1, horizon);
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 4, 256);
-  return new THREE.Mesh(new THREE.SphereGeometry(5000, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2 + 0.1),
-    new THREE.MeshBasicMaterial({ map: texture(c, false), side: THREE.BackSide, fog: false, depthWrite: false }));
-}
-
-function stars() {
-  const n = 900, pos = new Float32Array(n * 3), rnd = seeded(3);
-  for (let i = 0; i < n; i++) {
-    const a = rnd() * Math.PI * 2, e = 0.08 + rnd() * 1.4, r = 4500;
-    pos.set([Math.cos(a) * Math.cos(e) * r, Math.sin(e) * r, Math.sin(a) * Math.cos(e) * r], i * 3);
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  return new THREE.Points(g, new THREE.PointsMaterial({ color: 0xc8d0e8, size: 1.6, sizeAttenuation: false, fog: false }));
-}
-
-// --- sparks ----------------------------------------------------------------------------------------------
-class Sparks {
-  private n = 400;
-  private pos = new Float32Array(this.n * 3);
-  private vel = new Float32Array(this.n * 3);
-  private life = new Float32Array(this.n);
-  private next = 0;
-  readonly points: THREE.Points;
-
-  constructor() {
-    this.pos.fill(-1e4);
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(this.pos, 3));
-    this.points = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffc46b, size: 0.22, map: glowTexture(), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
-    this.points.frustumCulled = false;
-  }
-
-  emit(at: THREE.Vector3, count: number) {
-    for (let i = 0; i < count; i++) {
-      const k = this.next++ % this.n;
-      this.pos.set([at.x, at.y, at.z], k * 3);
-      this.vel.set([(Math.random() - 0.5) * 14, 2 + Math.random() * 6, (Math.random() - 0.5) * 14], k * 3);
-      this.life[k] = 0.3 + Math.random() * 0.4;
-    }
-  }
-
-  update(dt: number) {
-    for (let k = 0; k < this.n; k++) {
-      if (this.life[k] <= 0) continue;
-      this.life[k] -= dt;
-      if (this.life[k] <= 0) { this.pos[k * 3 + 1] = -1e4; continue; }
-      this.vel[k * 3 + 1] -= 20 * dt;
-      for (let j = 0; j < 3; j++) this.pos[k * 3 + j] += this.vel[k * 3 + j] * dt;
-    }
-    (this.points.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
-  }
-}
-
-// --- placing things on the track ------------------------------------------------------------------------
-const UP = new THREE.Vector3(0, 1, 0);
-const X = new THREE.Vector3(1, 0, 0);
-const basis = new THREE.Matrix4(), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion();
-
-// The banked surface's up direction at d (it leans in toward the inside of the turn)
-function surfaceUp(t: Track, s: number, d: number) {
-  const p = t.at(s), b = Math.atan(t.slope(s, d));
-  return new THREE.Vector3(p.hz * Math.sin(b), Math.cos(b), -p.hx * Math.sin(b));
-}
-
-// A car on the track: along it, tilted with the banking, turned by its slide or spin
-function place(t: Track, o: THREE.Object3D, s: number, d: number, yaw: number) {
-  const p = t.point(s, d);
-  const f = new THREE.Vector3(p.p.hx, 0, p.p.hz), right = new THREE.Vector3(-p.p.hz, 0, p.p.hx);
-  basis.makeBasis(f, UP, right);
-  o.quaternion.setFromRotationMatrix(basis)
-    .multiply(q1.setFromAxisAngle(X, -Math.atan(t.slope(s, d))))
-    .multiply(q2.setFromAxisAngle(UP, -yaw));
-  o.position.set(p.x, p.y, p.z);
-}
-
-// A ribbon along the lap (or part of it) between two edges: inner edge first, so it faces up / inwards.
-// u0..u1: the part of the texture across it.
-function strip(t: Track, a: (s: number) => THREE.Vector3, b: (s: number) => THREE.Vector3, tile: number, s0 = 0, s1 = t.length, u0 = 0, u1 = 1) {
-  const n = Math.max(1, Math.ceil((s1 - s0) / STEP)), pos: number[] = [], uv: number[] = [], index: number[] = [];
-  for (let i = 0; i <= n; i++) {
-    const s = s0 + ((s1 - s0) * i) / n, p = a(s), q = b(s), v = (s - s0) / tile;
-    pos.push(p.x, p.y, p.z, q.x, q.y, q.z);
-    uv.push(u0, v, u1, v);
-    if (i < n) { const k = i * 2; index.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  g.setIndex(index);
-  g.computeVertexNormals();
-  return g;
-}
-
 // --- textures, drawn here so there's nothing to download ---------------------------------------------------
-
-
 
 // across the track (u: inside edge to the wall), along it (v): fine aggregate, rubber in the groove,
 // tyre marks, and the seams where it was laid. A road course has a white line both sides.
@@ -509,15 +390,6 @@ function asphaltTexture(width: number, road: boolean) {
   g.fillStyle = '#e8e6df'; // the white line along the inside edge
   g.fillRect(0, 0, 8, 512);
   if (road) g.fillRect(504, 0, 8, 512);
-  return texture(c);
-}
-
-function kerbTexture() {
-  const c = canvas(16, 64), g = c.getContext('2d')!;
-  for (let y = 0; y < 64; y += 16) {
-    g.fillStyle = y % 32 ? '#f3f0e8' : '#c8323a';
-    g.fillRect(0, y, 16, 16);
-  }
   return texture(c);
 }
 
@@ -556,15 +428,6 @@ function fenceTexture() {
   return texture(c);
 }
 
-function checkerTexture() {
-  const c = canvas(64, 64), g = c.getContext('2d')!;
-  for (let y = 0; y < 2; y++) for (let x = 0; x < 16; x++) {
-    g.fillStyle = (x + y) % 2 ? '#111' : '#f3f0e8';
-    g.fillRect(x * 4, y * 32, 4, 32);
-  }
-  return texture(c, false);
-}
-
 function gantryTexture() {
   const c = canvas(512, 64), g = c.getContext('2d')!;
   g.fillStyle = '#0e1016';
@@ -574,37 +437,6 @@ function gantryTexture() {
   g.textBaseline = 'middle';
   g.fillStyle = '#d7ff3b';
   g.fillText('START  ·  FINISH', 256, 34);
-  return texture(c, false);
-}
-
-// rows of people (x across the stand, y along it)
-function crowdTexture() {
-  const c = canvas(256, 512), g = c.getContext('2d')!, rnd = seeded(23);
-  g.fillStyle = '#1d2029';
-  g.fillRect(0, 0, 256, 512);
-  const shirts = ['#d8d4cb', '#c4505a', '#4a74c4', '#d0a640', '#38a07a', '#b45aa0', '#7d7b85', '#a6c043', '#c47a45', '#2a2e3a'];
-  for (let row = 0; row < 32; row++) {
-    g.fillStyle = '#12141b';
-    g.fillRect(row * 8 + 6, 0, 2, 512);
-    for (let y = 0; y < 512; y += 4) {
-      if (rnd() < 0.15) continue;
-      g.fillStyle = shirts[Math.floor(rnd() * shirts.length)];
-      g.fillRect(row * 8 + 2, y + rnd(), 4, 3);
-      g.fillStyle = '#8d6e5a';
-      g.fillRect(row * 8, y + rnd(), 2, 2);
-    }
-  }
-  return texture(c);
-}
-
-function glowTexture() {
-  const c = canvas(64, 64), g = c.getContext('2d')!;
-  const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-  r.addColorStop(0, 'rgba(255,255,255,1)');
-  r.addColorStop(0.35, 'rgba(255,255,255,0.35)');
-  r.addColorStop(1, 'rgba(255,255,255,0)');
-  g.fillStyle = r;
-  g.fillRect(0, 0, 64, 64);
   return texture(c, false);
 }
 

@@ -1,0 +1,10 @@
+{
+  "name": "Fireteam",
+  "icon": "🎖️",
+  "tagline": "Lead your squad through the hedgerows of Normandy",
+  "players": "1–4",
+  "category": "Action",
+  "needs": "standard",
+  "order": 60,
+  "inProgress": true
+}

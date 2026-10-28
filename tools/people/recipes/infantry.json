@@ -1,0 +1,163 @@
+{
+ "about": "Modern infantry: a combat shirt and trousers (in grey: the game paints the camouflage), boots and gloves, and the whole kit made to measure by gear.py (a high-cut helmet with night-vision goggles up and down, a plate carrier with pouches, a pack, knee pads, a thigh holster), on eight different men. No hair: it would show through the helmet.",
+ "defaults": {
+  "eyes": "low-poly",
+  "eyebrows": "eyebrow001",
+  "eyelashes": "eyelashes01",
+  "phenotype": {
+   "gender": 1.0,
+   "age": 0.5,
+   "muscle": 0.75,
+   "weight": 0.55,
+   "height": 0.6,
+   "proportions": 0.5
+  },
+  "detail": {
+   "skin": 0.4,
+   "top": 0.5,
+   "legs": 0.5,
+   "boots": 0.5,
+   "gloves": 0.5
+  },
+  "clothes": {
+   "top": "toigo_fisherman_sweater",
+   "legs": "cortu_cargo_pants",
+   "boots": "toigo_ankle_boots_male",
+   "gloves": "toigo_gloves_short"
+  },
+  "helmet": null,
+  "gear": true
+ },
+ "plain": [
+  "top",
+  "legs",
+  "boots",
+  "gloves"
+ ],
+ "people": [
+  {
+   "name": "m1",
+   "skin": "young_caucasian_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0.05,
+     "caucasian": 0.95,
+     "asian": 0
+    },
+    "muscle": 0.75,
+    "weight": 0.55,
+    "height": 0.6
+   }
+  },
+  {
+   "name": "m2",
+   "skin": "middleage_caucasian_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0,
+     "caucasian": 1,
+     "asian": 0
+    },
+    "muscle": 0.7,
+    "weight": 0.62,
+    "height": 0.52,
+    "age": 0.6
+   }
+  },
+  {
+   "name": "m3",
+   "skin": "young_african_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0.9,
+     "caucasian": 0.1,
+     "asian": 0
+    },
+    "muscle": 0.8,
+    "weight": 0.55,
+    "height": 0.68
+   }
+  },
+  {
+   "name": "m4",
+   "skin": "young_caucasian_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0.1,
+     "caucasian": 0.9,
+     "asian": 0
+    },
+    "muscle": 0.68,
+    "weight": 0.5,
+    "height": 0.45,
+    "age": 0.4
+   }
+  },
+  {
+   "name": "m5",
+   "skin": "mindfront_skin_male_african_middleage",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 1,
+     "caucasian": 0,
+     "asian": 0
+    },
+    "muscle": 0.85,
+    "weight": 0.6,
+    "height": 0.58,
+    "age": 0.55
+   }
+  },
+  {
+   "name": "m6",
+   "skin": "young_asian_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0,
+     "caucasian": 0.2,
+     "asian": 0.8
+    },
+    "muscle": 0.72,
+    "weight": 0.5,
+    "height": 0.5
+   }
+  },
+  {
+   "name": "m7",
+   "skin": "middleage_african_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0.95,
+     "caucasian": 0.05,
+     "asian": 0
+    },
+    "muscle": 0.78,
+    "weight": 0.58,
+    "height": 0.62,
+    "age": 0.55
+   }
+  },
+  {
+   "name": "m8",
+   "skin": "young_caucasian_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0,
+     "caucasian": 1,
+     "asian": 0
+    },
+    "muscle": 0.82,
+    "weight": 0.6,
+    "height": 0.72
+   }
+  }
+ ]
+}

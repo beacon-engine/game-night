@@ -38,6 +38,7 @@
   .view .who { position: absolute; left: 22px; top: 92px; }
   .view .lap { position: absolute; right: 20px; top: 18px; font: 800 26px/1 var(--font-display); text-transform: uppercase; text-shadow: 0 2px 12px rgb(7 8 11 / 0.7); }
   .view .speed { position: absolute; right: 20px; bottom: 14px; font: 900 56px/1 var(--font-display); font-variant-numeric: tabular-nums; text-shadow: 0 2px 16px rgb(7 8 11 / 0.6); }
+  .view .sky { position: absolute; right: 20px; top: 50px; font: 700 13px/1 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--chalk-2); text-shadow: 0 2px 10px rgb(7 8 11 / 0.8); }
   .view .speed span { font: 600 14px/1 var(--font-ui); color: var(--chalk-2); margin-left: 6px; }
   .view .tow { position: absolute; left: 20px; bottom: 22px; padding: 7px 12px; border-radius: var(--r-2); background: var(--volt); color: var(--volt-ink);
     font: 800 18px/1 var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; opacity: 0; transition: opacity var(--t) var(--ease); }
@@ -57,6 +58,8 @@
   .stat i { height: 6px; background: var(--ink-3); border-radius: 3px; overflow: hidden; }
   .stat b { display: block; height: 100%; background: var(--chalk); }
   .paint { display: flex; align-items: center; gap: 8px; font: 600 13px/1 var(--font-ui); }
+  .paint i.tread { background: repeating-linear-gradient(60deg, #26262b 0 4px, #0b0b0d 4px 6px); }
+  .paint i.tread.slick { background: #26262b; }
   .paint i { width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--line-strong); }
   .ready { margin-top: 4px; font: 800 20px/1 var(--font-display); text-transform: uppercase; color: var(--chalk-2); display: flex; align-items: center; gap: 8px; }
   .ready.on { color: var(--volt); }

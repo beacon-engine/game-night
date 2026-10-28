@@ -20,11 +20,27 @@
     "paths": {
       "@platform": [
         "./platform/index.ts"
+      ],
+      "@racing/*": [
+        "./racing/*"
+      ],
+      "@world/*": [
+        "./world/*"
+      ],
+      "@people/*": [
+        "./people/*"
+      ],
+      "@armoury/*": [
+        "./armoury/*"
       ]
     }
   },
   "include": [
     "platform",
+    "world",
+    "racing",
+    "people",
+    "armoury",
     "hub",
     "pad",
     "games"

@@ -1,0 +1,129 @@
+{
+ "about": "A footballer's moves: idle, walk, jog and run cycles, kicks and passes with either foot, falling, getting up, sliding, throwing. CMU motion capture (the run is an athlete's: subject 78) and Quaternius' libraries.",
+ "fps": 30,
+ "body": {
+  "gender": 1.0,
+  "age": 0.5,
+  "muscle": 0.82,
+  "weight": 0.58,
+  "height": 0.6,
+  "proportions": 0.5
+ },
+ "moves": [
+  {
+   "name": "idle",
+   "ual1": "Idle_Loop",
+   "cyclic": true
+  },
+  {
+   "name": "walk",
+   "cmu": "10_04",
+   "start": 1.4,
+   "loop": [
+    0.8,
+    1.4
+   ]
+  },
+  {
+   "name": "jog",
+   "cmu": "16_36",
+   "loop": [
+    0.55,
+    0.95
+   ],
+   "upper": {
+    "cmu": "78_12",
+    "loop": [
+     0.5,
+     0.8
+    ]
+   }
+  },
+  {
+   "name": "run",
+   "cmu": "78_12",
+   "loop": [
+    0.5,
+    0.8
+   ]
+  },
+  {
+   "name": "kick_r",
+   "cmu": "11_01",
+   "foot": "RightToeBase",
+   "start": 2.0,
+   "around": [
+    0.75,
+    0.55
+   ],
+   "support": "LeftToeBase"
+  },
+  {
+   "name": "kick_l",
+   "cmu": "11_01",
+   "foot": "RightToeBase",
+   "start": 2.0,
+   "around": [
+    0.75,
+    0.55
+   ],
+   "mirror": true,
+   "support": "LeftToeBase"
+  },
+  {
+   "name": "pass_r",
+   "cmu": "10_05",
+   "foot": "RightToeBase",
+   "start": 1.5,
+   "around": [
+    0.6,
+    0.5
+   ],
+   "support": "LeftToeBase"
+  },
+  {
+   "name": "pass_l",
+   "cmu": "10_05",
+   "foot": "RightToeBase",
+   "start": 1.5,
+   "around": [
+    0.6,
+    0.5
+   ],
+   "mirror": true,
+   "support": "LeftToeBase"
+  },
+  {
+   "name": "fall",
+   "cmu": "90_16"
+  },
+  {
+   "name": "getup",
+   "cmu": "140_01"
+  },
+  {
+   "name": "slide_in",
+   "ual2": "Slide_Start"
+  },
+  {
+   "name": "slide",
+   "ual2": "Slide_Loop",
+   "cyclic": true
+  },
+  {
+   "name": "slide_out",
+   "ual2": "Slide_Exit"
+  },
+  {
+   "name": "throw",
+   "ual2": "OverhandThrow"
+  },
+  {
+   "name": "lie_up",
+   "ual2": "LayToIdle"
+  }
+ ],
+ "stance": {
+  "legs": 5
+ }
+}

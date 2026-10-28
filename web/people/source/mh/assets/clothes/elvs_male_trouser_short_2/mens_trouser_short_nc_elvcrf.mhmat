@@ -1,0 +1,40 @@
+# Material definition for fabric_teal_polysterMaterial
+
+name fabric_teal_polysterMaterial
+description Mens_trouser_short_nc_elvcrf material
+ambientColor 1.0 1.0 1.0
+diffuseColor 0.0551 0.2102 0.242
+specularColor 0.5 0.5 0.5
+shininess 0.0
+emissiveColor 0.0 0.0 0.0
+opacity 1.0
+translucency 0.0
+
+shadeless False
+wireframe False
+transparent False
+alphaToCoverage True
+backfaceCull False
+depthless False
+
+castShadows True
+
+receiveShadows True
+
+diffuseTexture shorttex1.png
+
+shader shaders/glsl/litsphere
+
+shaderParam AdditiveShading 0.02
+shaderParam litsphereTexture litspheres/lit_matte.png
+
+shaderDefine CALC_NORMAL_Z
+
+shaderConfig ambientOcclusion True
+shaderConfig normal False
+shaderConfig bump False
+shaderConfig displacement False
+shaderConfig vertexColors False
+shaderConfig spec False
+shaderConfig transparency True
+shaderConfig diffuse True

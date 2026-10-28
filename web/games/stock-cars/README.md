@@ -27,14 +27,13 @@ left and right to steer, with gas and brake pedals (`controls.json`). Menus use 
 |---|---|
 | `tracks.json` | The tracks. An oval is half a lap of straights and left turns (the other half is its mirror image, so it always closes); a road course is the whole lap, turning both ways. Width, banking, time of day. Add one and it's in the lobby. |
 | `cars.json` | The cars: which model, how long, and top speed, pick-up, grip and weight compared with the Stocker. |
-| `track.ts` | A track as numbers, from its description. Everything is measured along it (`s`) and across it (`d`). |
-| `race.ts` | The cars, the slipstream, contact (cars bounce off the wall and each other by weight; hard hits spin you round), laps, finishing order, and the computer drivers. No graphics, so it can be tested on its own. |
-| `cars.ts` | Loads the models and repaints each in its driver's colour, with their number on the doors. |
-| `scene.ts` | The venue in three.js, built from `track.ts` and lit for day, dusk or night; sparks; a chase camera per person (the screen splits for 2 to 4), a TV camera, and the turntables for picking cars. |
-| `scenery.ts` | The land around each track by its theme: countryside hills and forest, desert mesas, a harbour with cranes and containers, or a city. Flat by the track, rising into hills further out. |
-| `draw.ts` | Small helpers for textures drawn in code (and the noise the hills are made from). |
-| `sound.ts` | A synthesised engine per person driving, through the gears, with tyres, wind, squeal and the wall; the pack going by; a thump for contact and a crunch for the wall. |
-| `main.ts` | Lobby, picking cars, countdown, race, results, saved records, what the phones show. |
+| `scene.ts` | The venue in three.js, built from the track and lit for day, dusk or night; sparks, rain and spray; a chase camera per person (the screen splits for 2 to 4), a TV camera, and the turntables for picking cars. |
+| `main.ts` | Lobby (with the weather), picking cars (and, for showers, tyres), countdown, race, results, saved records, what the phones show. |
+
+The racing itself is shared with the other racing games, in [`web/racing/`](../../racing/README.md):
+the track (`track.ts`), the cars on it, the slipstream, contact, laps and the computer drivers (`race.ts`,
+no graphics, so it can be tested on its own), the models and their paint (`cars.ts`), the land round each
+track (`scenery.ts`), the weather (`weather.ts`, `rain.ts`) and the engine sound (`sound.ts`).
 
 Handling, in short: gas settles you at your top speed (more in a slipstream); the tyres and the banking hold
 the turns up to a point, and beyond it you slide to the outside and scrub speed. An oval's banking is steeper
@@ -45,8 +44,14 @@ the turns they can't take flat, take the racing line on a road course, and keep 
 
 Saved: each driver's races, wins, podiums, best lap and last car, and each track's lap record.
 
+**Weather** (the road course only: ovals aren't raced wet, as in the real sport): Dry, Showers or Rain.
+The rain soaks the road over half a minute and it dries over a couple. There are no pit stops, so for
+Showers everyone picks tyres before the start with Leaf: slicks are quicker until the rain comes and slither
+about once it does; wets, with grooves cut in them to clear the water, are slower in the dry and safe in the
+wet. For Rain everyone's on wets. Half the computer drivers gamble on slicks.
+
 The cars are from [Kenney's Car Kit](https://kenney.nl/assets/car-kit) (CC0), kept with their licence in
-[`source/`](source/README.md). Everything else (track, scenery, textures) is drawn in code.
+[`web/racing/source/`](../../racing/source/README.md). Everything else (track, scenery, textures) is drawn in code.
 
 ## Competition
 
@@ -73,6 +78,7 @@ track; no real series, teams, sponsors, manufacturers or circuits. See [Original
 - [x] Menus and HUD use the brand (`/brand/brand.css`, see [brand/README.md](../../brand/README.md))
 - [x] Two keyboard players can play it too (they come free with `Input`)
 - [x] A road course, turning both ways
+- [x] Weather on the road course: showers and rain, slicks or wets
 
 ## Next
 

@@ -1,0 +1,75 @@
+{
+ "fps": 30,
+ "clips": {
+  "idle": {
+   "duration": 2.5,
+   "speed": 0.0,
+   "loop": true
+  },
+  "walk": {
+   "duration": 1.3333,
+   "speed": 0.0,
+   "loop": true
+  },
+  "jog": {
+   "duration": 0.9333,
+   "speed": 0.0,
+   "loop": true
+  },
+  "run": {
+   "duration": 0.6667,
+   "speed": 0.0,
+   "loop": true
+  },
+  "crouch": {
+   "duration": 2.9333,
+   "speed": 0.0,
+   "loop": true
+  },
+  "crouch_walk": {
+   "duration": 2.0,
+   "speed": 0.0,
+   "loop": true
+  },
+  "pistol": {
+   "duration": 1.6667,
+   "speed": 0.0,
+   "loop": true
+  },
+  "knife": {
+   "duration": 1.5333,
+   "speed": 0.0,
+   "loop": false
+  },
+  "throw": {
+   "duration": 1.3333,
+   "speed": 0.0,
+   "loop": false
+  },
+  "hit": {
+   "duration": 0.3333,
+   "speed": 0.094,
+   "loop": false
+  },
+  "die": {
+   "duration": 2.4,
+   "speed": 0.221,
+   "loop": false
+  },
+  "die_face": {
+   "duration": 2.2,
+   "speed": 0.009,
+   "loop": false
+  },
+  "getup": {
+   "duration": 1.5333,
+   "speed": 0.115,
+   "loop": false
+  },
+  "roll": {
+   "duration": 1.4667,
+   "speed": 0.078,
+   "loop": false
+  }
+ }
+}

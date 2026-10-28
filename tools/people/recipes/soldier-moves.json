@@ -1,0 +1,21 @@
+{
+ "about": "An infantryman's moves. Legs: idle, walk, jog, run, crouched idle and walk. Upper body (laid over the legs by the game): a rifle held at the ready and aimed at the shoulder (CMU subject 79's shooting take), a grenade throw. Whole body: hit, falling dead, getting up.",
+ "fps": 30,
+ "body": {"gender": 1.0, "age": 0.5, "muscle": 0.75, "weight": 0.55, "height": 0.6, "proportions": 0.5},
+ "stance": {"legs": 4},
+ "moves": [
+  {"name": "idle", "ual1": "Idle_Loop", "cyclic": true},
+  {"name": "walk", "cmu": "10_04", "start": 1.4, "loop": [0.8, 1.4]},
+  {"name": "jog", "cmu": "16_36", "loop": [0.55, 0.95]},
+  {"name": "run", "cmu": "78_12", "loop": [0.5, 0.8]},
+  {"name": "crouch", "ual1": "Crouch_Idle_Loop", "cyclic": true},
+  {"name": "crouch_walk", "ual1": "Crouch_Fwd_Loop", "cyclic": true},
+  {"name": "ready", "cmu": "79_96", "start": 0.3, "end": 0.8},
+  {"name": "aim", "cmu": "79_96", "start": 2.7, "end": 3.3},
+  {"name": "throw", "ual2": "OverhandThrow"},
+  {"name": "hit", "ual1": "Hit_Chest"},
+  {"name": "die", "ual1": "Death01"},
+  {"name": "die_face", "cmu": "90_16", "end": 2.2},
+  {"name": "getup", "ual2": "LayToIdle"}
+ ]
+}

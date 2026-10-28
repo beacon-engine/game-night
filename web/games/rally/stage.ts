@@ -5,7 +5,7 @@
 // physics drives on and the scene draws, triangle for triangle the same. Along the road: `s`, metres
 // from the start line; across it: `d`, + to the right of travel. No graphics here.
 import * as THREE from 'three';
-import { noise2, seeded } from '../stock-cars/draw.ts';
+import { noise2, seeded } from '@world/draw.ts';
 import { SURFACE_LIST, type Ground, type Post, type Surface } from './physics.ts';
 
 export interface StageSpec {

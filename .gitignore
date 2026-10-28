@@ -13,3 +13,7 @@ node_modules/
 /android/app/src/main/assets/
 # Claude Code agents' scratch checkouts
 /.claude/worktrees/
+
+# MakeHuman asset packs: the parts our people use are kept unzipped in source/mh/assets/;
+# the packs themselves (some over GitHub's 100 MB limit) come back with tools/people/fetch/mh.sh
+/web/people/source/mh/*.zip

@@ -8,7 +8,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { ALL, CAR_TOP, LANE_W, ROPE_TOP, ZIP_Y, type Ground, type Piece, type PieceKind, type Power, type Route } from './course.ts';
 import { Person } from './people.ts';
 import { SLIDE, type Run, type Runner } from './run.ts';
-import { canvas, DISPLAY_FONT, seeded, texture } from './draw.ts';
+import { canvas, DISPLAY_FONT, seeded, texture } from '@world/draw.ts';
 
 const AHEAD = 190; // m of course drawn in front of the camera
 const BEHIND = 12;

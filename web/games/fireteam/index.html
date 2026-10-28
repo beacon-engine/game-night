@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fireteam · Beacon Arcade</title>
+<link rel="icon" href="/brand/mark.svg">
+<link rel="stylesheet" href="/brand/brand.css">
+<style>
+  html, body { height: 100%; overflow: hidden; background: #9aa6ad; }
+  #view { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  #lobby { position: fixed; inset: 0; display: grid; grid-template-columns: minmax(400px, 36%) 1fr; }
+  #lobby .side { display: flex; flex-direction: column; gap: 22px; padding: 32px 40px; background: rgb(7 8 11 / 0.9); border-right: 1px solid var(--line); overflow-y: auto; }
+  #lobby .back { align-self: flex-start; }
+  #crew { display: flex; flex-direction: column; gap: 8px; }
+  .pilot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .pilot .gun { font: 700 13px/1 var(--font-ui); color: var(--chalk); display: flex; gap: 6px; align-items: center; }
+  #settings { display: flex; flex-direction: column; }
+  .setting { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-left: 3px solid transparent;
+    font: 700 22px/1 var(--font-display); text-transform: uppercase; color: var(--chalk-2); }
+  .setting.sel { background: var(--ink-2); border-left-color: var(--volt); color: var(--chalk); }
+  .setting .value { display: flex; align-items: center; gap: 10px; }
+  .setting .value b { min-width: 6em; text-align: center; color: var(--chalk); }
+  .setting:not(.sel) .glyph { visibility: hidden; }
+  #lobby .join { display: flex; gap: 14px; align-items: center; padding: 12px; margin-top: auto; }
+  #lobby .join .qr { width: 88px; height: 88px; padding: 5px; }
+  #lobby .join .url { font: 600 13px/1.3 var(--font-ui); word-break: break-all; margin-top: 4px; }
+  #lobby .help { position: absolute; right: 28px; bottom: 24px; padding: 12px 16px; max-width: 60%; }
+
+  #hud { position: fixed; inset: 0; pointer-events: none; }
+  #goal { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); padding: 10px 18px; text-align: center; background: rgb(13 15 20 / 0.78); border: 1px solid var(--line); border-radius: var(--r-2); }
+  #goal .caption-s, .caption-s { font: 700 11px/1 var(--font-ui); text-transform: uppercase; letter-spacing: 0.12em; color: var(--chalk-3); }
+  #goal .title { font: 800 24px/1.1 var(--font-display); text-transform: uppercase; margin-top: 4px; }
+  #goal .progress { font: 600 14px/1.2 var(--font-ui); color: var(--volt); margin-top: 4px; }
+  #squads { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 10px; padding: 14px 20px; flex-wrap: wrap; }
+  .squad { display: flex; align-items: center; gap: 10px; padding: 7px 12px 7px 0; border-radius: var(--r-2); background: rgb(13 15 20 / 0.82); border: 1px solid var(--line); overflow: hidden; }
+  .squad > b { align-self: stretch; display: flex; align-items: center; padding: 0 10px; background: var(--pc); color: var(--ink-0); font: 800 13px/1 var(--font-ui); }
+  .squad .who { display: flex; flex-direction: column; gap: 4px; min-width: 90px; }
+  .squad .n { font: 700 14px/1 var(--font-ui); }
+  .squad .hp { height: 5px; border-radius: 3px; background: rgb(255 255 255 / 0.15); overflow: hidden; }
+  .squad .hp i { display: block; height: 100%; background: linear-gradient(90deg, #ff4d5a, #2ee59d); }
+  .squad .w, .squad .o { font: 700 12px/1 var(--font-ui); color: var(--chalk-2); }
+  .squad .g { color: #c8b46a; font: 800 12px/1 var(--font-ui); }
+  .squad.down { border-color: #ff4d5a; }
+  #tags { position: fixed; inset: 0; pointer-events: none; }
+  /* each player's view: the objective and its marker, his weapon, his squad */
+  #views { position: fixed; inset: 0; pointer-events: none; }
+  .pv { position: absolute; overflow: hidden; outline: 2px solid rgb(7 8 11 / 0.9); }
+  .pv .obj { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); text-align: center; padding: 7px 14px; background: rgb(13 15 20 / 0.62); border-radius: var(--r-2); white-space: nowrap; }
+  .pv .obj .t { font: 800 17px/1.1 var(--font-display); text-transform: uppercase; }
+  .pv .obj .p { font: 600 13px/1.2 var(--font-ui); color: var(--volt); margin-top: 2px; }
+  .pv .me { position: absolute; left: 14px; bottom: 12px; display: flex; align-items: center; gap: 10px; padding: 7px 12px 7px 0; background: rgb(13 15 20 / 0.62); border-radius: var(--r-2); overflow: hidden; }
+  .pv .me > b { align-self: stretch; display: flex; align-items: center; padding: 0 10px; background: var(--pc); color: var(--ink-0); font: 800 13px/1 var(--font-ui); }
+  .pv .me .hp { width: 90px; height: 5px; border-radius: 3px; background: rgb(255 255 255 / 0.15); overflow: hidden; margin-top: 5px; }
+  .pv .me .hp i { display: block; height: 100%; background: linear-gradient(90deg, #ff4d5a, #2ee59d); }
+  .pv .me .n { font: 700 13px/1 var(--font-ui); }
+  .pv .ammo { position: absolute; right: 14px; bottom: 12px; text-align: right; padding: 7px 12px; background: rgb(13 15 20 / 0.62); border-radius: var(--r-2); }
+  .pv .ammo .w { font: 700 12px/1 var(--font-ui); color: var(--chalk-2); text-transform: uppercase; letter-spacing: 0.06em; }
+  .pv .ammo .a { font: 800 26px/1 var(--font-display); margin-top: 3px; }
+  .pv .ammo .a small { font-size: 15px; color: var(--chalk-3); }
+  .pv .ammo .x { font: 700 12px/1 var(--font-ui); color: #c8b46a; margin-top: 4px; }
+  .pv .mark { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; gap: 3px; color: #ffd23d; font: 800 12px/1 var(--font-ui); text-shadow: 0 1px 4px rgb(0 0 0 / 0.9); }
+  .pv .mark i { width: 14px; height: 14px; border: 2px solid #ffd23d; transform: rotate(45deg); box-shadow: 0 0 8px rgb(0 0 0 / 0.7); }
+  .pv .mark.edge i { background: #ffd23d; }
+  .pv .cross { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; transform: translate(-50%, -50%); border: 2px solid rgb(255 255 255 / 0.55); border-radius: 50%; }
+  .pv .cross.on { border-color: #ff4d5a; }
+  .pv .tag { position: absolute; }
+  /* the briefing */
+  #briefing { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 4vw; align-items: center; }
+  #briefing canvas { width: 100%; aspect-ratio: 160 / 144; border-radius: var(--r-2); border: 1px solid var(--line); background: #1b2016; }
+  #briefing ol { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 6px; font: 600 16px/1.3 var(--font-ui); }
+  #briefing ol li::marker { color: #ffd23d; font-weight: 800; }
+  #briefing p { margin: 0; font: 500 16px/1.45 var(--font-ui); color: var(--chalk-2); max-width: 60ch; }
+  .tag { position: absolute; transform: translate(-50%, -100%); padding: 3px 8px; border-radius: 4px; background: var(--pc); color: var(--ink-0); font: 800 12px/1 var(--font-ui); white-space: nowrap; }
+  .tag.down { background: #ff4d5a; color: #fff; animation: pulse 0.8s infinite alternate; }
+  @keyframes pulse { to { opacity: 0.6; } }
+  #callout { position: fixed; left: 0; right: 0; top: 30%; display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none; opacity: 0; transition: opacity 0.3s; text-align: center; }
+  #callout.show { opacity: 1; }
+  #callout .big { font: 900 clamp(46px, 7vw, 100px)/0.92 var(--font-display); text-transform: uppercase; text-shadow: 0 4px 30px rgb(7 8 11 / 0.8); }
+  #callout .sub { font: 600 20px/1.3 var(--font-ui); color: var(--chalk); text-shadow: 0 2px 12px rgb(7 8 11 / 0.9); max-width: 46ch; }
+  .overlay { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 20px; padding: 6vh 8vw; background: rgb(7 8 11 / 0.82); backdrop-filter: blur(6px); }
+  #stats { display: flex; gap: 10px; flex-wrap: wrap; }
+  .stat { padding: 10px 14px; background: var(--ink-1); border: 1px solid var(--line); border-radius: var(--r-2); display: flex; gap: 12px; align-items: center; }
+  .actions { display: flex; gap: 10px; }
+  @media (max-height: 640px) {
+    #lobby { grid-template-columns: 42% 1fr; }
+    #lobby .side { padding: 20px 26px; gap: 14px; }
+    .setting { font-size: 18px; padding: 9px 12px; }
+    .h1 { font-size: 44px; }
+  }
+  .tv .keys { display: none !important; }
+</style>
+</head>
+<body>
+  <canvas id="view"></canvas>
+  <div id="tags"></div>
+
+  <div id="lobby" class="hidden">
+    <aside class="side">
+      <button class="btn back" id="back"><span class="glyph glyph-drop" title="Drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg></span> Games</button>
+      <div>
+        <span class="eyebrow">Action</span>
+        <h1 class="h1" style="margin-top:10px">Fire<span class="hl-volt">team</span></h1>
+        <p class="muted" style="margin:10px 0 0;max-width:36ch">A night raid in the hedgerow country: find the downed pilot, get him out, knock out the gun that keeps the helicopters away, and hold on until the helicopter lands.</p>
+      </div>
+      <div><div class="caption" style="margin-bottom:10px">Squad leaders</div><div id="crew"></div></div>
+      <div id="settings"></div>
+      <div style="display:flex;gap:10px">
+        <button id="start" class="btn btn-primary btn-lg"><span class="glyph glyph-bolt" title="Bolt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span> Start</button>
+        <button id="howto" class="btn btn-lg"><span class="glyph glyph-star" title="Star"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 16.9l-5.4 2.9 1-6.1-4.4-4.3 6.1-.8z"/></svg></span> How to play</button>
+      </div>
+      <div class="panel join">
+        <div class="qr" id="qr"></div>
+        <div><div class="caption">Scan to join · same Wi-Fi</div><div class="url" id="url">…</div></div>
+      </div>
+    </aside>
+    <div style="position:relative"><div class="panel panel-glass help legend" id="legend"></div></div>
+  </div>
+
+  <div id="hud" class="hidden">
+    <div id="views"></div>
+  </div>
+
+  <div id="briefing" class="overlay hidden">
+    <div><canvas id="map" width="800" height="720"></canvas></div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <span class="eyebrow" id="opTime"></span>
+      <h1 class="h1" id="opName" style="margin:0"></h1>
+      <p id="opAbout"></p>
+      <p id="opPlan"></p>
+      <ol id="opSteps"></ol>
+      <div class="legend"><span><span class="glyph glyph-bolt" title="Bolt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span> Move out</span></div>
+    </div>
+  </div>
+  <div id="callout"></div>
+
+  <div id="failed" class="overlay hidden">
+    <span class="eyebrow" id="failWhy">Everyone is down</span>
+    <h1 class="h1">Back to the checkpoint?</h1>
+    <div class="legend"><span><span class="glyph glyph-bolt" title="Bolt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span> Try this step again</span><span><span class="glyph glyph-drop" title="Drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg></span> Back to the lobby</span></div>
+  </div>
+
+  <div id="results" class="overlay hidden">
+    <span class="eyebrow" id="resultsWhy">Mission done</span>
+    <h1 class="h1" id="final"></h1>
+    <div id="stats"></div>
+    <div class="actions">
+      <button class="btn btn-primary btn-lg" id="again"><span class="glyph glyph-bolt" title="Bolt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span> Again</button>
+      <button class="btn btn-lg" id="toLobby"><span class="glyph glyph-drop" title="Drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg></span> Lobby</button>
+    </div>
+  </div>
+
+  <div id="pause" class="overlay hidden">
+    <span class="eyebrow">Fireteam</span>
+    <h1 class="h1">Paused</h1>
+    <div class="legend"><span><span class="glyph glyph-bolt" title="Bolt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span> Resume</span><span><span class="glyph glyph-drop" title="Drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg></span> Quit to the lobby</span></div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+{
+ "about": "Footballers in a plain kit (a collared jersey, shorts, socks and boots in grey, for the game to colour), keepers with gloves, and a referee. Athletes' builds, varied heights, faces, skin and hair.",
+ "defaults": {
+  "eyes": "low-poly",
+  "eyebrows": "eyebrow001",
+  "eyelashes": "eyelashes01",
+  "phenotype": {
+   "gender": 1.0,
+   "age": 0.5,
+   "muscle": 0.82,
+   "weight": 0.58,
+   "height": 0.6,
+   "proportions": 0.5
+  },
+  "detail": {
+   "skin": 0.4,
+   "shorts": 0.35,
+   "boots": 0.5,
+   "hair": 0.6,
+   "gloves": 0.5,
+   "shirt": 0.7
+  },
+  "clothes": {
+   "shirt": "namuhekam_male_polo_shirt",
+   "shorts": "elvs_male_trouser_short_2",
+   "socks": "joepal_crude_high_socks",
+   "boots": "punkduck_running_shoes_01"
+  }
+ },
+ "plain": [
+  "shirt",
+  "shorts",
+  "socks",
+  "boots",
+  "gloves",
+  "hair"
+ ],
+ "people": [
+  {
+   "name": "p1",
+   "skin": "young_african_male",
+   "hair": "short04",
+   "body": {
+    "race": {
+     "african": 0.9,
+     "caucasian": 0.1,
+     "asian": 0
+    },
+    "proportions": 0.5
+   }
+  },
+  {
+   "name": "p2",
+   "skin": "middleage_african_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 1,
+     "caucasian": 0,
+     "asian": 0
+    },
+    "height": 0.78,
+    "age": 0.48,
+    "muscle": 0.9,
+    "weight": 0.62,
+    "proportions": 0.5
+   }
+  },
+  {
+   "name": "p3",
+   "skin": "young_african_male",
+   "hair": "short04",
+   "body": {
+    "race": {
+     "african": 0.85,
+     "caucasian": 0.15,
+     "asian": 0
+    },
+    "height": 0.42,
+    "muscle": 0.76,
+    "weight": 0.52,
+    "proportions": 0.5
+   }
+  },
+  {
+   "name": "p4",
+   "skin": "mindfront_skin_male_african_middleage",
+   "hair": "short02",
+   "body": {
+    "race": {
+     "african": 1,
+     "caucasian": 0,
+     "asian": 0
+    },
+    "muscle": 0.88,
+    "weight": 0.62,
+    "proportions": 0.5
+   }
+  },
+  {
+   "name": "p5",
+   "skin": "young_african_male",
+   "hair": "afro01",
+   "body": {
+    "race": {
+     "african": 0.75,
+     "caucasian": 0.25,
+     "asian": 0
+    },
+    "height": 0.55,
+    "muscle": 0.78,
+    "weight": 0.54,
+    "proportions": 0.5
+   }
+  },
+  {
+   "name": "p6",
+   "skin": "middleage_african_male",
+   "hair": "short01",
+   "body": {
+    "race": {
+     "african": 0.95,
+     "caucasian": 0.05,
+     "asian": 0
+    },
+    "height": 0.68,
+    "age": 0.45,
+    "muscle": 0.85,
+    "weight": 0.64,
+    "proportions": 0.5
+   }
+  },
+  {
+   "name": "p7",
+   "skin": "young_african_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 1,
+     "caucasian": 0,
+     "asian": 0
+    },
+    "height": 0.5,
+    "muscle": 0.95,
+    "weight": 0.6,
+    "proportions": 0.5
+   }
+  },
+  {
+   "name": "p8",
+   "skin": "young_caucasian_male",
+   "hair": "short02",
+   "body": {
+    "race": {
+     "african": 0.1,
+     "caucasian": 0.9,
+     "asian": 0
+    },
+    "height": 0.62,
+    "muscle": 0.8,
+    "weight": 0.56,
+    "proportions": 0.5
+   }
+  },
+  {
+   "name": "p9",
+   "skin": "mindfront_skin_male_african_middleage",
+   "hair": "cortu_short_messy_hair",
+   "body": {
+    "race": {
+     "african": 0.9,
+     "caucasian": 0.1,
+     "asian": 0
+    },
+    "height": 0.48,
+    "muscle": 0.78,
+    "weight": 0.55,
+    "proportions": 0.5
+   }
+  },
+  {
+   "name": "p10",
+   "skin": "young_asian_male",
+   "hair": "short01",
+   "body": {
+    "race": {
+     "african": 0.05,
+     "caucasian": 0.25,
+     "asian": 0.7
+    },
+    "height": 0.5,
+    "muscle": 0.8,
+    "weight": 0.55,
+    "proportions": 0.5
+   }
+  },
+  {
+   "name": "gk1",
+   "skin": "young_african_male",
+   "hair": "short04",
+   "body": {
+    "race": {
+     "african": 1,
+     "caucasian": 0,
+     "asian": 0
+    },
+    "height": 0.85,
+    "muscle": 0.82,
+    "weight": 0.6,
+    "proportions": 0.5
+   },
+   "clothes": {
+    "shirt": "namuhekam_male_polo_shirt",
+    "shorts": "elvs_male_trouser_short_2",
+    "socks": "joepal_crude_high_socks",
+    "boots": "punkduck_running_shoes_01",
+    "gloves": "toigo_gloves_short"
+   }
+  },
+  {
+   "name": "gk2",
+   "skin": "middleage_african_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0.9,
+     "caucasian": 0.1,
+     "asian": 0
+    },
+    "height": 0.8,
+    "muscle": 0.8,
+    "weight": 0.62,
+    "proportions": 0.5
+   },
+   "clothes": {
+    "shirt": "namuhekam_male_polo_shirt",
+    "shorts": "elvs_male_trouser_short_2",
+    "socks": "joepal_crude_high_socks",
+    "boots": "punkduck_running_shoes_01",
+    "gloves": "toigo_gloves_short"
+   }
+  },
+  {
+   "name": "ref",
+   "skin": "middleage_caucasian_male",
+   "hair": "short01",
+   "body": {
+    "race": {
+     "african": 0.3,
+     "caucasian": 0.7,
+     "asian": 0
+    },
+    "height": 0.55,
+    "age": 0.58,
+    "muscle": 0.65,
+    "weight": 0.6,
+    "proportions": 0.5
+   }
+  }
+ ]
+}

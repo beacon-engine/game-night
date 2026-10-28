@@ -1,9 +1,10 @@
 // The pit lane: a road alongside the main straight, beside the track on the infield side. In
 // before the start/finish line, out after it, with a speed limit and a box for every car in
 // between. A car in the pit lane is driven by the lane, not by its driver: it slows to the limit,
-// stops at its box while the crew works, and is let back out at the end. Works on anything with a
+// stops at its box while the crew works, and is let back out at the end. How long the crew takes is
+// given when the car reaches its box (the driver may change what they want done on the way in). Works on anything with a
 // place on the track (`dist`, `d`) and a speed, so Superbikes can use it too.
-import type { Track } from '../stock-cars/track.ts';
+import type { Track } from '@racing/track.ts';
 
 export interface InPit { dist: number; d: number; v: number }
 
@@ -45,17 +46,28 @@ export class PitLane {
   has(car: InPit) { return this.stops.has(car); }
   get cars() { return [...this.stops.keys()]; }
   waiting(car: InPit) { const s = this.stops.get(car); return s?.phase === 'box' ? s.wait : null; }
+  // still on the way in to the box
+  arriving(car: InPit) { return this.stops.get(car)?.phase === 'in'; }
+  // metres to go to its box
+  toBox(car: InPit) { const s = this.stops.get(car); return s ? Math.max(0, s.box - this.at(car.dist)) : 0; }
 
-  // Into the lane, heading for box `box` (an index), with `work` seconds of work waiting there
-  enter(car: InPit, box: number, work: number) {
-    this.stops.set(car, { box: this.boxes[box % this.boxes.length], phase: 'in', wait: work, d0: car.d, released: false });
+  // Into the lane, heading for box `box` (an index)
+  enter(car: InPit, box: number) {
+    this.stops.set(car, { box: this.boxes[box % this.boxes.length], phase: 'in', wait: 0, d0: car.d, released: false });
+  }
+
+  // The crew's work on a car that has just stopped in its box: this many seconds
+  work(car: InPit, seconds: number) {
+    const s = this.stops.get(car);
+    if (s) s.wait = seconds;
   }
 
   // One step for every car in the lane. Returns who has just been seen to (their stop is done)
-  // and who has reached the end of the exit road (back on the track: the caller takes them back).
+  // who has just stopped in their box (the caller gives the crew's time, with work()), and who has
+  // reached the end of the exit road (back on the track: the caller takes them back).
   // `clear`: is the track clear to let this car out? (If not, it waits at the end of the lane.)
   step(dt: number, clear: (car: InPit) => boolean = () => true) {
-    const serviced: InPit[] = [], left: InPit[] = [];
+    const serviced: InPit[] = [], arrived: InPit[] = [], left: InPit[] = [];
     for (const [car, stop] of this.stops) {
       const s = this.at(car.dist);
       if (stop.phase === 'box') {
@@ -66,7 +78,7 @@ export class PitLane {
         // down to the limit by the end of the slip road, and to a stop at the box
         const want = Math.min(Math.sqrt(LIMIT ** 2 + 2 * BRAKE * Math.max(0, this.from + RAMP - s)), Math.sqrt(2 * BRAKE * Math.max(0, stop.box - s)));
         car.v = car.v > want ? Math.max(want, car.v - BRAKE * 1.6 * dt) : Math.min(want, car.v + PICKUP * dt);
-        if (s + car.v * dt >= stop.box) { car.dist += stop.box - s; car.v = 0; stop.phase = 'box'; continue; }
+        if (s + car.v * dt >= stop.box) { car.dist += stop.box - s; car.v = 0; stop.phase = 'box'; arrived.push(car); continue; }
       } else {
         const end = this.to - RAMP;
         if (!stop.released && s + car.v * dt >= end) { // the end of the lane: out if the track is clear, or wait
@@ -80,7 +92,7 @@ export class PitLane {
       car.d = this.side(this.at(car.dist), stop);
       if (stop.phase === 'out' && this.at(car.dist) >= this.to) { this.stops.delete(car); left.push(car); }
     }
-    return { serviced, left };
+    return { serviced, arrived, left };
   }
 
   // Where across the track a car is along the lane: easing over from the track at the entry, back at the exit

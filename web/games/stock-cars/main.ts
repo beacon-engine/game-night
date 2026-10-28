@@ -1,16 +1,19 @@
 // Stock Cars: the game flow. Lobby (with a race going on behind it), picking cars, the grid, the
 // race, results, saved records. The tracks and cars are data (tracks.json, cars.json); the racing is
-// in race.ts, the track's shape in track.ts, the models in cars.ts, the 3D world in scene.ts.
+// shared with the other racing games (@racing: race.ts, the track's shape in track.ts, the models in
+// cars.ts, the weather in weather.ts); the 3D world is in scene.ts.
 import {
   $, backToHub, BIT, chip, earnStars, escapeHtml, gameSaves, glyph, hostInfo, Input, keyCode, loadControls, manualOpen,
   manualPadInput, manualScreen, ownedItems, PerformanceGuard, playerKey, requireDevice, shopItems, showManual, starsLabel,
   type EarnFor, type Earned, type Pad, type PadScreen,
 } from '@platform';
-import { loadCars, type CarType } from './cars.ts';
-import { Race, TICK, type Car, type CarSpec, type Hit } from './race.ts';
+import { loadCars, type CarType } from '@racing/cars.ts';
+import { Race, TICK, TOP, type Car, type CarSpec, type Hit } from '@racing/race.ts';
 import { World } from './scene.ts';
-import { Engines, type Driving, type Others } from './sound.ts';
-import { Track, type TrackSpec } from './track.ts';
+import { Engines, type Driving, type Others } from '@racing/sound.ts';
+import { Track, type TrackSpec } from '@racing/track.ts';
+import { Tyre, TYRE_NAME } from '@racing/tyres.ts';
+import { FORECASTS, Forecast, Weather } from '@world/weather.ts';
 
 const device = await requireDevice(); // (simple 3D: not on the lightest screens)
 const getJson = <T>(url: string) => fetch(url, { cache: 'no-store' }).then((r) => r.json() as Promise<T>);
@@ -39,18 +42,21 @@ interface Driver {
   ready: boolean;
   paints: Paint[]; // the paint jobs they own
   paint: number; // 0 = their own colour, then paints[paint - 1]
+  tyre: Tyre; // what they start on (no pit stops here: it's for the whole race)
   lapRecord: boolean; // set the track's lap record this race
   earned: Earned | null; // stars from the last race
 }
-const input = new Input({ state: (): Driver => ({ record: null, pick: 0, ready: false, paints: [], paint: 0, lapRecord: false, earned: null }) });
+const input = new Input({ state: (): Driver => ({ record: null, pick: 0, ready: false, paints: [], paint: 0, tyre: Tyre.Slick, lapRecord: false, earned: null }) });
 type Player = Pad<Driver>;
 const paintOf = (c: Player) => c.paints[c.paint - 1] ?? { id: '', name: 'Your colour', color: c.color };
 
 // --- settings, chosen in the lobby --------------------------------------------------------------
 const LAPS = [3, 5, 10];
 const LEVELS = [{ name: 'Easy', skill: 0.94 }, { name: 'Medium', skill: 0.975 }, { name: 'Hard', skill: 1 }];
-const settings = { track: 0, rivals: 7, laps: 5, level: 1 };
-const ROWS = ['track', 'rivals', 'laps', 'level'] as const;
+// Rain only on a road course: a wet oval isn't raced (the banking's too slippery), so it's always dry
+const SKIES = [Forecast.Dry, Forecast.Showers, Forecast.Rain];
+const settings = { track: 0, rivals: 7, laps: 5, level: 1, weather: Forecast.Dry };
+const ROWS = ['track', 'weather', 'rivals', 'laps', 'level'] as const;
 let row = 0; // the lobby row being changed
 
 type Stage = 'lobby' | 'garage' | 'grid' | 'racing' | 'results' | 'paused';
@@ -71,6 +77,7 @@ const track = () => {
   return tracks.get(spec.id)!;
 };
 const lapRecord = () => lapRecords.get(trackSpec().id) ?? null;
+const forecast = (): Forecast => (track().road ? settings.weather : Forecast.Dry);
 
 const world = new World($<HTMLCanvasElement>('world'));
 const engines = new Engines();
@@ -88,6 +95,18 @@ guard.watchCanvas(world.renderer.domElement);
 const RIVALS = ['Rook', 'Dash', 'Mako', 'Vega', 'Blaze', 'Juno', 'Rex', 'Nova', 'Kit', 'Ace', 'Lynx', 'Moss'];
 const LIVERIES = ['#e8e6df', '#ff8a3d', '#3fd0ff', '#9b6bff', '#2a2f3d', '#c0c4cc', '#0f8a63', '#d94040', '#f2d03b', '#2f5bd8', '#ff5ecf', '#8a5a34'];
 const NUMBERS = [7, 11, 14, 17, 22, 28, 31, 42, 55, 63, 77, 91];
+
+// Wets when it's raining from the start; for showers the people choose, and the computer drivers
+// split: half gamble on slicks
+const startTyre = (c: Car): Tyre => {
+  const f = forecast();
+  if (f === Forecast.Dry) return Tyre.Slick;
+  if (f === Forecast.Rain) return Tyre.Wet;
+  if (c.spec.ai) return c.spec.number % 2 ? Tyre.Wet : Tyre.Slick;
+  const p = input.list.find((x) => x.id === c.id);
+  return p ? personTyre(p) : Tyre.Slick;
+};
+const personTyre = (c: Player): Tyre => (forecast() === Forecast.Showers ? c.tyre : forecast() === Forecast.Rain ? Tyre.Wet : Tyre.Slick);
 
 const carOf = (type: CarType): CarSpec['car'] => ({ ...type, width: models.get(type.id)!.width });
 
@@ -110,6 +129,10 @@ function field(withPeople: boolean): CarSpec[] {
 function newRace(withPeople: boolean, laps: number) {
   world.setTrack(track());
   race = new Race(track(), field(withPeople), laps);
+  // the weather, over about as long as the race will take (the one behind the menu runs on and on)
+  const f = forecast();
+  race.weather = f === Forecast.Dry ? null : new Weather(f, (Math.min(laps, 20) * track().length) / (TOP * 0.6));
+  for (const c of race.cars) c.tyre = startTyre(c);
   world.setCars(race.cars, models);
   const slot = (c: Car) => input.list.find((p) => p.id === c.id)?.slot ?? 99;
   world.setViews(race.cars.filter((c) => !c.spec.ai).sort((a, b) => slot(a) - slot(b))); // (P1 top left)
@@ -308,6 +331,7 @@ function menuInput(c: Player) {
     if (!ev.down) continue;
     if (ev.bit === BIT.bolt) (stage === 'garage' ? toggleReady(c) : confirm());
     else if (ev.bit === BIT.drop) (stage === 'garage' && c.ready ? toggleReady(c) : back());
+    else if (ev.bit === BIT.leaf && stage === 'garage' && !c.ready && forecast() === Forecast.Showers) { c.tyre = c.tyre === Tyre.Wet ? Tyre.Slick : Tyre.Wet; showroom(); }
     else if (ev.bit === BIT.star && stage === 'lobby') howTo();
   }
 }
@@ -324,6 +348,11 @@ function change(d: number) {
   if (key === 'track') {
     settings.track = (settings.track + d + TRACKS.length) % TRACKS.length;
     return toLobby(); // (the race behind the menu moves to the new track)
+  }
+  if (key === 'weather') {
+    if (!track().road) return; // (ovals are dry)
+    settings.weather = cycle(SKIES, settings.weather);
+    return toLobby(); // (the race behind the menu gets the weather too)
   }
   if (key === 'rivals') settings.rivals = Math.max(0, Math.min(11, settings.rivals + d));
   else if (key === 'laps') settings.laps = cycle(LAPS, settings.laps);
@@ -374,7 +403,8 @@ function padScreen(c: Player): PadScreen {
     case 'lobby': return { ...base, labels: { bolt: 'Start', drop: 'Games', star: 'How to play' }, hint: '▲▼ choose · ◀▶ change' };
     case 'garage': return c.ready
       ? { ...base, labels: { drop: 'Change car' }, hint: 'Ready. Waiting for the others' }
-      : { ...base, labels: { bolt: 'Ready', drop: 'Back' }, hint: c.paints.length ? `◀▶ car: ${CARS[c.pick].name} · ▲▼ paint` : `◀▶ pick your car: ${CARS[c.pick].name}` };
+      : { ...base, labels: { bolt: 'Ready', drop: 'Back', ...(forecast() === Forecast.Showers ? { leaf: TYRE_NAME[c.tyre] } : {}) },
+          hint: c.paints.length ? `◀▶ car: ${CARS[c.pick].name} · ▲▼ paint` : `◀▶ pick your car: ${CARS[c.pick].name}` };
     case 'results': return { ...base, labels: { bolt: 'Race again', drop: 'Lobby' }, hint: 'Race over' };
     case 'paused': return { ...base, labels: { bolt: 'Resume', drop: 'Quit' }, hint: 'Paused' };
     default: {
@@ -397,12 +427,12 @@ function renderLobby() {
   $('drivers').innerHTML = people.length
     ? people.map((c) => `<div class="driver">${chip(c)}<span class="caption faint">${escapeHtml(recordLine(c.record))}</span></div>`).join('')
     : '<p class="muted" style="margin:0">Join with your phone to drive. On your own? Race the computer drivers.</p>';
-  const value = { track: trackSpec().name, rivals: String(settings.rivals), laps: `${settings.laps} laps`, level: LEVELS[settings.level].name };
-  const label = { track: 'Track', rivals: 'Computer drivers', laps: 'Race', level: 'Their pace' };
+  const value = { track: trackSpec().name, weather: track().road ? FORECASTS[settings.weather].name : 'Dry (oval)', rivals: String(settings.rivals), laps: `${settings.laps} laps`, level: LEVELS[settings.level].name };
+  const label = { track: 'Track', weather: 'Weather', rivals: 'Computer drivers', laps: 'Race', level: 'Their pace' };
   $('settings').innerHTML = ROWS.map((r, i) => `<div class="setting ${i === row ? 'sel' : ''} ${r}">
       <span>${label[r]}</span><span class="value"><span class="glyph glyph-key">◀</span><b>${escapeHtml(value[r])}</b><span class="glyph glyph-key">▶</span></span></div>`).join('');
   const rec = lapRecord();
-  $('trackAbout').textContent = trackSpec().about;
+  $('trackAbout').textContent = `${trackSpec().about} ${track().road ? FORECASTS[settings.weather].about : 'Ovals are only raced in the dry.'}`;
   $('record').textContent = rec ? `Lap record: ${fmt(rec.time)} by ${rec.name}${rec.car ? ` (${rec.car})` : ''}` : 'No lap record here yet. Set one.';
 }
 
@@ -410,7 +440,7 @@ function renderLobby() {
 function showroom() {
   const list = [...input.list].sort((a, b) => a.slot - b.slot);
   world.setTrack(track());
-  world.showroom(list.map((c) => ({ model: models.get(CARS[c.pick].id)!, color: paintOf(c).color, number: c.slot + 1 })));
+  world.showroom(list.map((c) => ({ model: models.get(CARS[c.pick].id)!, color: paintOf(c).color, number: c.slot + 1, tyre: personTyre(c) })));
   renderGarage();
 }
 
@@ -425,6 +455,7 @@ function renderGarage() {
         <p class="muted">${escapeHtml(t.about)}</p>
         <div class="paint"><i style="background:${paintOf(c).color}"></i>${escapeHtml(paintOf(c).name)}${c.paints.length
           ? ` <span class="faint">· ▲▼ ${c.paints.length + 1} paints</span>` : ' <span class="faint">· more in the shop on your phone</span>'}</div>
+        ${forecast() === Forecast.Showers ? `<div class="paint tyres"><i class="tread ${c.tyre}"></i>${TYRE_NAME[c.tyre]} <span class="faint">· ${glyph('leaf')} ${c.tyre === Tyre.Wet ? 'safe in the rain, slower in the dry' : 'quick in the dry, a handful in the rain'}</span></div>` : ''}
         ${bar('Top speed', t.top * 1.1)}${bar('Pick-up', t.accel)}${bar('Grip', t.grip)}${bar('Weight', t.weight * 0.85)}
         <div class="ready ${c.ready ? 'on' : ''}">${c.ready ? 'Ready' : `${glyph('bolt')} when you're happy`}</div>
       </div></div>`;
@@ -439,7 +470,7 @@ function buildHud() {
     const who = v.car ? playerOf(v.car) ?? input.list.find((c) => c.id === v.car!.id) : undefined;
     return `<div class="view ${v.car ? '' : 'tv'}" id="view${i}" style="${at}">
       <div class="pos"><b></b><span></span></div>${who ? `<div class="who">${chip(who)}</div>` : ''}
-      <div class="lap"></div><div class="speed"></div><div class="tow">Draft</div><div class="flash"></div></div>`;
+      <div class="lap"></div><div class="sky"></div><div class="speed"></div><div class="tow">Draft</div><div class="flash"></div></div>`;
   }).join('');
   $('tower').classList.toggle('hidden', world.views.length > 1);
 }
@@ -460,6 +491,7 @@ function updateHud() {
     q('.pos span').textContent = `of ${order.length}`;
     q('.lap').textContent = car.finish !== null ? 'Finished' : `Lap ${Math.min(car.laps + 1, race.laps)} / ${race.laps}`;
     q('.speed').innerHTML = `${Math.round(car.v * 2.237)}<span>mph</span>`;
+    q('.sky').textContent = race.weather ? `${race.weather.conditions} · ${TYRE_NAME[car.tyre]}` : '';
     q('.tow').classList.toggle('on', car.tow > 0.015 && car.v > 20 && car.finish === null);
     const shown = lapShown.get(car), flash = q('.flash');
     if (car.spinning > 0) { flash.textContent = 'Spun round!'; flash.classList.add('show'); return; }
@@ -482,7 +514,7 @@ function gapText(c: Car, leader: Car, i: number) {
 function renderResults() {
   const order = race.standings(), win = order[0];
   $('winner').innerHTML = `<span style="color:${win.spec.ai ? 'var(--chalk)' : win.spec.color}">${escapeHtml(win.spec.name)}</span> wins`;
-  $('resultsTrack').textContent = `${race.track.name} · ${plural(race.laps, 'lap', 'laps')}`;
+  $('resultsTrack').textContent = `${race.track.name} · ${plural(race.laps, 'lap', 'laps')}${race.weather ? ` · ${FORECASTS[race.weather.forecast].name}` : ''}`;
   $('standings').innerHTML = order.map((c, i) => {
     const human = playerOf(c);
     const who = human ? chip(human) : `<span class="chip" style="--pc:${c.spec.color}"><b>${c.spec.number}</b>${escapeHtml(c.spec.name)}</span>`;
@@ -556,10 +588,12 @@ function frame(now: number) {
     acc += dt;
     while (acc >= TICK) { tick(); acc -= TICK; }
   }
-  world.render(dt, tvFocus(dt));
+  world.render(dt, tvFocus(dt), race.weather);
   const racing = stage === 'racing' || stage === 'grid';
-  if (racing) engines.update(people().filter((c) => c.finish === null).map(driving), pack());
-  else engines.update([]);
+  if (racing) {
+    engines.update(people().filter((c) => c.finish === null).map(driving), pack());
+    engines.weather(race.weather?.rain ?? 0, race.weather?.wet ?? 0);
+  } else engines.update([]);
   hudT += dt;
   if (hudT > 0.1 && (racing || stage === 'paused')) { hudT = 0; updateHud(); }
   padT += dt;

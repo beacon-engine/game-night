@@ -20,9 +20,64 @@ function canvasTex(w: number, h: number, draw: Draw, opts: { repeat?: [number, n
   return t;
 }
 
+// The net as cloth (see netHit). How fine the mesh is, how far a hit pushes it (m per m/s of the
+// ball, at most `most`), how wide the bulge is, how fast its ring runs out (m/s) and swings (Hz), and
+// how quickly it settles.
+const NET = { cells: 16, give: 0.022, most: 0.55, spread: 0.45, speed: 2.6, swing: 2.2, settle: 2.4, life: 2.5, reach: 4.5, hits: 4 };
+
+interface NetHit { at: THREE.Vector3; t: number; size: number }
+interface NetPanel {
+  geo: THREE.BufferGeometry;
+  rest: Float32Array; // the panel's own vertices, at rest
+  world: THREE.Vector3[]; // the same, where they are in the stadium
+  centre: THREE.Vector3;
+  out: number; // which way along its z is away from the goal: +1 or -1
+  hits: NetHit[];
+}
+
+// (`inside`: a point inside the goal, to know which way is out)
+function netPanel(m: THREE.Mesh, inside: THREE.Vector3): NetPanel {
+  const pos = m.geometry.attributes.position;
+  const world: THREE.Vector3[] = [];
+  const centre = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    const v = new THREE.Vector3().fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld);
+    world.push(v);
+    centre.add(v);
+  }
+  centre.divideScalar(pos.count);
+  const normal = new THREE.Vector3(0, 0, 1).transformDirection(m.matrixWorld);
+  const out = Math.sign(normal.dot(centre.clone().sub(inside))) || 1;
+  return { geo: m.geometry, rest: new Float32Array(pos.array), world, centre, out, hits: [] };
+}
+
+// Each vertex is pushed along the panel's normal (its own z, outward from the goal) by every recent
+// hit: a bulge where the ball struck, then a ring spreading from there, swinging and dying away
+function rippleNet(p: NetPanel, dt: number) {
+  if (!p.hits.length) return;
+  for (const h of p.hits) h.t += dt;
+  p.hits = p.hits.filter((h) => h.t < NET.life);
+  const pos = p.geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    let d = 0;
+    for (const h of p.hits) {
+      const r = p.world[i].distanceTo(h.at);
+      const ring = r - h.t * NET.speed; // how far behind the front of the ring this point is
+      const env = Math.exp(-(ring * ring) / (NET.spread * NET.spread)) * Math.exp(-h.t * NET.settle);
+      d += h.size * env * Math.cos(h.t * NET.swing * Math.PI * 2 - Math.max(0, -ring) * 3);
+    }
+    pos.setZ(i, p.rest[i * 3 + 2] + d * p.out);
+  }
+  pos.needsUpdate = true;
+  if (!p.hits.length) { pos.array.set(p.rest); pos.needsUpdate = true; }
+}
+
 export interface Stadium {
   setTimeOfDay(mode: TimeOfDay): void;
+  readonly grass: THREE.MeshStandardMaterial; // (darkens and shines in the rain)
+  setSnow(on: boolean): void; // snow lying on the pitch (the lines show through)
   update(dt: number, excitement?: number): void; // excitement 0..1 makes the crowd bounce faster
+  netHit(x: number, y: number, z: number, speed: number): void; // the ball struck the net here (world m, m/s): it billows
 }
 
 export function buildStadium(
@@ -111,6 +166,13 @@ export function buildStadium(
   pitch.rotation.x = -Math.PI / 2;
   pitch.receiveShadow = true;
   scene.add(pitch);
+  // snow lying on it: a white layer just above, thin enough that the lines show through
+  const snow = new THREE.Mesh(new THREE.PlaneGeometry(L + M * 2, W + M * 2), std({ color: '#f1f4f8', transparent: true, opacity: 0.78, roughness: 1 }));
+  snow.rotation.x = -Math.PI / 2;
+  snow.position.y = 0.01;
+  snow.receiveShadow = true;
+  snow.visible = false;
+  scene.add(snow);
 
   const apron = new THREE.Mesh(new THREE.PlaneGeometry(L + 120, W + 120), std({ color: '#24452a' }));
   apron.rotation.x = -Math.PI / 2;
@@ -136,6 +198,9 @@ export function buildStadium(
     t.needsUpdate = true;
     return new THREE.MeshStandardMaterial({ map: t, transparent: true, alphaTest: 0.25, side: THREE.DoubleSide, roughness: 1 });
   };
+  // The back and roof of each net are cloth: a hit pushes the mesh out where the ball struck and the
+  // bulge runs out across it in a ring, swinging back and forth as it settles
+  const panels: NetPanel[] = [];
   for (const s of [-1, 1]) {
     const grp = new THREE.Group();
     grp.position.x = s * L / 2;
@@ -154,14 +219,17 @@ export function buildStadium(
     // net: the roof slopes down toward the back
     const backH = goal.height * 0.55;
     const roofLen = Math.hypot(depth, goal.height - backH);
-    const roof = new THREE.Mesh(new THREE.PlaneGeometry(roofLen, goal.width), netMat(roofLen * 3, goal.width * 3));
+    const roof = new THREE.Mesh(new THREE.PlaneGeometry(roofLen, goal.width, NET.cells, Math.round(NET.cells * goal.width / roofLen)), netMat(roofLen * 3, goal.width * 3));
     roof.rotation.set(Math.PI / 2, s * Math.atan2(goal.height - backH, depth), 0);
     roof.position.set(s * depth / 2, (goal.height + backH) / 2, 0);
     grp.add(roof);
-    const back = new THREE.Mesh(new THREE.PlaneGeometry(goal.width, backH), netMat(goal.width * 3, backH * 3));
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(goal.width, backH, Math.round(NET.cells * goal.width / backH / 2), NET.cells / 2), netMat(goal.width * 3, backH * 3));
     back.rotation.y = Math.PI / 2;
     back.position.set(s * depth, backH / 2, 0);
     grp.add(back);
+    grp.updateMatrixWorld(true);
+    const inside = new THREE.Vector3(s * (L / 2 + depth / 2), goal.height / 2, 0);
+    for (const m of [roof, back]) panels.push(netPanel(m, inside));
     for (const z of [-goal.width / 2, goal.width / 2]) {
       const shape = new THREE.Shape([new THREE.Vector2(0, 0), new THREE.Vector2(s * depth, 0), new THREE.Vector2(s * depth, backH), new THREE.Vector2(0, goal.height)]);
       const sg = new THREE.ShapeGeometry(shape);
@@ -406,7 +474,9 @@ export function buildStadium(
     }
   });
   const skyMat = new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false });
-  scene.add(new THREE.Mesh(new THREE.SphereGeometry(400, 32, 16), skyMat));
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(400, 32, 16), skyMat);
+  dome.userData.sky = true; // (it clouds over in the rain: world/precipitation.ts)
+  scene.add(dome);
   const fog = new THREE.Fog('#0b1430', 160, 380);
   scene.fog = fog;
 
@@ -457,9 +527,20 @@ export function buildStadium(
 
   return {
     setTimeOfDay,
+    grass: pitch.material as THREE.MeshStandardMaterial,
+    setSnow(on) { snow.visible = on; },
+    netHit(x, y, z, speed) {
+      const hit = new THREE.Vector3(x, y, z);
+      for (const p of panels) {
+        if (p.centre.distanceTo(hit) > NET.reach) continue;
+        p.hits.push({ at: hit.clone(), t: 0, size: Math.min(NET.most, speed * NET.give) });
+        if (p.hits.length > NET.hits) p.hits.shift();
+      }
+    },
     // excitement 0..1 makes the crowd bounce faster
     update(dt, excitement = 0) {
       t += dt;
+      for (const p of panels) rippleNet(p, dt);
       for (const b of boards) b.offset.x = (t * 0.03) % 1;
       frameT += dt;
       if (frameT > (excitement > 0.5 ? 0.12 : 0.45)) {

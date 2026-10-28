@@ -6,6 +6,25 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 ## [Unreleased]
 
 ### Added (games)
+- **Fireteam**, a squad shooter for 1–4 (marked In progress). Each of you leads a squad (up to three computer
+  squad-mates) through one mission in the Normandy bocage, in five steps: through their hedgerow line, into the farm,
+  down the orchard to the sunken lane, silencing a field gun at the edge of the woods, then holding the crossroads
+  against their counter-attack. Real soldiers (MakeHuman, in field uniform with steel helmets, motion-captured), real
+  guns held in both hands (assault rifle, rifle, shotgun, sniper rifle). Photographed countryside (Poly Haven, CC0):
+  rolling pasture, wheat and plough, mud tracks, earth-bank hedgerows thick with leaves, dry-stone walls, barbed
+  wire, shell craters, a stone farm with a tiled roof, a ruined cottage, oaks, ashes and an orchard (grown by
+  ez-tree), lit by an overcast sky. Cover and crouching matter, near misses pin you down, grenades, squad orders
+  (follow me, hold here, assault), getting a downed friend back on his feet, checkpoints. Whatever stands between
+  the camera and a player dissolves round him.
+
+- **Space Shooter**, a co-op side-scrolling shooter for 1–4 (marked In progress). Three stages (The Kessler
+  Belt, Orbital Yard, The Rift), each with its waves of darts, raiders, miners, carriers, turrets, rocks and mines,
+  and a boss at the end: shoot off its guns, then its core. Then they come round again, tougher. Fly with the
+  stick, hold Bolt to fire, Leaf to focus (slower and tighter), Drop for a bomb that clears the screen. Pickups
+  power your weapon up or change it (blaster, spread, laser, homing missiles), give you a shield, a bomb or a
+  spare ship. The team shares its ships and its score, with a kill chain multiplier, ten seconds to continue,
+  and a high score table. Computer wingmen if you're short of pilots; they fly the demo behind the menu. Ships
+  and scenery from Kenney's Space Kit (CC0), with hull paint jobs in the shop.
 - **City Runners**, an endless runner for 1–4 at once on one screen: over city rooftops and an elevated rail line.
   Pick one of six runners (real, motion-captured people, each with a strength: quick across, a big jump, shrugs off
   stumbles, long reach for coins) and one of three routes (Rooftops at dusk, The Rail Line at night, Sky Bridges at
@@ -36,12 +55,74 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   the shop.
 
 ### Added
+- **Weather in the racing games.** Choose it in the lobby. Rain comes in **Showers** (dry to start, then
+  a spell or two of rain) or all race (**Rain**). The road soaks over half a minute and takes a couple of
+  minutes to dry, so a shower is a stretch of the race, not a switch. Slicks are quickest in the dry and slide
+  everywhere in the wet. Wets, with grooves you can see turning on the tyres, are slower in the dry and far
+  better once it's wet. Braking grip drops too, and the computer drivers brake earlier to match. You see the
+  rain fall, the sky cloud over, the road darken and shine, and spray come off the cars ahead; you hear the
+  rain and the tyres hissing on a wet road.
+  - **Grand Prix**: Dry, Showers or Rain. The crew fits the right tyres when you box, the pit wall calls
+    *Wets* or *Slicks* when you're on the wrong ones, and wets wear out fast once the road dries.
+  - **Rally**: Dry, Showers, Rain or **Snow**. In the wet, dirt turns to mud and tarmac gets slippery
+    (gravel hardly minds). Snow covers the stage, and everyone runs studded tyres. Rally tyres now always
+    show their tread.
+  - **Stock Cars**: Showers or Rain on the road course; ovals stay dry, as in the real sport. With no pit
+    stops, you choose slicks or wets before a showers race (Leaf), and half the computer drivers gamble on
+    slicks.
+- **Weather in Football**: Dry, Showers, Rain or Snow (the button next to Day/Night in the lobby). A wet
+  pitch is quicker: the ball skids on and bounces lower, and players lose a little footing. Snow lies on
+  the pitch (the lines show through), the ball rolls short, hardly bounces, and is orange.
+- **Football: favourite foot.** Every player is right-footed, left-footed or two-footed (`"foot"` in
+  `teams.json`, shown beside his ratings). He strikes with the foot on the side the ball is, and the
+  kicking animation uses that leg; with his weaker foot a pass or shot is less accurate and has less on it.
+- **Grand Prix: plan your pit stop.** On the way down the pit lane your phone turns into a d-pad and a panel
+  opens on your screen: keep the tyres or fit slicks or wets, put in fuel a lap at a time (or exactly enough
+  to the flag), mend the damage or save the time; it shows how long you'll be stopped. The pit entry is now
+  easy to find: a dashed line down the left of the straight, a ◀ PIT board over it, PIT IN and PIT OUT on the
+  road, and the metres to the entry on your screen once you've asked to box.
 - **Stock Cars: a road course.** Ridgeway, 2.3 km in the hills, turning both ways: the esses, a loop to the
   right and a hairpin, with walls both sides and kerbs in the turns. Brake for the turns; the computer
   drivers take the racing line and brake for them too. Tracks can now be a whole lap (`"lap"` in
   `tracks.json`), with right turns.
 
+### Changed (football)
+- **Real people in real kits.** Every footballer is a real-looking person now: ten outfield bodies, two keepers
+  and a referee, each with their own build, height, face, skin and hair. They're made with MakeHuman in Blender from
+  free-licensed parts. The kit is real clothing (shirt, shorts, high socks, boots, keeper's gloves) in the team's
+  colours. Stripes, hoops and the number are printed on the shirt and fold with it as he moves. Before, everyone
+  was one superhero body with the kit painted on the skin.
+- **Motion-captured running and striking.** Walking, jogging, running and sprinting are captured cycles (CMU's
+  motion capture database), blended by speed with the stride in step with how fast he's moving. The old
+  bounding jog, with its springs in the feet, is gone. Kicks and passes are captured strikes with either foot
+  (a right-footed take, mirrored for the left), timed so the boot meets the ball when the game strikes it. The
+  windup is a little longer (0.28 s, from the last stride and the backswing).
+- **Men who move like players.** The bodies are athletes' builds, in a loose collared jersey (not a fitted tee) and
+  proper football shorts. Running and the jog's arm action come from an athlete's motion capture (CMU subject 78),
+  with a wider stance: no more feet landing on one line, or hands held up at the chest.
+- **Strikes meet the ball.** The swing only starts once the ball is at his feet, set beside the standing foot where
+  the captured kick meets it, so nobody kicks thin air running at a ball a stride away. Dead balls too: the run-up
+  goes to the standing foot's spot, and a kick-off taker steps into place first.
+- **Turning to pass, and balance.** Before passing or shooting, the player turns with the ball toward where it's
+  going (a pass back means turning round first, not spinning on the spot as it's struck). Striking it well away
+  from where he's facing costs pace and accuracy, and a really awkward one leaves him stumbling.
+- **Bending the ball.** Hold the stick to one side just after you strike a pass or shot and it curls that way (a
+  swerve that builds in flight and fades as it rolls). The computer curls some of its shots round the keeper.
+- **The net billows.** The back and roof of the net ripple out from where the ball hits them, harder the harder
+  it's struck, and swing back as they settle.
+- The people, their moves and the tools that build them are shared by any game (`web/people/`, `tools/people/`):
+  boxers, wrestlers, soldiers and zombies come next.
+
 ### Changed
+- What the 3D games share is in `web/world/` (`@world/…`): the weather, rain and snow, the sky, particles,
+  drawn textures and the split screen, so football and the racing games use the same weather. City Runners'
+  copy of the texture helpers is gone. The weather and tyres use enums (`Forecast`, `Conditions`, `Tyre`,
+  Grand Prix's `Call`) and named thresholds instead of chains of string comparisons.
+- The code and car models the racing games share are now in one place, `web/racing/` (imported as
+  `@racing/…`): the cars and their tyres, the track, the racing, the weather, the sound, the sky and the
+  scenery. Rally and Grand Prix no longer reach into Stock Cars' folder, and helpers that had been copied
+  between the three games (the sky, reflections, split screen, particles, track ribbons, kerbs, the crowd)
+  are now written once.
 - **Stock Cars handles differently.**
   - The cars differ more: the Prototype is quickest flat out and wins on the big oval, the Hot Hatch and
     the Open Wheeler on the short track and the road course, and the heavy ones win the shoving matches.

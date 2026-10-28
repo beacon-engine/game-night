@@ -1,0 +1,23 @@
+{
+  "intro": "A squad game for up to four, in the Normandy countryside in the summer of 1944. Each of you leads a squad of soldiers through the bocage, the small fields boxed in by high hedgerows, step by step: through their line at the first hedge, into the farm, down the orchard to the sunken lane, up to the field gun at the edge of the woods, and then holding the crossroads until the tanks come up.",
+  "inspiredBy": "Squad shooters like Brothers in Arms (2005), where you lead men and use cover more than you run and gun, and the war films they came from. Fireteam is our own: our own countryside, mission and soldiers.",
+  "goal": "Get through every step of the mission. If everyone on your side goes down, you go back to the step's checkpoint and try again.",
+  "howToPlay": [
+    "Join with your phone. In the lobby press {leaf} to choose your weapon (assault rifle, rifle, shotgun or sniper rifle), choose how many squad-mates each of you leads, then press {bolt} to start.",
+    "Move with the stick; push it past its ring to sprint. You aim at the nearest enemy you can see in the direction you're facing or moving.",
+    "Hold {bolt} to fire. Every gun has its range: the shotgun is deadly close up, the sniper rifle a long way off, the assault rifle in between.",
+    "Tap {leaf} to crouch (and again to stand). Crouched behind a low wall, a cart or sandbags you're very hard to hit; standing in the open you're easy. Hedgerows and buildings stop bullets altogether; you can't see through a hedge either, so go through the gaps and gateways.",
+    "Press {drop} to throw a grenade at the man you're aiming at (or ahead of you). Good for someone tucked behind a wall.",
+    "Press {star} to give your squad its orders: Follow me (they keep near you, in cover), Hold here (they stay and cover), Assault (they push forward from cover to cover).",
+    "When you or a friend is shot down, you're down, not out: stand still beside him and he's back on his feet in a few seconds. Your squad-mates will help you up too, if it's safe. Wait too long and he's gone.",
+    "Press {l1} to reload before you run dry. Press ❚❚ on your phone to pause."
+  ],
+  "steering": "Move with the stick",
+  "tips": [
+    "Shots that just miss you put you off your aim, and pin down whoever they're aimed at. Keep their heads down while a friend moves round the side.",
+    "Don't stand in the open to swap shots: get to cover first, crouch, then fight.",
+    "Your squad can do a lot of the work: tell them to assault while you hold, or hold while you work round the flank.",
+    "At the field gun, the charge takes three seconds: clear the men round it first.",
+    "At the crossroads they come out of the woods and along the road from both sides: use the sandbags they dug, and spread your squads out to cover the ways in."
+  ]
+}

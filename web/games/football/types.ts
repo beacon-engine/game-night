@@ -16,7 +16,15 @@ export interface Kit {
   pattern?: 'plain' | 'stripes' | 'hoops';
 }
 
-export type PlayerData = { name: string; number: number; pos: Role; style?: DribbleStyle } & Partial<Record<Stat, number>> &
+// which foot a player kicks with best. Most are right-footed, about one in five left-footed, and a
+// few are as good with either. With the weaker foot a shot or pass is less accurate and has less on it.
+export enum Footed {
+  Right = 'right',
+  Left = 'left',
+  Both = 'both',
+}
+
+export type PlayerData = { name: string; number: number; pos: Role; style?: DribbleStyle; foot?: Footed } & Partial<Record<Stat, number>> &
   Record<'pace' | 'passing' | 'shooting' | 'tackling' | 'dribbling', number>;
 
 export interface Club {

@@ -2,7 +2,9 @@
 // its fuel, fire, and how it ends up out of the race. No graphics and no race rules here: the game
 // tells it about hits, distance and sliding, and reads back what the car can still do (grip, pace)
 // and what just happened (caught fire, wrecked, burnt out, ran dry). The pit crew's side is
-// service(): how long a stop takes for what it does.
+// suggest(), time() and service(): what a stop would do, how long it takes, and doing it. Which tyres (slicks or wets) suit the weather is
+// the weather's to say (racing/weather.ts); the crew fits what it's asked for.
+import { Tyre } from '@racing/tyres.ts';
 
 export type Out = 'wrecked' | 'fire' | 'fuel';
 
@@ -21,6 +23,8 @@ export const RULES = {
   tyreWear: 0.08, // tyre wear per lap (1 = worn out)...
   slideWear: 0.002, // ...plus this per m/s of sliding, per second
   tyreGrip: 0.35, // grip lost on fully worn tyres
+  freshTyres: 0.12, // the crew changes tyres worn more than this
+  wetsInDry: 3, // wets wear this many times faster on a dry road (they overheat without water to cool them)
   carWear: 1.5, // health lost per lap just from racing
   hurt: 60, // below this much health the car loses pace...
   hurtPace: 0.12, // ...up to this much at none left
@@ -39,11 +43,12 @@ export interface HitResult { damage: number; fire: boolean; wrecked: boolean }
 export class Condition {
   health = 100;
   tyres = 0; // wear, 0 (new) .. 1 (worn out)
+  tyre = Tyre.Slick; // which kind are on
   fuel = RULES.tank; // laps' worth
   burning = false;
   out: Out | null = null;
 
-  constructor(private immortal = false) {} // (the race behind the menu: knocks, but nobody retires)
+  constructor(private immortal = false, tyre = Tyre.Slick) { this.tyre = tyre; } // (immortal: the race behind the menu: knocks, but nobody retires)
 
   // A hit with this force; `wall`: into the barrier (worse than another car). `rnd` gives 0..1.
   hit(strength: number, wall: boolean, rnd: () => number = Math.random): HitResult {
@@ -60,10 +65,12 @@ export class Condition {
     return r;
   }
 
-  // Time passing: `laps` of distance covered, `slide` m/s of sliding. Returns how it went out, if it did.
-  run(dt: number, laps: number, slide: number): Out | null {
+  // Time passing: `laps` of distance covered, `slide` m/s of sliding, on a road this `wet` (0..1).
+  // Returns how it went out, if it did.
+  run(dt: number, laps: number, slide: number, wet = 0): Out | null {
     if (this.out) return null;
-    this.tyres = Math.min(1, this.tyres + laps * RULES.tyreWear + slide * RULES.slideWear * dt);
+    const cook = this.tyre === Tyre.Wet ? 1 + (RULES.wetsInDry - 1) * Math.max(0, 1 - wet / 0.3) : 1;
+    this.tyres = Math.min(1, this.tyres + (laps * RULES.tyreWear + slide * RULES.slideWear * dt) * cook);
     this.fuel = Math.max(0, this.fuel - laps);
     this.health = Math.max(this.immortal ? 20 : 0, this.health - laps * RULES.carWear - (this.burning ? RULES.burn * dt : 0));
     if (this.immortal) { if (this.fuel < 0.5) this.fuel = RULES.tank; return null; }
@@ -92,25 +99,38 @@ export class Condition {
     return 1 - RULES.hurtPace * hurt - (this.burning ? 0.05 : 0);
   }
 
-  // A pit stop: what it will do for this many laps still to run, and how long that takes
-  plan(lapsLeft: number): Service {
-    const fuel = Math.max(0, Math.min(RULES.tank, lapsLeft + 0.3) - this.fuel);
-    const tyres = this.tyres > 0.12;
-    const repair = 100 - this.health;
-    const time = RULES.stop + (tyres ? RULES.tyres : 0) + fuel * RULES.perLap + repair * RULES.repair + (this.burning ? RULES.putOut : 0);
-    return { fuel, tyres, repair, putOut: this.burning, time };
+  // A pit stop: what the crew would do for this many laps still to run, with these tyres wanted for
+  // the weather. The driver can change it on the way down the pit lane (see PitPlan).
+  suggest(lapsLeft: number, want: Tyre = this.tyre): PitPlan {
+    const fuel = Math.max(0, this.toFinish(lapsLeft) - this.fuel);
+    const tyres = this.tyres > RULES.freshTyres || want !== this.tyre ? want : null;
+    return { tyres, fuel, repair: this.health < 100 };
+  }
+
+  // The fuel that sees the car to the flag, with a little over (no more than the tank holds)
+  toFinish(lapsLeft: number) { return Math.min(RULES.tank, lapsLeft + 0.3); }
+
+  // How much fuel can go in: up to a full tank
+  get room() { return Math.max(0, RULES.tank - this.fuel); }
+
+  // How long the crew takes over this plan (a fire is always put out)
+  time(p: PitPlan) {
+    return RULES.stop + (p.tyres ? RULES.tyres : 0) + p.fuel * RULES.perLap
+      + (p.repair ? (100 - this.health) * RULES.repair : 0) + (this.burning ? RULES.putOut : 0);
   }
 
   // ...and once it's done
-  service(s: Service) {
-    this.fuel += s.fuel;
-    if (s.tyres) this.tyres = 0;
-    this.health = Math.min(100, this.health + s.repair);
+  service(p: PitPlan) {
+    this.fuel = Math.min(RULES.tank, this.fuel + p.fuel);
+    if (p.tyres) { this.tyres = 0; this.tyre = p.tyres; }
+    if (p.repair) this.health = 100;
     this.burning = false;
   }
 }
 
-export interface Service { fuel: number; tyres: boolean; repair: number; putOut: boolean; time: number }
+// What the crew does at a stop: new tyres of this kind (null: keep the ones on), laps of fuel to
+// put in, and whether to mend the damage
+export interface PitPlan { tyres: Tyre | null; fuel: number; repair: boolean }
 
 // What the out-of-the-race reasons say in the results
 export const OUT_LABEL: Record<Out, string> = { wrecked: 'Crashed out', fire: 'Burnt out', fuel: 'Out of fuel' };

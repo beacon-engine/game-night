@@ -1,5 +1,5 @@
 {
-  "_help": "The cars to choose from. 'model' is a file in models/ (without .glb); 'length' is how long it is on the track, in metres (its width follows from the model). The rest are compared with the Stocker: 'top' speed, 'accel' (how quickly it gets there), 'grip' (how fast it can take a turn before sliding up) and 'weight' (who gets pushed around in a bump).",
+  "_help": "The cars to choose from. 'model' is one of the shared models in web/racing/models (without .glb), or models/<name> for one of this game's own; 'length' is how long it is on the track, in metres (its width follows from the model). The rest are compared with the Stocker: 'top' speed, 'accel' (how quickly it gets there), 'grip' (how fast it can take a turn before sliding up) and 'weight' (who gets pushed around in a bump).",
   "cars": [
     { "id": "stocker", "name": "Stocker", "model": "sedan-sports", "about": "The all-rounder, built for ovals.", "length": 4.9, "top": 1, "accel": 1, "grip": 1, "weight": 1 },
     { "id": "hot-hatch", "name": "Hot Hatch", "model": "hatchback-sports", "about": "Quick off the line and nimble, but light in a shoving match.", "length": 4.4, "top": 0.93, "accel": 1.2, "grip": 1.08, "weight": 0.85 },

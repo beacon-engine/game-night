@@ -7,8 +7,9 @@ import {
   manualPadInput, manualScreen, ownedItems, PerformanceGuard, playerKey, requireDevice, shopItems, showManual, starsLabel,
   type EarnFor, type Earned, type Pad, type PadScreen,
 } from '@platform';
-import { loadCars } from '../stock-cars/cars.ts';
-import { Engines } from '../stock-cars/sound.ts';
+import { loadCars } from '@racing/cars.ts';
+import { Engines } from '@racing/sound.ts';
+import { FORECASTS, Forecast, Weather } from '@world/weather.ts';
 import { chassisOf, shapeOf, type RallyCar } from './chassis.ts';
 import { TICK } from './physics.ts';
 import { Race, type RaceEvents, type Racer, type RacerSpec } from './race.ts';
@@ -53,8 +54,10 @@ const paintOf = (c: Player) => c.paints[c.paint - 1] ?? { id: '', name: 'Your co
 // --- settings, chosen in the lobby --------------------------------------------------------------
 const LAPS = [1, 2, 3, 5];
 const LEVELS = [{ name: 'Easy', skill: 0.88 }, { name: 'Medium', skill: 0.94 }, { name: 'Hard', skill: 1 }];
-const settings = { stage: 0, rivals: 3, laps: 2, level: 1 };
-const ROWS = ['stage', 'rivals', 'laps', 'level'] as const;
+// (rallies run whatever the weather: rain, and the winter rounds on snow)
+const SKIES = [Forecast.Dry, Forecast.Showers, Forecast.Rain, Forecast.Snow];
+const settings = { stage: 0, rivals: 3, laps: 2, level: 1, weather: Forecast.Dry };
+const ROWS = ['stage', 'weather', 'rivals', 'laps', 'level'] as const;
 let row = 0; // the lobby row being changed
 
 type Step = 'lobby' | 'garage' | 'grid' | 'racing' | 'results' | 'paused';
@@ -116,8 +119,11 @@ function field(withPeople: boolean): RacerSpec[] {
 }
 
 function newRace(withPeople: boolean, laps: number) {
-  world.setStage(stage());
+  world.setStage(stage(), settings.weather === Forecast.Snow);
   race = new Race(stage(), field(withPeople), laps);
+  // the weather, over about as long as the race will take (about 22 m/s round a stage; the one
+  // behind the menu runs on)
+  race.weather = settings.weather === Forecast.Dry ? null : new Weather(settings.weather, (Math.min(laps, 8) * stage().length) / 22);
   world.setCars(race.racers, models);
   const slot = (r: Racer) => input.list.find((p) => p.id === r.id)?.slot ?? 99;
   world.setViews(race.racers.filter((r) => !r.spec.ai).sort((a, b) => slot(a) - slot(b))); // (P1 top left)
@@ -344,6 +350,10 @@ function change(d: number) {
     settings.stage = (settings.stage + d + STAGES.length) % STAGES.length;
     return toLobby(); // (the race behind the menu moves to the new stage)
   }
+  if (key === 'weather') {
+    settings.weather = cycle(SKIES, settings.weather);
+    return toLobby(); // (the race behind the menu gets it too)
+  }
   if (key === 'rivals') settings.rivals = Math.max(0, Math.min(RIVALS.length - 3, settings.rivals + d));
   else if (key === 'laps') settings.laps = cycle(LAPS, settings.laps);
   else settings.level = (settings.level + d + LEVELS.length) % LEVELS.length;
@@ -418,19 +428,19 @@ function renderLobby() {
   $('drivers').innerHTML = list.length
     ? list.map((c) => `<div class="driver">${chip(c)}<span class="caption faint">${escapeHtml(recordLine(c.record))}</span></div>`).join('')
     : '<p class="muted" style="margin:0">Join with your phone to drive. On your own? Race the computer drivers.</p>';
-  const value = { stage: stageSpec().name, rivals: String(settings.rivals), laps: plural(settings.laps, 'lap', 'laps'), level: LEVELS[settings.level].name };
-  const label = { stage: 'Stage', rivals: 'Computer drivers', laps: 'Race', level: 'Their pace' };
+  const value = { stage: stageSpec().name, weather: FORECASTS[settings.weather].name, rivals: String(settings.rivals), laps: plural(settings.laps, 'lap', 'laps'), level: LEVELS[settings.level].name };
+  const label = { stage: 'Stage', weather: 'Weather', rivals: 'Computer drivers', laps: 'Race', level: 'Their pace' };
   $('settings').innerHTML = ROWS.map((r, i) => `<div class="setting ${i === row ? 'sel' : ''} ${r}">
       <span>${label[r]}</span><span class="value"><span class="glyph glyph-key">◀</span><b>${escapeHtml(value[r])}</b><span class="glyph glyph-key">▶</span></span></div>`).join('');
   const rec = stageRecord(), km = (stage().length / 1000).toFixed(1);
-  $('stageAbout').textContent = `${stageSpec().about} ${km} km.`;
+  $('stageAbout').textContent = `${stageSpec().about} ${km} km. ${FORECASTS[settings.weather].about}`;
   $('record').textContent = rec ? `Stage record: ${fmt(rec.time)} by ${rec.name}${rec.car ? ` (${rec.car})` : ''}` : 'No stage record yet. Set one.';
 }
 
 // Picking cars: each person's choice turning in their part of the screen
 function showroom() {
   const list = [...input.list].sort((a, b) => a.slot - b.slot);
-  world.setStage(stage());
+  world.setStage(stage(), settings.weather === Forecast.Snow);
   world.showroom(list.map((c) => ({ model: models.get(CARS[c.pick].id)!, color: paintOf(c).color, number: c.slot + 1 })));
   renderGarage();
 }
@@ -460,7 +470,7 @@ function buildHud() {
     const who = v.racer ? playerOf(v.racer) ?? input.list.find((c) => c.id === v.racer!.id) : undefined;
     return `<div class="view ${v.racer ? '' : 'tv'}" id="view${i}" style="${at}">
       <div class="pos"><b></b><span></span></div>${who ? `<div class="who">${chip(who)}</div>` : ''}
-      <div class="lap"></div><div class="note"></div><div class="speed"></div><div class="flash"></div></div>`;
+      <div class="lap"></div><div class="sky"></div><div class="note"></div><div class="speed"></div><div class="flash"></div></div>`;
   }).join('');
   $('tower').classList.toggle('hidden', world.views.length > 1);
 }
@@ -480,6 +490,7 @@ function updateHud() {
     q('.pos b').textContent = ordinal(pos);
     q('.pos span').textContent = `of ${order.length}`;
     q('.lap').textContent = r.finish !== null ? 'Finished' : `Lap ${Math.min(r.laps + 1, race.laps)} / ${race.laps}`;
+    q('.sky').textContent = race.weather?.conditions ?? '';
     q('.speed').innerHTML = `${Math.round(r.car.speed * 3.6)}<span>km/h</span>`;
     q('.note').textContent = r.finish === null && step === 'racing' ? notes.get(r) ?? '' : '';
     const f = flashes.get(r), box = q('.flash');
@@ -503,7 +514,7 @@ function gapText(r: Racer, leader: Racer, i: number) {
 function renderResults() {
   const order = race.standings(), win = order[0];
   $('winner').innerHTML = `<span style="color:${win.spec.ai ? 'var(--chalk)' : win.spec.color}">${escapeHtml(win.spec.name)}</span> wins`;
-  $('resultsStage').textContent = `${race.stage.spec.name} · ${plural(race.laps, 'lap', 'laps')}`;
+  $('resultsStage').textContent = `${race.stage.spec.name} · ${plural(race.laps, 'lap', 'laps')}${race.weather ? ` · ${FORECASTS[race.weather.forecast].name}` : ''}`;
   $('standings').innerHTML = order.map((r, i) => {
     const human = playerOf(r);
     const who = human ? chip(human) : `<span class="chip" style="--pc:${r.spec.color}"><b>${r.spec.number}</b>${escapeHtml(r.spec.name)}</span>`;
@@ -563,6 +574,7 @@ function tick() {
 function sound() {
   const racing = step === 'racing' || step === 'grid';
   if (!racing) return updateEngines([]);
+  engines.weather(race.weather && !race.weather.snow ? race.weather.rain : 0, race.weather && !race.weather.snow ? race.weather.wet : 0); // (snow falls quietly)
   const mine = people().filter((r) => r.finish === null);
   const cars = mine.map((r) => {
     const v = world.views.find((x) => x.racer === r);
@@ -596,7 +608,7 @@ function frame(now: number) {
     acc += dt;
     while (acc >= TICK) { tick(); acc -= TICK; }
   }
-  world.render(dt, tvFocus(dt));
+  world.render(dt, tvFocus(dt), race.weather);
   sound();
   noteT += dt;
   if (noteT > 0.4 && step === 'racing') { noteT = 0; for (const r of people()) notes.set(r, race.stage.note(r.s)); }

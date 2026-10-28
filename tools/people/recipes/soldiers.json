@@ -1,0 +1,160 @@
+{
+ "about": "Infantry: the same field uniform (wool sweater, cargo trousers, ankle boots) in grey for the game to colour each army, on eight different men, with a steel helmet made to measure (M1 style; the 'axis' cast has the flared kind). No hair: it would show through.",
+ "defaults": {
+  "eyes": "low-poly",
+  "eyebrows": "eyebrow001",
+  "eyelashes": "eyelashes01",
+  "phenotype": {
+   "gender": 1.0,
+   "age": 0.5,
+   "muscle": 0.75,
+   "weight": 0.55,
+   "height": 0.6,
+   "proportions": 0.5
+  },
+  "detail": {
+   "skin": 0.4,
+   "top": 0.5,
+   "legs": 0.5,
+   "boots": 0.5
+  },
+  "clothes": {
+   "top": "toigo_fisherman_sweater",
+   "legs": "cortu_cargo_pants",
+   "boots": "toigo_ankle_boots_male"
+  },
+  "helmet": "m1"
+ },
+ "plain": [
+  "top",
+  "legs",
+  "boots"
+ ],
+ "people": [
+  {
+   "name": "s1",
+   "skin": "young_caucasian_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0.05,
+     "caucasian": 0.95,
+     "asian": 0
+    },
+    "muscle": 0.75,
+    "weight": 0.55,
+    "height": 0.6
+   }
+  },
+  {
+   "name": "s2",
+   "skin": "middleage_caucasian_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0,
+     "caucasian": 1,
+     "asian": 0
+    },
+    "muscle": 0.7,
+    "weight": 0.62,
+    "height": 0.52,
+    "age": 0.6
+   }
+  },
+  {
+   "name": "s3",
+   "skin": "young_african_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0.9,
+     "caucasian": 0.1,
+     "asian": 0
+    },
+    "muscle": 0.8,
+    "weight": 0.55,
+    "height": 0.68
+   }
+  },
+  {
+   "name": "s4",
+   "skin": "young_caucasian_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0.1,
+     "caucasian": 0.9,
+     "asian": 0
+    },
+    "muscle": 0.68,
+    "weight": 0.5,
+    "height": 0.45,
+    "age": 0.4
+   }
+  },
+  {
+   "name": "s5",
+   "skin": "mindfront_skin_male_african_middleage",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 1,
+     "caucasian": 0,
+     "asian": 0
+    },
+    "muscle": 0.85,
+    "weight": 0.6,
+    "height": 0.58,
+    "age": 0.55
+   }
+  },
+  {
+   "name": "s6",
+   "skin": "young_asian_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0,
+     "caucasian": 0.2,
+     "asian": 0.8
+    },
+    "muscle": 0.72,
+    "weight": 0.5,
+    "height": 0.5
+   }
+  },
+  {
+   "name": "s7",
+   "skin": "middleage_african_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0.95,
+     "caucasian": 0.05,
+     "asian": 0
+    },
+    "muscle": 0.78,
+    "weight": 0.58,
+    "height": 0.62,
+    "age": 0.55
+   }
+  },
+  {
+   "name": "s8",
+   "skin": "young_caucasian_male",
+   "hair": null,
+   "body": {
+    "race": {
+     "african": 0,
+     "caucasian": 1,
+     "asian": 0
+    },
+    "muscle": 0.82,
+    "weight": 0.6,
+    "height": 0.72
+   }
+  }
+ ],
+ "flat": []
+}
