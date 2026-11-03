@@ -2,7 +2,7 @@
 // and grip, with its size and where its wheels are taken from the model (Kenney's Car Kit, shared with
 // Stock Cars).
 import * as THREE from 'three';
-import type { CarModel, CarType } from '@racing/cars.ts';
+import { wheelOf, type CarModel, type CarType } from '@racing/cars.ts';
 import type { Chassis } from './physics.ts';
 
 // cars.json: compared with the Saloon, as in Stock Cars, plus `ride`: how soft and long its springs
@@ -19,7 +19,6 @@ export interface Shape {
   offset: { x: number; z: number }; // the body's middle, from the model's origin (for drawing it)
 }
 
-export const WHEEL = /^wheel-(front|back)-(left|right)$/;
 
 export function shapeOf(m: CarModel): Shape {
   const s = m.scale;
@@ -29,10 +28,11 @@ export function shapeOf(m: CarModel): Shape {
   const wheels: Chassis['wheels'] = [];
   let radius = 0.33;
   m.scene.traverse((o) => {
-    if (!WHEEL.test(o.name)) return; // (not the SUV's spare on the back)
+    const w = wheelOf(o);
+    if (!w) return; // (not the SUV's spare on the back)
     const b = new THREE.Box3().setFromObject(o), c = b.getCenter(new THREE.Vector3());
     radius = (b.max.y - b.min.y) * s * 0.5;
-    wheels.push({ x: (c.z - mid.z) * s, z: -(c.x - mid.x) * s, front: /front/.test(o.name) || c.z > mid.z, name: o.name });
+    wheels.push({ x: (c.z - mid.z) * s, z: -(c.x - mid.x) * s, front: w.front || c.z > mid.z, name: o.name });
   });
   // The kit's cars are toys, their wheels tucked well in under tall bodies: on those they'd tip over
   // in an ordinary bend. The physics puts the tyres out near the body's edges (they're still drawn

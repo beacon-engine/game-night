@@ -1,8 +1,8 @@
 # City Runners
 
-Race the rooftops together; the drone takes the slowest · 1–4 players · Arcade · **playable**
+Through the night traffic and over the rooftops together; mind the lights · 1–4 players · Arcade · **playable**
 
-An endless three-lane runner over city rooftops and an elevated rail line. Everyone picks a runner and runs the same
+An endless three-lane runner down a city street through the traffic, or over city rooftops and an elevated rail line. Everyone picks a runner and runs the same
 course at the same time on one screen: last one running wins. On your own it's a run for distance.
 
 ## Controls
@@ -44,9 +44,28 @@ Shoes are always in the player's colour. The computer runners are the runners no
 In simulation (computer runners, Sky Bridges) a crossing takes 0.78× the time of running it on the zip line, 0.94×
 on the ropes and 1.42× on the rail; letting go of a rope in the last 40% of its swing always reaches the next.
 
-**Three routes** (`ROUTES` in `course.ts`): **Rooftops** (dusk into night, a bit of everything), **The Rail Line** (at
+**Four routes** (`ROUTES` in `course.ts`): **Downtown Streets** (at night, down in the traffic: see below), **Rooftops** (dusk into night, a bit of everything), **The Rail Line** (at
 night, mostly trains, more of them coming at you) and **Sky Bridges** (sunrise into day, gaps too wide to jump, so beams
 and zip lines).
+
+## Downtown Streets
+
+A one-way street, three lanes, at night, between rows of lit shops and offices, with junctions every 130–250 m.
+
+- **Parked cars** (real-looking ones from the [car library](../../cars/README.md)): jump onto the roof and run over
+  it; run into the back of one and you stumble. Coins are often up on the roofs.
+- **Vans, lorries and buses** pulled in: too tall, go round. Run into one and you're out.
+- **Traffic coming the other way**, in one lane: get out of its way, or it knocks you out.
+- **Roadworks** barriers to jump, and scaffolding right across to slide under.
+- **Junctions**: the lights cycle green (5 s), amber (1.5 s), red (3.5 s), each junction at its own point in the
+  cycle. Cross the line on red, down on the road, and **the police** come after you for 9 s (less with grit): a
+  police car drives up alongside, lights going, siren on. Cross on red again, or stumble, while it's there and
+  you're **busted** (out). While it's red, cars cross the junction both ways: hit one and you stumble (so on red,
+  that's busted too). One lane has a **footbridge**: run up its ramp and you're over, whatever the lights. The
+  computer runners read the lights and take the footbridge when it'll be red.
+
+In simulation (three computer runners, 12 courses) they go about as far on the streets as on the Rail Line, and
+further than on Rooftops or Sky Bridges.
 
 ## How it works
 
@@ -55,7 +74,8 @@ and zip lines).
   onto their roofs) and now and then one coming the other way; and gaps too wide to jump, crossed on a beam or a zip
   line. Every row has a way through. "Today's course" is the same seed all day, so distances can be compared.
 - **The run** (`run.ts`): everyone runs at the course's speed, which rises over the run. Runners pass through each
-  other; coins and power-ups go to whoever gets there first. Hit a barrier, or the side of something while changing
+  other (when two are in the same lane, one just behind the other, they're drawn a step apart, so the one in front
+  isn't hidden); coins and power-ups go to whoever gets there first. Hit a barrier, or the side of something while changing
   lanes, and you stumble: you drop back and the **security drone** comes after you for 7 s (less with more grit). Stumble again while it's
   there, or fall more than 24 m behind the leader (off the back of the screen), and it has you. Run into the front of
   a vent stack or a train and you're out; so is falling into a gap.
@@ -71,6 +91,10 @@ All runners share one camera that sits behind whoever is at the back and keeps t
 the same speed, so the pack only spreads out when someone stumbles, and the rule that the drone takes anyone 24 m
 behind keeps it on screen. That means a big, readable picture on a TV instead of four small ones, one render a frame
 instead of four (it holds 30 fps on a TV), and you can see who's about to grab the coins in front of you.
+
+- **The vehicles** (`vehicles.ts`): the street cars, police car, van, lorry and bus from the
+  [car library](../../cars/README.md) (credits there),
+  each kind in a few paint jobs, a pool of copies per paint job placed afresh each frame from what's in view.
 
 ## Saved
 

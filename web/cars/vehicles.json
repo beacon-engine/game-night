@@ -1,0 +1,88 @@
+{
+ "vehicles": {
+  "police": {
+   "what": "police cruiser",
+   "length": 5.2,
+   "width": 1.88,
+   "height": 1.61,
+   "triangles": 19499,
+   "bytes": 3576148,
+   "credit": {
+    "title": "Fairheaven LT '80 Cop Cruiser - Low poly model",
+    "by": "Daniel Zhabotinsky (https://sketchfab.com/DanielZhabotinsky)",
+    "from": "https://sketchfab.com/3d-models/fairheaven-lt-80-cop-cruiser-low-poly-model-61766c1e6e1e4b2b803c174f33433a74",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   }
+  },
+  "lorry": {
+   "what": "box lorry",
+   "length": 7.0,
+   "width": 3.04,
+   "height": 3.32,
+   "triangles": 18939,
+   "bytes": 3659980,
+   "credit": {
+    "title": "LCT 3000 '95 - Low poly model",
+    "by": "Daniel Zhabotinsky (https://sketchfab.com/DanielZhabotinsky)",
+    "from": "https://sketchfab.com/3d-models/lct-3000-95-low-poly-model-663a0953c038434a918cb85725c88ffa",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   }
+  },
+  "van": {
+   "what": "panel van",
+   "length": 5.0,
+   "width": 2.4,
+   "height": 1.97,
+   "triangles": 23045,
+   "bytes": 3744624,
+   "credit": {
+    "title": "Shvan '92 - Low poly model",
+    "by": "Daniel Zhabotinsky (https://sketchfab.com/DanielZhabotinsky)",
+    "from": "https://sketchfab.com/3d-models/shvan-92-low-poly-model-09d718c9cf72401b8534d265a06a803f",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   }
+  },
+  "bus": {
+   "what": "town bus",
+   "length": 11.5,
+   "width": 2.8,
+   "height": 2.85,
+   "triangles": 54483,
+   "bytes": 621916,
+   "credit": {
+    "title": "Generic Town Bus",
+    "by": "own.guest (https://sketchfab.com/own.guest)",
+    "from": "https://sketchfab.com/3d-models/generic-town-bus-14fe03d792914d51b6c6250b393c44fd",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   }
+  },
+  "airliner": {
+   "what": "airliner",
+   "length": 38.0,
+   "width": 36.16,
+   "height": 11.97,
+   "triangles": 3484,
+   "bytes": 39620,
+   "credit": {
+    "title": "Low Poly Airliner",
+    "by": "Mauro3D (https://sketchfab.com/maurogsw)",
+    "from": "https://sketchfab.com/3d-models/low-poly-airliner-f06d488f08764e3ca26f2917d4053c69",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   }
+  },
+  "helicopter": {
+   "what": "helicopter",
+   "length": 12.0,
+   "width": 9.99,
+   "height": 3.9,
+   "triangles": 1930,
+   "bytes": 68340,
+   "credit": {
+    "title": "Low Poly Helicopter",
+    "by": "antonmoek (https://sketchfab.com/antonmoek)",
+    "from": "https://sketchfab.com/3d-models/low-poly-helicopter-5bbed2de9baa4a13a7faa72653b78b64",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   }
+  }
+ }
+}

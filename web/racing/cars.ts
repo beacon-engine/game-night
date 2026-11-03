@@ -1,17 +1,20 @@
-// The cars you can pick (cars.json), drawn with models from Kenney's Car Kit (CC0; see
-// source/README.md). Every model in the kit shares one small colour palette image (16 columns by 4
+// The cars you can pick (cars.json): real cars from the library in web/cars/ ("model": "cars/<id>": cut
+// into panels by tools/cars/, CC BY, credits in web/cars/README.md), repainted by swapping their paint;
+// or models from Kenney's Car Kit (CC0; see source/README.md), which work like this: Every model in the kit shares one small colour palette image (16 columns by 4
 // rows of colours); a model's paint is one of the colours in the second row. Each car gets its own
 // copy of the palette with that square in its colour. A second, tiny map says how each square is
 // finished (glossy paint with a clear coat, dark glass, metal rims, rubber), and a third which of
 // them are lights, so the cars catch the sky and the venue's lights like the real thing.
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Tyre } from './tyres.ts';
 
 export interface CarType {
   id: string;
   name: string;
-  model: string; // a model of the kit's (racing/models/<model>.glb), or models/<name> for a game's own
+  model: string; // a model of the kit's (racing/models/<model>.glb), the library's (cars/<id> or vehicles/<id>), or models/<name> for a game's own
   about: string;
   length: number; // m
   top: number; // the rest compared with the Stocker
@@ -29,22 +32,77 @@ export interface CarModel {
   paint: number; // which column of the palette's second row is its paint
   shadow: THREE.Texture; // its outline from above, softened
   rich: boolean; // clear-coated paint (skipped on slower screens)
+  library: boolean; // a real car from web/cars (its own materials, but for the paint), not the kit's
+  wheelRadius: number; // m
+}
+
+// A wheel, by its name in either the kit ('wheel-front-left') or the library ('wheel.front.L'; three.js
+// keeps that name in userData, as it drops the dots from .name)
+const KIT_WHEEL = /^wheel-(front|back)-(left|right)$/, LIBRARY_WHEEL = /^wheel\.(front|rear)\.([LR])$/;
+export function wheelOf(o: THREE.Object3D): { front: boolean } | null {
+  const k = KIT_WHEEL.exec(o.name);
+  if (k) return { front: k[1] === 'front' };
+  const l = LIBRARY_WHEEL.exec((o.userData.name as string | undefined) ?? '');
+  return l ? { front: l[1] === 'front' } : null;
 }
 const DISPLAY_FONT = '"Big Shoulders Display", "Arial Narrow", sans-serif';
 
 export async function loadCars(types: CarType[], rich: boolean): Promise<Map<string, CarModel>> {
-  const loader = new GLTFLoader();
+  const loader = new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath('/people/draco/'));
   const models = await Promise.all(types.map(async (type): Promise<CarModel> => {
     const { scene } = await loader.loadAsync(modelURL(type.model));
+    if (type.model.startsWith('cars/')) mergeParts(scene); // (one mesh per material, but for the wheels: a grid of them draws quickly)
+    if (type.model.startsWith('vehicles/')) { // (the library's other vehicles face the other way)
+      const turned = new THREE.Group();
+      turned.add(...scene.children);
+      turned.rotation.y = Math.PI;
+      scene.add(turned);
+    }
     const box = new THREE.Box3().setFromObject(scene), size = box.getSize(new THREE.Vector3());
     const scale = type.length / size.z; // (the models face +z)
-    return { type, scene, scale, width: size.x * scale, height: size.y * scale, paint: paintColumn(scene), shadow: outline(scene, box), rich };
+    const library = type.model.startsWith('cars/') || type.model.startsWith('vehicles/');
+    let wheelRadius = 0.3 * scale;
+    if (library) scene.traverse((o) => { if (wheelOf(o)) wheelRadius = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()).y * 0.5 * scale; });
+    return { type, scene, scale, width: size.x * scale, height: size.y * scale, paint: library ? -1 : paintColumn(scene), shadow: outline(scene, box), rich, library, wheelRadius };
   }));
   return new Map(models.map((m) => [m.type.id, m]));
 }
 
-// The shared models are served at /racing/models/; a path with a slash is the game's own, next to its page
-const modelURL = (model: string) => (model.includes('/') ? `${model}.glb` : `/racing/models/${model}.glb`);
+// A library car comes cut into the panels Shift Bots takes apart; a racing game only needs it whole.
+// Everything but the wheels is baked into one mesh per material (dozens of draw calls a car fewer).
+function mergeParts(scene: THREE.Object3D) {
+  scene.updateMatrixWorld(true);
+  const groups = new Map<THREE.Material, THREE.BufferGeometry[]>(), done: THREE.Mesh[] = [];
+  const onWheel = (o: THREE.Object3D) => { for (let p: THREE.Object3D | null = o; p; p = p.parent) if (wheelOf(p)) return true; return false; };
+  scene.traverse((o) => {
+    if (!(o instanceof THREE.Mesh) || Array.isArray(o.material) || onWheel(o)) return;
+    const g = o.geometry.clone().applyMatrix4(o.matrixWorld);
+    for (const name of Object.keys(g.attributes)) if (name !== 'position' && name !== 'normal' && name !== 'uv') g.deleteAttribute(name);
+    if (!g.attributes.normal) g.computeVertexNormals();
+    if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+    if (!g.index) g.setIndex([...Array(g.attributes.position.count).keys()]);
+    if (!groups.has(o.material)) groups.set(o.material, []);
+    groups.get(o.material)!.push(g);
+    done.push(o);
+  });
+  for (const o of done) o.removeFromParent();
+  // (what's left of the hierarchy is the wheels; the merged parts go at the top, already in place)
+  const inverse = new THREE.Matrix4().copy(scene.matrixWorld).invert();
+  for (const [material, list] of groups) {
+    const merged = mergeGeometries(list);
+    if (!merged) continue;
+    merged.applyMatrix4(inverse);
+    const m = new THREE.Mesh(merged, material);
+    m.name = material.name;
+    scene.add(m);
+  }
+}
+
+// The shared models are served at /racing/models/, the library's at /cars/models/ (cars/<id>) and
+// /cars/vehicles/ (vehicles/<id>: police car, van, lorry, bus); any other path with a slash is the game's own
+const modelURL = (model: string) => model.startsWith('cars/') ? `/${model.replace('cars/', 'cars/models/')}.glb`
+  : model.startsWith('vehicles/') ? `/cars/${model}.glb`
+  : model.includes('/') ? `${model}.glb` : `/racing/models/${model}.glb`;
 
 // One car, ready to place: facing +x (the track code's forward), its wheels listed for spinning
 export function carMesh(m: CarModel, color: string, number: number) {
@@ -54,24 +112,24 @@ export function carMesh(m: CarModel, color: string, number: number) {
   model.rotation.y = Math.PI / 2;
   const wheels: { node: THREE.Object3D; sign: number; front: boolean; turn: number }[] = [];
   model.traverse((o) => {
-    const wheel = /^wheel/.test(o.name) || /^wheel/.test(o.parent?.name ?? '');
-    if (/^wheel/.test(o.name)) {
+    const wheel = m.library ? wheelOf(o) : /^wheel/.test(o.name) ? { front: /front/.test(o.name) } : null, onWheel = !!wheel || /^wheel/.test(o.parent?.name ?? '');
+    if (wheel) {
       o.rotation.reorder('YXZ'); // (steer about the upright, then roll about the axle)
-      wheels.push({ node: o, sign: new THREE.Vector3(1, 0, 0).applyQuaternion(o.quaternion).x >= 0 ? 1 : -1, front: /front/.test(o.name), turn: o.rotation.y });
+      wheels.push({ node: o, sign: new THREE.Vector3(1, 0, 0).applyQuaternion(o.quaternion).x >= 0 ? 1 : -1, front: wheel.front, turn: o.rotation.y });
     }
-    if (o instanceof THREE.Mesh) {
-      const base = (o.material as THREE.MeshStandardMaterial).map!;
-      o.material = finish(m, wheel ? base : painted(base, m.paint, color), wheel);
-      o.userData.own = true;
-    }
+    if (!(o instanceof THREE.Mesh)) return;
+    o.userData.own = true;
+    o.castShadow = true;
+    if (m.library) { o.material = libraryMaterial(o.material as THREE.MeshStandardMaterial, color, m.rich); return; }
+    const base = (o.material as THREE.MeshStandardMaterial).map!;
+    o.material = finish(m, onWheel ? base : painted(base, m.paint, color), onWheel);
   });
   g.add(model);
 
-  // the number on both doors
-  const tex = numberTexture(number);
-  const plate = new THREE.MeshBasicMaterial({ map: tex, transparent: true, polygonOffset: true, polygonOffsetFactor: -2 });
+  // the number on both doors (0: none, a car off the street)
+  const plate = number ? new THREE.MeshBasicMaterial({ map: numberTexture(number), transparent: true, polygonOffset: true, polygonOffsetFactor: -2 }) : null;
   const w = m.type.length * 0.3, h = w / 2;
-  for (const side of [1, -1]) {
+  if (plate) for (const side of [1, -1]) {
     const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), plate);
     p.geometry.userData.own = true;
     p.position.set(-m.type.length * 0.04, m.height * 0.42, side * (m.width / 2 + 0.02));
@@ -88,13 +146,13 @@ export function carMesh(m: CarModel, color: string, number: number) {
   g.add(shadow);
 
   g.userData.wheels = wheels;
-  g.userData.wheelRadius = 0.3 * m.scale;
+  g.userData.wheelRadius = m.library ? m.wheelRadius : 0.3 * m.scale;
   return g;
 }
 
 // How bright the lights are: off by day, on at dusk and at night
 export function carLights(g: THREE.Object3D, level: number) {
-  g.traverse((o) => { if (o instanceof THREE.Mesh && o.userData.own && 'emissiveIntensity' in o.material) o.material.emissiveIntensity = level; });
+  g.traverse((o) => { if (o instanceof THREE.Mesh && o.userData.own && 'emissiveIntensity' in o.material && !o.material.userData.noLights) o.material.emissiveIntensity = level; });
 }
 
 // Spin the wheels by how far the car went
@@ -128,9 +186,14 @@ export function fitTyres(g: THREE.Object3D, tread: Tyre) {
 
 // An open cylinder just over the tyre, as wide as it, on the wheel's axle (its x)
 function band(wheel: THREE.Object3D) {
-  const geo = (wheel as THREE.Mesh).geometry ?? (wheel.children.find((c) => c instanceof THREE.Mesh) as THREE.Mesh | undefined)?.geometry;
-  geo.computeBoundingBox();
-  const box = geo.boundingBox!, size = box.getSize(new THREE.Vector3()), at = box.getCenter(new THREE.Vector3());
+  // (the wheel's size in its own frame: all its meshes, tyre, rim and brake)
+  const box = new THREE.Box3();
+  for (const o of [wheel, ...wheel.children]) {
+    if (!(o instanceof THREE.Mesh)) continue;
+    o.geometry.computeBoundingBox();
+    box.union(o === wheel ? o.geometry.boundingBox! : o.geometry.boundingBox!.clone().applyMatrix4(o.matrix));
+  }
+  const size = box.getSize(new THREE.Vector3()), at = box.getCenter(new THREE.Vector3());
   const r = Math.max(size.y, size.z) / 2 * 1.015;
   const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, size.x * 0.9, 28, 1, true).rotateZ(Math.PI / 2).translate(at.x, at.y, at.z));
   m.userData.tread = true;
@@ -181,10 +244,41 @@ export function disposeCar(g: THREE.Object3D) {
     if (o instanceof THREE.Mesh && o.userData.tread) o.geometry.dispose(); // (the treads' materials are shared)
     if (!(o instanceof THREE.Mesh) || !o.userData.own) return;
     const m = o.material as THREE.MeshStandardMaterial;
+    if (m.userData.shared) return; // (a library car's materials are shared by every car of its kind)
     if (m.map?.userData.own) m.map.dispose();
     m.dispose();
     if (o.geometry.userData.own) o.geometry.dispose();
   });
+}
+
+// A library car's material, as this car wears it: its paint in the driver's colour (glossy, clear-coated
+// where there's power to spare); its lamps able to glow (carLights); the rest just as the model has it.
+// All shared between cars of the same colour.
+const libraryMats = new Map<string, THREE.Material>();
+const HEADLAMP = /head|drl|lamp|led|blinker|indicator|front.?light/i, TAILLAMP = /tail|brake.?light|rear.?light|reverse|(^|[^a-z])red([^a-z]|$)/i;
+const NOT_LAMP = /wheel|dis[ck]|caliper|rim|tyre|tire|pad|suspension/i; // (brake discs, pads...)
+function libraryMaterial(base: THREE.MeshStandardMaterial, color: string, rich: boolean) {
+  const paint = base.name === 'paint', notLamp = NOT_LAMP.test(base.name);
+  const head = !paint && !notLamp && HEADLAMP.test(base.name), tail = !paint && !notLamp && !head && TAILLAMP.test(base.name); // (not the brake discs)
+  const key = `${base.uuid}|${paint ? color : ''}|${rich}`;
+  let m = libraryMats.get(key);
+  if (m) return m;
+  if (paint) {
+    const o: THREE.MeshPhysicalMaterialParameters = { color, metalness: 0.35, roughness: 0.32, normalMap: base.normalMap, emissive: 0x000000 };
+    m = rich ? new THREE.MeshPhysicalMaterial({ ...o, clearcoat: 1, clearcoatRoughness: 0.04 }) : new THREE.MeshStandardMaterial(o);
+  } else if (head || tail) {
+    const c = base.clone();
+    c.emissive = new THREE.Color(head ? 0xfff1d6 : 0xff2a1a);
+    c.emissiveIntensity = 0;
+    m = c;
+  } else {
+    m = base;
+    if (!('emissiveIntensity' in m)) return m;
+    m.userData.noLights = true; // (carLights leaves it be)
+  }
+  m.userData.shared = true;
+  libraryMats.set(key, m);
+  return m;
 }
 
 // The body's paint: the square of the palette's second row its faces use most

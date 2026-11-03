@@ -18,6 +18,7 @@ import { FORECASTS, Forecast, Weather } from '@world/weather.ts';
 import { OUT_LABEL, type PitPlan } from './damage.ts';
 import { GrandPrix, type Call } from './gp.ts';
 import { World } from './scene.ts';
+import { loadCrew } from './crew.ts';
 
 const device = await requireDevice(); // (3D: not on the lightest screens)
 const getJson = <T>(url: string) => fetch(url, { cache: 'no-store' }).then((r) => r.json() as Promise<T>);
@@ -26,7 +27,10 @@ const [{ circuits: CIRCUITS }, { cars: CARS }] = await Promise.all([
   getJson<{ cars: CarType[] }>('cars.json'),
   document.fonts.load('900 100px "Big Shoulders Display"'), // (the cars' numbers are painted in it)
 ]);
-const models = await loadCars(CARS, device.tier === 'heavy' && !device.tv); // (clear coats where there's power to spare)
+const [models] = await Promise.all([
+  loadCars(CARS, device.tier === 'heavy' && !device.tv), // (clear coats where there's power to spare)
+  loadCrew(), // (the pit crews)
+]);
 interface Paint { id: string; name: string; color: string }
 const PAINTS: Paint[] = (await shopItems('grand-prix')).filter((it) => typeof it.extra.color === 'string')
   .map((it) => ({ id: it.id.slice('grand-prix/'.length), name: it.name, color: it.extra.color as string }));
@@ -618,6 +622,7 @@ function tvFocus(dt: number) {
 }
 
 // --- the loop -----------------------------------------------------------------------------------------
+const called = new Map<Car, string | null>(); // the pit wall's last call to each person (so it's said once)
 function tick() {
   stageT += TICK;
   if (stage === 'garage') return;
@@ -650,6 +655,12 @@ function tick() {
     if (!c.spec.ai) buzz(c, 800);
   }
   for (const c of ev.pitDone) if (!c.spec.ai) { flash(c, 'Go go go'); buzz(c, 150); }
+  // the pit wall's call, when it first comes: on the screen, big, with the button to press
+  for (const c of people()) {
+    const call = gp.boxCall.has(c) || gp.inPits(c) ? null : gp.call(c);
+    if (call && called.get(c) !== call) { flash(c, `Box this lap: ${call} · press L1`, 5); buzz(c, 200); }
+    called.set(c, call);
+  }
   for (const c of ev.lap) onLap(c);
   for (const c of ev.finished) onFinish(c);
   if (flagT >= 0) flagT += TICK;
@@ -660,7 +671,8 @@ function tick() {
 
 const MIN_FRAME = 1000 / maxFps - 1;
 let acc = 0, last = performance.now(), padT = 0, hudT = 0;
-const look = { burning: (c: Car) => gp.cond.get(c)!.burning, out: (c: Car) => gp.isOut(c), inPits: (c: Car) => gp.inPits(c) };
+const look = { burning: (c: Car) => gp.cond.get(c)!.burning, out: (c: Car) => gp.isOut(c), inPits: (c: Car) => gp.inPits(c), atBox: (c: Car) => gp.pits.waiting(c) !== null,
+  crewOut: (c: Car) => !c.spec.ai || gp.inPits(c) || gp.boxCall.has(c) };
 
 function frame(now: number) {
   requestAnimationFrame(frame);
@@ -737,5 +749,6 @@ $('toLobby').addEventListener('click', toLobby);
 document.body.classList.toggle('tv', device.tv);
 world.resize();
 engines.unlock();
+(globalThis as { grandPrix?: unknown }).grandPrix = { world, input, get gp() { return gp; } }; // (for looking into it while testing)
 toLobby();
 requestAnimationFrame(frame);

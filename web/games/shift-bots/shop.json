@@ -1,0 +1,9 @@
+{
+  "_comment": "Finishes bought with stars. finish: which one (paint.ts). Looks only: every finish drives and fights the same.",
+  "items": [
+    { "id": "satin", "name": "Satin finish", "price": 60, "finish": "satin", "about": "A soft sheen, between matte and gloss" },
+    { "id": "candy", "name": "Candy finish", "price": 100, "finish": "candy", "about": "Deep, glassy colour with glitter under it" },
+    { "id": "chrome", "name": "Chrome finish", "price": 150, "finish": "chrome", "about": "Mirror-bright, in your colour" },
+    { "id": "gold", "name": "Gold plate", "price": 300, "finish": "gold", "about": "The whole bot in gold. For champions" }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "_help": "The cars to choose from. 'model' is a real car from the library (cars/<id>: web/cars/README.md lists them); 'length' is how long it is on the track, in metres (its width follows from the model). The rest are compared with the Sovereign: 'top' speed, 'accel' (how quickly it gets there), 'grip' (how fast it can take a turn before sliding) and 'weight' (who gets pushed around in a bump). 'traffic' lists the ordinary cars out on the streets (their 'top' is slow: they keep to the speed limit).",
+  "cars": [
+    { "id": "sovereign", "name": "Sovereign", "model": "cars/gt-coupe", "about": "A big grand tourer. Quick everywhere, best at nothing.", "length": 4.7, "top": 1, "accel": 1, "grip": 1, "weight": 1.1 },
+    { "id": "goblin", "name": "Goblin", "model": "cars/goblin", "about": "The wedge. Fastest of all on the long straights; a handful in the tight corners.", "length": 4.6, "top": 1.08, "accel": 0.98, "grip": 0.93, "weight": 0.95 },
+    { "id": "cheetah", "name": "Cheetah", "model": "cars/cheetah", "about": "Low and light, all pick-up. Gone off the line.", "length": 4.4, "top": 0.97, "accel": 1.18, "grip": 1.03, "weight": 0.85 },
+    { "id": "abyss", "name": "Abyss", "model": "cars/abyss", "about": "Long and planted. Turns in like it's on rails.", "length": 4.8, "top": 1.01, "accel": 0.95, "grip": 1.1, "weight": 1 },
+    { "id": "stinger", "name": "Stinger", "model": "cars/sport-lp", "about": "Loud, angry and quick in a straight line. Brake early.", "length": 4.5, "top": 1.05, "accel": 1.06, "grip": 0.95, "weight": 0.95 },
+    { "id": "nomad", "name": "Nomad", "model": "cars/nfr", "about": "A street racer with a wing. Grips hard, light in a bump.", "length": 4.4, "top": 0.96, "accel": 1.08, "grip": 1.09, "weight": 0.85 },
+    { "id": "kiri", "name": "Kiri", "model": "cars/kiri", "about": "A nimble little coupé. Loves the tight streets downtown.", "length": 4.4, "top": 0.93, "accel": 1.14, "grip": 1.12, "weight": 0.8 },
+    { "id": "azura", "name": "Azura", "model": "cars/azura", "about": "The hot hatch. Slow at the top end, but it never lets go.", "length": 4.4, "top": 0.92, "accel": 1.12, "grip": 1.13, "weight": 0.9 }
+  ],
+  "traffic": [
+    { "id": "meridian", "name": "Saloon", "model": "cars/sedan", "about": "", "length": 4.9, "top": 0.25, "accel": 0.6, "grip": 1, "weight": 1.3 },
+    { "id": "halcyon", "name": "Coupé", "model": "cars/shc", "about": "", "length": 4.8, "top": 0.26, "accel": 0.6, "grip": 1, "weight": 1.2 },
+    { "id": "summit", "name": "SUV", "model": "cars/suv", "about": "", "length": 4.8, "top": 0.23, "accel": 0.55, "grip": 1, "weight": 1.6 },
+    { "id": "ridgeback", "name": "Pickup", "model": "cars/lightbody", "about": "", "length": 5.2, "top": 0.22, "accel": 0.5, "grip": 1, "weight": 1.8 },
+    { "id": "thunderbolt", "name": "Hatchback", "model": "cars/thunderbolt", "about": "", "length": 4.4, "top": 0.25, "accel": 0.6, "grip": 1, "weight": 1.1 },
+    { "id": "van", "name": "Van", "model": "vehicles/van", "about": "", "length": 5, "top": 0.23, "accel": 0.5, "grip": 1, "weight": 1.8 },
+    { "id": "lorry", "name": "Lorry", "model": "vehicles/lorry", "about": "", "length": 7, "top": 0.2, "accel": 0.4, "grip": 1, "weight": 3 },
+    { "id": "bus", "name": "Bus", "model": "vehicles/bus", "about": "", "length": 11.5, "top": 0.2, "accel": 0.4, "grip": 1, "weight": 3.5 }
+  ]
+}

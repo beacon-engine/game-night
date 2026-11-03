@@ -1,0 +1,1016 @@
+{
+ "cars": [
+  {
+   "id": "goblin",
+   "name": "Goblin",
+   "length": 4.6,
+   "width": 2.202,
+   "height": 1.172,
+   "belt": 0.538,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.802,
+     "y": 0.353,
+     "z": 1.217,
+     "r": 0.348
+    },
+    "wheel.front.R": {
+     "x": -0.803,
+     "y": 0.348,
+     "z": 1.217,
+     "r": 0.348
+    },
+    "wheel.rear.L": {
+     "x": 0.91,
+     "y": 0.368,
+     "z": -1.415,
+     "r": 0.366
+    },
+    "wheel.rear.R": {
+     "x": -0.91,
+     "y": 0.368,
+     "z": -1.415,
+     "r": 0.366
+    }
+   },
+   "panels": [
+    "bonnet",
+    "chassis",
+    "deck",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "glass.front",
+    "glass.rear",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 39391,
+   "credit": {
+    "title": "Fictional supercar - V12 Goblin",
+    "by": "ollitei (https://sketchfab.com/ollitei)",
+    "from": "https://sketchfab.com/3d-models/fictional-supercar-v12-goblin-0a20e49ad5774d778567cb5c3f345786",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 1049440
+  },
+  {
+   "id": "cheetah",
+   "name": "Cheetah",
+   "length": 4.4,
+   "width": 2.126,
+   "height": 1.082,
+   "belt": 0.485,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.817,
+     "y": 0.31,
+     "z": 1.186,
+     "r": 0.227
+    },
+    "wheel.front.R": {
+     "x": -0.817,
+     "y": 0.31,
+     "z": 1.186,
+     "r": 0.227
+    },
+    "wheel.rear.L": {
+     "x": 0.858,
+     "y": 0.31,
+     "z": -1.24,
+     "r": 0.227
+    },
+    "wheel.rear.R": {
+     "x": -0.858,
+     "y": 0.31,
+     "z": -1.24,
+     "r": 0.227
+    }
+   },
+   "panels": [
+    "bonnet",
+    "chassis",
+    "deck",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "glass.front",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 37539,
+   "credit": {
+    "title": "Generic Supercar \"Cheetah\"",
+    "by": "mk2design (https://sketchfab.com/mk2design)",
+    "from": "https://sketchfab.com/3d-models/generic-supercar-cheetah-f5420af7b30c4e8c874be33cc58724f2",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 1299548
+  },
+  {
+   "id": "abyss",
+   "name": "Abyss",
+   "length": 4.8,
+   "width": 2.049,
+   "height": 1.135,
+   "belt": 0.515,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.345,
+     "y": 0.479,
+     "z": 0.163,
+     "r": 0.358
+    },
+    "wheel.front.R": {
+     "x": -0.345,
+     "y": 0.479,
+     "z": 0.163,
+     "r": 0.358
+    },
+    "wheel.rear.L": {
+     "x": 0.771,
+     "y": 0.335,
+     "z": -1.258,
+     "r": 0.335
+    },
+    "wheel.rear.R": {
+     "x": -0.771,
+     "y": 0.335,
+     "z": -1.258,
+     "r": 0.335
+    }
+   },
+   "panels": [
+    "bonnet",
+    "chassis",
+    "cockpit",
+    "deck",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "glass.front",
+    "glass.rear",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 32789,
+   "credit": {
+    "title": "Tokii Abyss GT.7 V12",
+    "by": "Glas'kavin (https://sketchfab.com/fiendishfarlander76)",
+    "from": "https://sketchfab.com/3d-models/tokii-abyss-gt7-v12-c399568541104e0e903cf138b1e24908",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 1002000
+  },
+  {
+   "id": "sport-lp",
+   "name": "Stinger",
+   "length": 4.5,
+   "width": 2.098,
+   "height": 1.15,
+   "belt": 0.713,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.826,
+     "y": 0.331,
+     "z": 1.116,
+     "r": 0.331
+    },
+    "wheel.front.R": {
+     "x": -0.802,
+     "y": 0.331,
+     "z": 1.116,
+     "r": 0.331
+    },
+    "wheel.rear.L": {
+     "x": 0.826,
+     "y": 0.331,
+     "z": -1.484,
+     "r": 0.331
+    },
+    "wheel.rear.R": {
+     "x": -0.802,
+     "y": 0.331,
+     "z": -1.484,
+     "r": 0.331
+    }
+   },
+   "panels": [
+    "bonnet",
+    "chassis",
+    "deck",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 6850,
+   "credit": {
+    "title": "Generic Sport Car Low Poly",
+    "by": "Han66st (https://sketchfab.com/Han66st)",
+    "from": "https://sketchfab.com/3d-models/generic-sport-car-low-poly-7ad3bfb2bd7449c19698fc7d0592a601",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 110596
+  },
+  {
+   "id": "gt-coupe",
+   "name": "Sovereign",
+   "length": 4.7,
+   "width": 2.262,
+   "height": 1.345,
+   "belt": 0.639,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.828,
+     "y": 0.377,
+     "z": 1.426,
+     "r": 0.376
+    },
+    "wheel.front.R": {
+     "x": -0.823,
+     "y": 0.377,
+     "z": 1.424,
+     "r": 0.376
+    },
+    "wheel.rear.L": {
+     "x": 0.825,
+     "y": 0.376,
+     "z": -1.5,
+     "r": 0.376
+    },
+    "wheel.rear.R": {
+     "x": -0.83,
+     "y": 0.376,
+     "z": -1.501,
+     "r": 0.376
+    }
+   },
+   "panels": [
+    "chassis",
+    "cockpit",
+    "deck",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "glass.front",
+    "glass.rear",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 35011,
+   "credit": {
+    "title": "Generic Sport Coup\u00e9 Car",
+    "by": "MMC Works (https://sketchfab.com/mmcworks)",
+    "from": "https://sketchfab.com/3d-models/generic-sport-coupe-car-820a13c4831c41959ce75e6c2014e882",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 2211124
+  },
+  {
+   "id": "azura",
+   "name": "Azura",
+   "length": 4.4,
+   "width": 1.829,
+   "height": 1.46,
+   "belt": 0.753,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.718,
+     "y": 0.351,
+     "z": 1.255,
+     "r": 0.257
+    },
+    "wheel.front.R": {
+     "x": -0.718,
+     "y": 0.351,
+     "z": 1.255,
+     "r": 0.257
+    },
+    "wheel.rear.L": {
+     "x": 0.718,
+     "y": 0.351,
+     "z": -1.32,
+     "r": 0.257
+    },
+    "wheel.rear.R": {
+     "x": -0.718,
+     "y": 0.351,
+     "z": -1.32,
+     "r": 0.257
+    }
+   },
+   "panels": [
+    "bonnet",
+    "chassis",
+    "deck",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "glass.front",
+    "glass.rear",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 39791,
+   "credit": {
+    "title": "Generic Coupe \"Azura\"",
+    "by": "mk2design (https://sketchfab.com/mk2design)",
+    "from": "https://sketchfab.com/3d-models/generic-coupe-azura-2e1a3699de7e4f688d328dc005ef1aac",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 1401656
+  },
+  {
+   "id": "nfr",
+   "name": "Nomad",
+   "length": 4.4,
+   "width": 1.953,
+   "height": 1.145,
+   "belt": 0.71,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.753,
+     "y": 0.301,
+     "z": 1.296,
+     "r": 0.301
+    },
+    "wheel.front.R": {
+     "x": -0.753,
+     "y": 0.301,
+     "z": 1.296,
+     "r": 0.301
+    },
+    "wheel.rear.L": {
+     "x": 0.769,
+     "y": 0.324,
+     "z": -1.245,
+     "r": 0.324
+    },
+    "wheel.rear.R": {
+     "x": -0.769,
+     "y": 0.324,
+     "z": -1.245,
+     "r": 0.324
+    }
+   },
+   "panels": [
+    "bonnet",
+    "chassis",
+    "cockpit",
+    "deck",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 21142,
+   "credit": {
+    "title": "NFR '90 - Low Poly model",
+    "by": "Daniel Zhabotinsky (https://sketchfab.com/DanielZhabotinsky)",
+    "from": "https://sketchfab.com/3d-models/nfr-90-low-poly-model-776078e51fbe4ec9addbe45ba13e1aad",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 3733340
+  },
+  {
+   "id": "kiri",
+   "name": "Kiri",
+   "length": 4.4,
+   "width": 1.818,
+   "height": 1.324,
+   "belt": 0.821,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.759,
+     "y": 0.302,
+     "z": 1.255,
+     "r": 0.302
+    },
+    "wheel.front.R": {
+     "x": -0.759,
+     "y": 0.302,
+     "z": 1.255,
+     "r": 0.302
+    },
+    "wheel.rear.L": {
+     "x": 0.759,
+     "y": 0.302,
+     "z": -1.237,
+     "r": 0.302
+    },
+    "wheel.rear.R": {
+     "x": -0.759,
+     "y": 0.302,
+     "z": -1.237,
+     "r": 0.302
+    }
+   },
+   "panels": [
+    "bonnet",
+    "chassis",
+    "cockpit",
+    "deck",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 23882,
+   "credit": {
+    "title": "Kiri '94 Racemod - Low Poly model",
+    "by": "Daniel Zhabotinsky (https://sketchfab.com/DanielZhabotinsky)",
+    "from": "https://sketchfab.com/3d-models/kiri-94-racemod-low-poly-model-64d5d6f074a84717ac6d764f35c95285",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 3718420
+  },
+  {
+   "id": "vanguard",
+   "name": "Vanguard",
+   "length": 4.8,
+   "width": 2.082,
+   "height": 1.492,
+   "belt": 1.058,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.377,
+     "y": 0.543,
+     "z": 1.082,
+     "r": 0.543
+    },
+    "wheel.front.R": {
+     "x": -0.378,
+     "y": 0.523,
+     "z": 1.082,
+     "r": 0.523
+    },
+    "wheel.rear.L": {
+     "x": 0.387,
+     "y": 0.589,
+     "z": -1.064,
+     "r": 0.589
+    },
+    "wheel.rear.R": {
+     "x": -0.387,
+     "y": 0.589,
+     "z": -1.064,
+     "r": 0.589
+    }
+   },
+   "panels": [
+    "bonnet",
+    "cockpit",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "glass.front",
+    "glass.rear",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 37910,
+   "credit": {
+    "title": "Vanguard - Fictional Muscle Car",
+    "by": "SimonStrikesBack (https://sketchfab.com/SimonStrikesBack)",
+    "from": "https://sketchfab.com/3d-models/vanguard-fictional-muscle-car-194ab4697e7a46be8ffb5103f877cd59",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 281736
+  },
+  {
+   "id": "thunderbolt",
+   "name": "Thunderbolt",
+   "length": 4.4,
+   "width": 1.962,
+   "height": 1.378,
+   "belt": 0.854,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.726,
+     "y": 0.306,
+     "z": 1.327,
+     "r": 0.306
+    },
+    "wheel.front.R": {
+     "x": -0.726,
+     "y": 0.306,
+     "z": 1.327,
+     "r": 0.306
+    },
+    "wheel.rear.L": {
+     "x": 0.726,
+     "y": 0.306,
+     "z": -1.212,
+     "r": 0.306
+    },
+    "wheel.rear.R": {
+     "x": -0.726,
+     "y": 0.306,
+     "z": -1.212,
+     "r": 0.306
+    }
+   },
+   "panels": [
+    "bonnet",
+    "chassis",
+    "cockpit",
+    "deck",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 24013,
+   "credit": {
+    "title": "Thunderbolt '96 - Low Poly Model",
+    "by": "Daniel Zhabotinsky (https://sketchfab.com/DanielZhabotinsky)",
+    "from": "https://sketchfab.com/3d-models/thunderbolt-96-low-poly-model-25a4ff2002834ec1b4441c57ecd7ca9f",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 3670448
+  },
+  {
+   "id": "sedan",
+   "name": "Meridian",
+   "length": 4.9,
+   "width": 2.125,
+   "height": 1.476,
+   "belt": 0.658,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.803,
+     "y": 0.339,
+     "z": 1.553,
+     "r": 0.338
+    },
+    "wheel.front.R": {
+     "x": -0.803,
+     "y": 0.339,
+     "z": 1.553,
+     "r": 0.338
+    },
+    "wheel.rear.L": {
+     "x": 0.803,
+     "y": 0.338,
+     "z": -1.317,
+     "r": 0.338
+    },
+    "wheel.rear.R": {
+     "x": -0.803,
+     "y": 0.338,
+     "z": -1.317,
+     "r": 0.338
+    }
+   },
+   "panels": [
+    "bonnet",
+    "chassis",
+    "cockpit",
+    "deck",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "glass.front",
+    "glass.rear",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 37282,
+   "credit": {
+    "title": "Generic Sedan Car",
+    "by": "MMC Works (https://sketchfab.com/mmcworks)",
+    "from": "https://sketchfab.com/3d-models/generic-sedan-car-58c33766470d46e7b2aed542650494e5",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 3073528
+  },
+  {
+   "id": "shc",
+   "name": "Halcyon",
+   "length": 4.8,
+   "width": 2.292,
+   "height": 1.389,
+   "belt": 0.641,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.891,
+     "y": 0.356,
+     "z": 1.455,
+     "r": 0.356
+    },
+    "wheel.front.R": {
+     "x": -0.891,
+     "y": 0.356,
+     "z": 1.455,
+     "r": 0.356
+    },
+    "wheel.rear.L": {
+     "x": 0.891,
+     "y": 0.356,
+     "z": -1.448,
+     "r": 0.356
+    },
+    "wheel.rear.R": {
+     "x": -0.891,
+     "y": 0.356,
+     "z": -1.448,
+     "r": 0.356
+    }
+   },
+   "panels": [
+    "bonnet",
+    "chassis",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 39280,
+   "credit": {
+    "title": "SHC MC Free Promotion Car",
+    "by": "denniswoo1993 (https://sketchfab.com/denniswoo1993)",
+    "from": "https://sketchfab.com/3d-models/shc-mc-free-promotion-car-cfaabdec76a74b68a48ba5657b6d9aee",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 879216
+  },
+  {
+   "id": "suv",
+   "name": "Summit",
+   "length": 4.8,
+   "width": 2.237,
+   "height": 1.784,
+   "belt": 1.124,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.845,
+     "y": 0.382,
+     "z": 1.57,
+     "r": 0.382
+    },
+    "wheel.front.R": {
+     "x": -0.85,
+     "y": 0.382,
+     "z": 1.57,
+     "r": 0.382
+    },
+    "wheel.rear.L": {
+     "x": 0.845,
+     "y": 0.382,
+     "z": -1.483,
+     "r": 0.382
+    },
+    "wheel.rear.R": {
+     "x": -0.85,
+     "y": 0.382,
+     "z": -1.483,
+     "r": 0.382
+    }
+   },
+   "panels": [
+    "bonnet",
+    "chassis",
+    "cockpit",
+    "deck",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "glass.front",
+    "glass.rear",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 33528,
+   "credit": {
+    "title": "MMC Generic Small SUV Car",
+    "by": "MMC Works (https://sketchfab.com/mmcworks)",
+    "from": "https://sketchfab.com/3d-models/mmc-generic-small-suv-car-5db696c6ed5d4bdc87905c1040fa072a",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 2885444
+  },
+  {
+   "id": "wyvern",
+   "name": "Wyvern",
+   "length": 4.9,
+   "width": 2.491,
+   "height": 1.749,
+   "belt": 1.359,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.976,
+     "y": 0.418,
+     "z": 1.393,
+     "r": 0.418
+    },
+    "wheel.front.R": {
+     "x": -0.976,
+     "y": 0.418,
+     "z": 1.393,
+     "r": 0.418
+    },
+    "wheel.rear.L": {
+     "x": 0.976,
+     "y": 0.418,
+     "z": -1.499,
+     "r": 0.418
+    },
+    "wheel.rear.R": {
+     "x": -0.976,
+     "y": 0.418,
+     "z": -1.499,
+     "r": 0.418
+    }
+   },
+   "panels": [
+    "bonnet",
+    "chassis",
+    "deck",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "glass.front",
+    "glass.rear",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 14926,
+   "credit": {
+    "title": "Wyvern concept car - FREE",
+    "by": "NETRUNNER_pl (https://sketchfab.com/NETRUNNER_pl)",
+    "from": "https://sketchfab.com/3d-models/wyvern-concept-car-free-969f16578168435d8f12391001fbd311",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 484116
+  },
+  {
+   "id": "lightbody",
+   "name": "Ridgeback",
+   "length": 5.2,
+   "width": 2.26,
+   "height": 2.027,
+   "belt": 1.257,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.827,
+     "y": 0.371,
+     "z": 1.674,
+     "r": 0.231
+    },
+    "wheel.front.R": {
+     "x": -0.822,
+     "y": 0.368,
+     "z": 1.674,
+     "r": 0.231
+    },
+    "wheel.rear.L": {
+     "x": 0.827,
+     "y": 0.371,
+     "z": -1.388,
+     "r": 0.231
+    },
+    "wheel.rear.R": {
+     "x": -0.822,
+     "y": 0.368,
+     "z": -1.388,
+     "r": 0.231
+    }
+   },
+   "panels": [
+    "bonnet",
+    "chassis",
+    "cockpit",
+    "deck",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 23976,
+   "credit": {
+    "title": "Lightbody Lifted '85 - Low poly model",
+    "by": "Daniel Zhabotinsky (https://sketchfab.com/DanielZhabotinsky)",
+    "from": "https://sketchfab.com/3d-models/lightbody-lifted-85-low-poly-model-67beae18c3d24be68f9c8f0ec382d8e3",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 3669060
+  },
+  {
+   "id": "open-wheeler",
+   "name": "Single-seater",
+   "length": 5.4,
+   "width": 2.804,
+   "height": 1.507,
+   "belt": 0.934,
+   "wheels": {
+    "wheel.front.L": {
+     "x": 0.994,
+     "y": 0.381,
+     "z": 1.658,
+     "r": 0.381
+    },
+    "wheel.front.R": {
+     "x": -0.994,
+     "y": 0.381,
+     "z": 1.658,
+     "r": 0.381
+    },
+    "wheel.rear.L": {
+     "x": 1.101,
+     "y": 0.381,
+     "z": -1.913,
+     "r": 0.381
+    },
+    "wheel.rear.R": {
+     "x": -1.101,
+     "y": 0.381,
+     "z": -1.913,
+     "r": 0.381
+    }
+   },
+   "panels": [
+    "bonnet",
+    "chassis",
+    "deck",
+    "door.L",
+    "door.R",
+    "fender.L",
+    "fender.R",
+    "nose.L",
+    "nose.R",
+    "quarter.L",
+    "quarter.R",
+    "roof",
+    "tail.L",
+    "tail.R",
+    "wheel.front.L",
+    "wheel.front.R",
+    "wheel.rear.L",
+    "wheel.rear.R"
+   ],
+   "triangles": 37631,
+   "credit": {
+    "title": "Open Wheel Race Car",
+    "by": "Dylan Jade (https://sketchfab.com/DylanJade3D)",
+    "from": "https://sketchfab.com/3d-models/open-wheel-race-car-4599e9608b6845aaafadc89f7d41fa3c",
+    "licence": "CC Attribution (http://creativecommons.org/licenses/by/4.0/)"
+   },
+   "bytes": 2775032
+  }
+ ]
+}

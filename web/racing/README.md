@@ -8,14 +8,14 @@ served at `/racing/models/`.
 
 | File | |
 |---|---|
-| `cars.ts` | Loads the car models and repaints each in its driver's colour, with their number on the doors; their finishes (clear-coated paint, glass, metal rims) and lights; wheels that spin and steer; and their tyres: slicks (the kit's own, smooth), or a band of tread for wets, gravel or snow tyres. |
+| `cars.ts` | Loads the car models (the kit's, or real-looking ones from the [car library](../cars/README.md): `"model": "cars/<id>"`, or its other vehicles, `vehicles/<id>`; a library car's panels are merged into one mesh per material, but for its wheels, so a grid of them draws quickly) and repaints each in its driver's colour, with their number on the doors (or none: 0); their finishes (clear-coated paint, glass, metal rims) and lights; wheels that spin and steer; and their tyres: slicks (the kit's own, smooth), or a band of tread for wets, gravel or snow tyres. |
 | `tyres.ts` | The tyres (`Tyre`: slick, wet, gravel, snow), the grip each has in the weather, and when the pit wall would change them (named thresholds, not a chain of conditions). No graphics. |
-| `race.ts` | Racing on a track (`track.ts`): the handling, the tow, contact, laps and the computer drivers. Stock Cars races with it as it is; Grand Prix adds health, fuel and pit stops on top. The grip comes from the car, its tyres and the weather. No graphics. |
+| `race.ts` | Racing on a track (`track.ts`): the handling, the tow, contact, laps and the computer drivers. Stock Cars races with it as it is; Grand Prix adds health, fuel and pit stops on top. (Street Racing drives freely round a city instead: its own `drive.ts`.) The grip comes from the car, its tyres and the weather. No graphics. |
 | `track.ts` | A track as numbers, from its description: an oval or a road course, everything measured along it (`s`) and across it (`d`). |
 | `sound.ts` | A synthesised engine for each person driving, tyres, wind, squeals and the wall; the pack going by; the rain, and tyres hissing on a wet road. |
 | `scenery.ts` | The land round a track by its theme (countryside, desert, harbour, city). |
 | `venue.ts` | Building a venue from a track: ribbons along the lap, cars placed on the banked surface, kerbs and the crowd. |
-| `models/` | The cars, from [Kenney's Car Kit](https://kenney.nl/assets/car-kit) (CC0), with the originals and their licence in [`source/`](source/README.md). A game's own model goes in its own `models/` folder (`"model": "models/<name>"` in its `cars.json`). |
+| `models/` | The kit cars, from [Kenney's Car Kit](https://kenney.nl/assets/car-kit) (CC0), with the originals and their licence in [`source/`](source/README.md). The real-looking cars are in the [car library](../cars/README.md), shared with Shift Bots. A game's own model goes in its own `models/` folder (`"model": "models/<name>"` in its `cars.json`). |
 
 The weather itself, the sky, particles and the split screen aren't racing things: they're in
 [`web/world/`](../world/README.md), for any game played outdoors.

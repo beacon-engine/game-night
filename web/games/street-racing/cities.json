@@ -1,0 +1,8 @@
+{
+  "_help": "The races to choose from in the lobby: each in a city of its own, made up from 'seed' (the same city every time): 'cols' by 'rows' blocks of avenues, streets and alleys, a river across the middle with a few bridges, a park. The race starts in one corner ('start') and finishes in the far one ('to', with its 'landmark': harbour, airport or tower). Any way there is allowed. 'time' is day, dusk or night.",
+  "cities": [
+    { "id": "harbour-run", "name": "Downtown to the Harbour", "about": "From the station, across downtown and the river, down to the docks. Any way you like: 2.5 km the short way.", "start": "Central Station", "to": "the Harbour", "time": "night", "seed": 11, "cols": 9, "rows": 7, "landmark": "harbour" },
+    { "id": "airport-run", "name": "The Airport Run", "about": "Out of town at sunset, over the river and on to the airport, with the planes coming in over your head.", "start": "Market Square", "to": "the Airport", "time": "dusk", "seed": 23, "cols": 11, "rows": 7, "landmark": "airport" },
+    { "id": "old-town", "name": "Old Town to Uptown", "about": "Tight streets and alleys in the old town, over a bridge, then up through the towers.", "start": "Old Town", "to": "Uptown", "time": "night", "seed": 37, "cols": 8, "rows": 8, "landmark": "tower" }
+  ]
+}

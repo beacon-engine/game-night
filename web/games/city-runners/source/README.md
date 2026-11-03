@@ -9,6 +9,8 @@ shipped in `beacon-arcade`.
 | `people/` | The male and female bodies, six hairstyles and a beard, rigged to the head bone | [Quaternius, Universal Base Characters](https://quaternius.itch.io/universal-base-characters) | CC0 |
 | `animations.json` | Idle, sprint, jog, jump (start, in the air, landing), roll, crouch, hit, fall, dance | [Quaternius, Universal Animation Library](https://quaternius.com/packs/universalanimationlibrary.html) | CC0 |
 
+The Streets route's traffic (cars, and the police car, van, lorry and bus) is from the shared [car library](../../../cars/README.md), credits there.
+
 - `make-bodies.py` copies the bodies and hair, keeps only their colour textures and shrinks them to 512 px (macOS
   `sips`), so a TV can load half a dozen runners: 4 MB in all.
 - `make-animations.mjs` cuts the clips the game uses out of the library's 25 MB FBX (`web/people/source/ual1/Unreal Engine/AL_Standard.fbx`): joint

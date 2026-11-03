@@ -5,7 +5,23 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-03
+
 ### Added (games)
+- **Shift Bots**, co-op car-robot battles for 1–4. Build your own car (15 real-looking bodies, paint, finish,
+  weapon, special) that changes into a robot; fight waves of enemy bots (scouts, troopers, brutes, lancers, the
+  Hauler boss) on four battlegrounds (quarry, desert canyon, night city, snowfield). Fight as a robot, change into
+  a car to flee, chase or ram; each body changes at its own speed. Run, dodge, multi-barrel guns, specials,
+  reviving each other, upgrades between waves, a radar. Skies and ground photographed (Poly Haven, CC0).
+- **Street Racing** is playable: a race across a night-time city from one corner to the far one, any way you
+  like (avenues, streets, alleys as shortcuts, a river with a few bridges). Traffic on every street, traffic
+  lights, people on the crossings; run a red and the police chase you, and if they catch you they block you in
+  for a few seconds. A map with the quickest way from wherever you are, turn-by-turn directions, names over every
+  car, headlights at night, planes and a helicopter overhead, a boost filled by near misses, computer drivers
+  that don't let you get away.
+- **City Runners: Downtown Streets**, a new route down a city street at night: vault parked cars, dodge vans,
+  lorries and buses, mind the traffic coming at you, and the junctions' lights. Cross on red and the police
+  chase you; the footbridge is always safe.
 - **Fireteam**, a squad shooter for 1–4 (marked In progress). Each of you leads a squad (up to three computer
   squad-mates) through one mission in the Normandy bocage, in five steps: through their hedgerow line, into the farm,
   down the orchard to the sunken lane, silencing a field gun at the edge of the woods, then holding the crossroads
@@ -55,6 +71,12 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   the shop.
 
 ### Added
+- **The car library** (`web/cars/`): 16 real-looking cars of made-up makes (CC Attribution, from Sketchfab, credits
+  in its README), cut into panels by `tools/cars/cars.py`; and other vehicles (police car, van, lorry, bus,
+  airliner, helicopter) by `tools/cars/vehicles.py`. Stock Cars, Rally, Grand Prix, Street Racing, City Runners
+  and Shift Bots drive them.
+- **Grand Prix: pit stops you can see.** Each team's box has a board with the driver's number and name, a pit crew
+  in team colours runs to the wheels when you stop, and the pit wall's call comes up big on your screen.
 - **Weather in the racing games.** Choose it in the lobby. Rain comes in **Showers** (dry to start, then
   a spell or two of rain) or all race (**Rain**). The road soaks over half a minute and takes a couple of
   minutes to dry, so a shower is a stretch of the race, not a switch. Slicks are quickest in the dry and slide
@@ -114,6 +136,9 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   boxers, wrestlers, soldiers and zombies come next.
 
 ### Changed
+- Stock Cars, Rally and Grand Prix use the real-looking cars from the library (Grand Prix: a single-seater, its
+  sponsors' decals taken off). A library car's panels are merged into one mesh per material when it's raced.
+- City Runners: two runners in the same lane, one behind the other, step apart so the one in front isn't hidden.
 - What the 3D games share is in `web/world/` (`@world/…`): the weather, rain and snow, the sky, particles,
   drawn textures and the split screen, so football and the racing games use the same weather. City Runners'
   copy of the texture helpers is gone. The weather and tyres use enums (`Forecast`, `Conditions`, `Tyre`,
@@ -141,6 +166,8 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
   and lights, their lights come on at dusk and at night, and each sits on a shadow of its own shape.
 
 ### Fixed
+- City Runners: changing lane onto a ramp part way up no longer drops you through it.
+- Library cars' brake discs no longer light up as tail lamps at night.
 - The screen no longer dims and sleeps mid-game, on the TV page or on the phones (where the browser
   allows it; the TV app already kept its screen on).
 - Stock Cars: the turns were bumpy. The banked surface was drawn flat across, so cars sank into it and
@@ -268,6 +295,7 @@ another console's button symbols; they were replaced by our own (see 0.2.0).
   bomb maze, sumo, dogfight, last stand, capture the flag, rooftop brawl, heist, and racing.
   (Some had other names at the time; they were renamed, and one dropped, so none borrows an existing game's name.)
 
-[Unreleased]: https://github.com/beacon-engine/game-night/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/beacon-engine/game-night/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/beacon-engine/game-night/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/beacon-engine/game-night/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/beacon-engine/game-night/releases/tag/v0.1.0

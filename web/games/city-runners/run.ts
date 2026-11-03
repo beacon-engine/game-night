@@ -1,8 +1,10 @@
 // The run: everyone on the same course at once, jumping, sliding, changing lanes, picking things up,
-// and the security drone that comes for anyone who stumbles twice or falls off the back. No graphics.
+// and the security drone that comes for anyone who stumbles twice or falls off the back. On the streets,
+// the police too: cross a junction on red and they come after you; do it again, or stumble, while
+// they're on you and you're busted. No graphics.
 // Runners don't bump into each other (they run through one another), but coins and power-ups are
 // first come, first served.
-import { ALL, CAR_TOP, Course, LANE_W, POWERS, ZIP_Y, type Piece, type PieceKind, type Power, type Tech } from './course.ts';
+import { ALL, CAR_TOP, Course, crossers, LANE_W, POWERS, signal, ZIP_Y, type Ground, type Piece, type PieceKind, type Power, type Tech } from './course.ts';
 import type { Look } from './people.ts';
 
 export const TICK = 1 / 60;
@@ -13,10 +15,15 @@ export const SLIDE = 0.62; // seconds
 const DIVE = 20; // m/s down: sliding in the air drops you straight down
 const TALL = 1.75, LOW = 0.85; // how tall a runner is, standing and sliding
 const HALF = 0.35; // half a runner's width and depth
+const STEP = 1; // m a runner on the ground steps up onto (changing lanes onto a ramp partway up); higher is beside them, not under
 const LANE_RATE = 14; // how quickly a lane change happens
 const STUMBLE_SLOW = 0.62; // speed for a moment after a stumble
 const DRONE_TIME = 7; // seconds the drone stays after a stumble: stumble again and it has you
 const LEFT_BEHIND = 24; // m behind the leader: off the back of the screen, and the drone has you
+const POLICE_TIME = 9; // seconds the police stay after you cross on red: do it again, or stumble, and you're busted
+const CROSSER_HALF = 2.3, CROSSER_SIDE = 0.95, CROSSER_TOP = 1.45; // a car in the cross traffic: half its length, half its width, its roof
+// half the width of each vehicle, for running into it
+const TRUCK_HALF: Record<string, number> = { van: 1.15, lorry: 1.35, bus: 1.35 };
 export const POWER_TIME: Record<Power, number> = { magnet: 10, boots: 10, shield: 0, double: 12 };
 // The ways across a crossing: how fast each carries you, compared with running
 export const TECH_PACE: Record<Tech, number> = { zip: 1.3, balance: 0.72, ropes: 1.25 };
@@ -42,7 +49,7 @@ export interface RunnerSpec {
   ai: boolean;
 }
 
-export type Out = 'crashed' | 'fell' | 'caught';
+export type Out = 'crashed' | 'fell' | 'caught' | 'busted';
 
 export class Runner {
   s = 0; // m along the course
@@ -56,6 +63,7 @@ export class Runner {
   balancing = false; // walking a thin rail
   slow = 0; // seconds of stumble slowdown left
   drone = 0; // seconds the drone stays on you
+  police = 0; // seconds the police stay after you
   safe = 0; // seconds of not being hit again (after a stumble, or a shield)
   out: Out | null = null;
   outAt = 0; // run time it went out
@@ -80,6 +88,7 @@ export interface RunEvents {
   shielded: Runner[];
   out: Runner[];
   drone: Runner[]; // the drone set off after someone
+  police: Runner[]; // someone crossed on red: the police set off after them
 }
 
 const SPEED_UP = 12; // m/s added over the run
@@ -88,7 +97,7 @@ const SPEED_TIME = 150; // s: how slowly it gets there
 export class Run {
   readonly runners: Runner[];
   t = 0; // seconds since Go
-  private ev: RunEvents = { jumped: [], landed: [], coin: [], power: [], stumbled: [], shielded: [], out: [], drone: [] };
+  private ev: RunEvents = { jumped: [], landed: [], coin: [], power: [], stumbled: [], shielded: [], out: [], drone: [], police: [] };
 
   constructor(readonly course: Course, specs: RunnerSpec[]) {
     // everyone starts side by side across the lanes (and on top of each other beyond three)
@@ -176,6 +185,7 @@ export class Run {
     for (const k of POWERS) if (k !== 'shield' && r.powers[k] > 0) r.powers[k] = Math.max(0, r.powers[k] - TICK);
     r.slow = Math.max(0, r.slow - TICK);
     r.drone = Math.max(0, r.drone - TICK);
+    r.police = Math.max(0, r.police - TICK);
     r.safe = Math.max(0, r.safe - TICK);
     r.slide = Math.max(0, r.slide - TICK);
     const prevS = r.s, prevX = r.x;
@@ -196,7 +206,7 @@ export class Run {
       const { y: floor, on } = this.under(r);
       r.vy -= GRAVITY * TICK;
       r.y += r.vy * TICK;
-      if (r.y <= floor && r.y > floor - 0.6 && r.vy <= 0) {
+      if (r.y <= floor && r.y > floor - (was ? STEP : 0.6) && r.vy <= 0) {
         r.y = floor;
         r.vy = 0;
         r.grounded = true;
@@ -214,6 +224,17 @@ export class Run {
     if (r.y < -5) {
       if (r.powers.shield) { r.powers.shield = 0; r.vy = BOOTS_JUMP * 1.15; r.y = -1; this.ev.shielded.push(r); r.safe = 1; }
       else return this.knockOut(r, 'fell');
+    }
+
+    // the streets: into a junction on red (down on the road, not up on the footbridge), and its cross traffic
+    const g = c.groundAt(r.s);
+    if (g.kind === 'junction') {
+      if (prevS < g.s0 && r.y < 1 && signal(g, this.t) === 'red') this.violation(r);
+      if (r.out) return;
+      if (r.y < CROSSER_TOP && r.safe <= 0) for (const x of crossers(g, this.t)) {
+        if (Math.abs(r.s - x.s) < CROSSER_SIDE + HALF && Math.abs(r.x - x.x) < CROSSER_HALF + HALF) { this.stumble(r); break; }
+      }
+      if (r.out) return;
     }
 
     // what's in the way, and what to pick up
@@ -242,8 +263,9 @@ export class Run {
     const check = (p: Piece, off: number) => {
       if (p.lane !== lane || p.s0 - off > r.s + HALF || p.s1 - off < r.s - HALF) return;
       let h = -Infinity;
-      if (p.kind === 'beam' || p.kind === 'balance' || (p.kind === 'car' && r.y >= CAR_TOP - 0.6)) h = p.y1;
+      if (p.kind === 'beam' || p.kind === 'balance' || ((p.kind === 'car' || p.kind === 'auto' || p.kind === 'deck') && r.y >= p.y1 - 0.6)) h = p.y1;
       else if (p.kind === 'ramp') h = ((r.s - p.s0) / (p.s1 - p.s0)) * CAR_TOP;
+      if (h > r.y + STEP) return; // (beside it, or under it: not on it)
       if (h >= y) { y = h; on = p.kind; }
     };
     for (let i = c.firstNear(r.s); i < c.pieces.length && c.pieces[i].s0 <= r.s + HALF; i++) check(c.pieces[i], 0);
@@ -277,17 +299,17 @@ export class Run {
       else { r.powers[p.power!] = p.power === 'shield' ? 1 : POWER_TIME[p.power!]; this.ev.power.push({ r, power: p.power! }); }
       return;
     }
-    if (p.kind === 'ramp' || p.kind === 'beam' || p.kind === 'zip' || p.kind === 'balance' || p.kind === 'rope' || p.kind === 'sign') return;
+    if (p.kind === 'ramp' || p.kind === 'beam' || p.kind === 'zip' || p.kind === 'balance' || p.kind === 'rope' || p.kind === 'sign' || p.kind === 'deck') return;
     // overlap, in all three directions?
-    const w = p.lane === ALL ? 4.5 : p.kind === 'car' ? 1.05 : 1;
+    const w = p.lane === ALL ? 4.5 : p.kind === 'car' ? 1.05 : p.kind === 'truck' ? TRUCK_HALF[p.model!] ?? 1.2 : 1;
     const px = p.lane === ALL ? 0 : p.lane * LANE_W;
     if (Math.abs(r.x - px) > w + HALF || r.s + HALF < s0 || r.s - HALF > s1) return;
     if (r.y >= p.y1 - 0.02 || r.y + r.height <= p.y0) return;
-    if (p.kind === 'car' && r.y >= CAR_TOP - 0.6) return; // (on its roof)
+    if ((p.kind === 'car' || p.kind === 'auto') && r.y >= p.y1 - 0.6) return; // (on its roof)
     if (r.safe > 0) return;
     // into its side while changing lanes: bounce back and stumble; into its front: down you go
     const fromSide = prevS + HALF > s0 && Math.abs(prevX - px) > w + HALF - 0.05;
-    if (p.kind === 'low' || fromSide) {
+    if (p.kind === 'low' || (p.kind === 'auto' && !p.move) || fromSide) { // (a parked car: you trip over its bonnet; one coming at you hits you)
       if (fromSide) r.lane = Math.round(prevX / LANE_W);
       return this.stumble(r);
     }
@@ -301,12 +323,20 @@ export class Run {
   }
 
   private stumble(r: Runner) {
+    if (r.police > 0) return this.knockOut(r, 'busted');
     if (r.drone > 0) return this.knockOut(r, 'caught');
     r.slow = 0.9 / r.spec.stats.grit;
     r.safe = 0.6;
     r.drone = DRONE_TIME / r.spec.stats.grit;
     this.ev.stumbled.push(r);
     this.ev.drone.push(r);
+  }
+
+  // Across a junction on red: the police come after you (and if they're already after you, that's it)
+  private violation(r: Runner) {
+    if (r.police > 0) return this.knockOut(r, 'busted');
+    r.police = POLICE_TIME / r.spec.stats.grit;
+    this.ev.police.push(r);
   }
 
   private knockOut(r: Runner, why: Out) {
@@ -339,6 +369,11 @@ export class Run {
         if (way.kind === 'rope' && r.s > g.s0 - 1.6) this.jump(r);
       }
     }
+    // a junction coming: if the lights won't be green when we get there, the footbridge
+    if (want === null) {
+      const j = c.grounds.find((x) => x.kind === 'junction' && x.s0 > r.s && x.s0 < r.s + v * 2.6);
+      if (j && !this.greenAt(j, r, v)) want = c.pieces.find((p) => p.kind === 'deck' && p.s0 < j.s1 && p.s1 > j.s0)?.lane ?? null;
+    }
     const here = this.danger(r, r.lane, look);
     if (r.think <= 0) {
       if (want !== null && !(here?.what === 'wall' && here.ds < v * 0.7)) {
@@ -362,6 +397,12 @@ export class Run {
     else if (here.what === 'bar' && when < 0.3 && r.slide <= 0.05) this.duck(r);
   }
 
+  // Will a junction's lights be green when this runner gets there (with a little to spare)?
+  private greenAt(j: Ground, r: Runner, v: number) {
+    const at = this.t + (j.s0 - r.s) / v;
+    return signal(j, at) !== 'red' && signal(j, at + 0.5) !== 'red';
+  }
+
   // The nearest trouble in a lane ahead: something to go round ('wall'), jump, slide under, or a gap
   private danger(r: Runner, lane: number, look: number) {
     const c = this.course;
@@ -374,7 +415,8 @@ export class Run {
       if (p.lane !== lane && p.lane !== ALL) continue;
       if (p.kind === 'low') consider('low', p.s0 - r.s);
       else if (p.kind === 'bar') consider('bar', p.s0 - r.s);
-      else if (p.kind === 'block') consider('wall', p.s0 - r.s);
+      else if (p.kind === 'block' || p.kind === 'truck') consider('wall', p.s0 - r.s);
+      else if (p.kind === 'auto' && r.y < p.y1 - 0.6) consider('low', p.s0 - r.s); // (vault onto its roof)
       else if (p.kind === 'car' && r.y >= CAR_TOP - 0.6) {
         // up on a train: the next train along (not the next car of this one) is a wall once we drop down
         if (lane === r.lane && p.s0 > r.s + 1 && !c.pieces.some((q) => q.kind === 'car' && q.lane === lane && q.s1 > r.s && q.s1 > p.s0 - 1.5 && q.s0 < p.s0)) consider('wall', p.s0 - r.s);

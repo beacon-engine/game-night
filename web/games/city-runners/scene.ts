@@ -1,11 +1,13 @@
-// The 3D world: the rooftops and the rail line built from the course's numbers (course.ts), the
-// city around them going from dusk to night, the runners and their trails, and the security drone.
+// The 3D world: the rooftops and the rail line built from the course's numbers (course.ts), or the
+// streets with their traffic, junctions and lights; the city around them going from dusk to night, the
+// runners and their trails, the security drone and the police car.
 // One camera for everyone (see the README): it sits behind the runner at the back and keeps the
 // leader in shot. Everything on the course is drawn with a few instanced meshes, refilled each frame
 // from what's in view, so it runs on a TV.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { ALL, CAR_TOP, LANE_W, ROPE_TOP, ZIP_Y, type Ground, type Piece, type PieceKind, type Power, type Route } from './course.ts';
+import { ALL, CAR_TOP, crossers, LANE_W, ROPE_TOP, signal, ZIP_Y, type Ground, type Piece, type PieceKind, type Power, type Route } from './course.ts';
+import { Vehicles } from './vehicles.ts';
 import { Person } from './people.ts';
 import { SLIDE, type Run, type Runner } from './run.ts';
 import { canvas, DISPLAY_FONT, seeded, texture } from '@world/draw.ts';
@@ -43,6 +45,8 @@ export class World {
   private bits: Bits;
   private people = new Map<Runner, Figure>();
   private drone = new Drone();
+  readonly vehicles = new Vehicles();
+  private police = new Police();
   private camS = 0;
   private camX = 0;
   private camY = 4.5;
@@ -60,7 +64,7 @@ export class World {
     this.sky = new Sky();
     this.city = new City();
     this.bits = new Bits();
-    this.scene.add(this.hemi, this.sun, this.sun.target, this.fill, this.fill.target, this.sky.mesh, this.city.group, this.stage.group, this.bits.group, this.drone.group);
+    this.scene.add(this.hemi, this.sun, this.sun.target, this.fill, this.fill.target, this.sky.mesh, this.city.group, this.stage.group, this.bits.group, this.drone.group, this.vehicles.group, this.police.group);
     this.extras.push(this.city.far);
   }
 
@@ -136,9 +140,23 @@ export class World {
     this.sky.update(a, b, k, night, cam.position);
     this.city.update(this.camS, night);
     this.stage.update(run.course.grounds, this.camS, night);
-    this.bits.update(run, this.camS, now);
+    this.vehicles.setLights(night > 0.5 ? 2 : night > 0.2 ? 0.8 : 0);
+    this.vehicles.begin();
+    this.bits.update(run, this.camS, now, this.vehicles);
+    this.police.update(run, dt, now, this.vehicles);
+    this.vehicles.end();
 
-    for (const [r, f] of this.people) f.update(r, run, dt, this.facing);
+    // runners in the same lane, one just behind the other, step a little apart (they'd hide each other)
+    const going = run.runners.filter((r) => !r.out);
+    for (const [r, f] of this.people) {
+      let want = 0;
+      if (!r.out) {
+        const near = going.filter((o) => Math.abs(o.x - r.x) < 1 && Math.abs(o.s - r.s) < 3.5).sort((a, b) => (a.id < b.id ? -1 : 1));
+        if (near.length > 1) want = (near.indexOf(r) - (near.length - 1) / 2) * 0.8;
+      }
+      f.side += (want - f.side) * Math.min(1, 5 * dt);
+      f.update(r, run, dt, this.facing);
+    }
     this.drone.update(run, dt, now);
     this.renderer.render(this.scene, cam);
   }
@@ -272,10 +290,13 @@ class Stage {
 
   update(grounds: Ground[], camS: number, night: number) {
     this.mats.neon.emissiveIntensity = 0.6 + night * 1.6;
+    this.mats.facade.emissiveIntensity = 0.2 + night * 1.1;
+    for (const m of this.mats.signs) m.emissiveIntensity = 0.5 + night * 1.6;
+    this.mats.lamp.opacity = Math.min(1, night * 1.2);
     for (const [g, obj] of this.built) if (g.s1 < camS - BEHIND - 20 || !grounds.includes(g)) { this.drop(obj); this.built.delete(g); }
     for (const g of grounds) {
       if (g.s0 > camS + AHEAD || g.s1 < camS - BEHIND || this.built.has(g) || g.kind === 'gap') continue;
-      const obj = g.kind === 'roof' ? this.roof(g) : this.rail(g);
+      const obj = g.kind === 'roof' ? this.roof(g) : g.kind === 'rail' ? this.rail(g) : g.kind === 'street' ? this.street(g) : this.junction(g);
       this.built.set(g, obj);
       this.group.add(obj);
     }
@@ -284,6 +305,64 @@ class Stage {
   private drop(obj: THREE.Group) {
     this.group.remove(obj);
     obj.traverse((o) => { if (o instanceof THREE.Mesh) o.geometry.dispose(); });
+  }
+
+  // A stretch of street: the road with its lane lines, kerbs and pavements, a row of buildings each side
+  // with lit shopfronts, and street lamps
+  private street(g: Ground) {
+    const out = new THREE.Group(), len = g.s1 - g.s0, rnd = seeded(Math.abs(Math.floor(g.s0 * 13)) + 5), m = this.mats, z = -(g.s0 + len / 2);
+    const road = new THREE.PlaneGeometry(ROAD_W, len).rotateX(-Math.PI / 2), uv = road.attributes.uv as THREE.BufferAttribute;
+    for (let i = 0; i < uv.count; i++) uv.setY(i, uv.getY(i) * len / 12);
+    out.add(placed(road, m.road, 0, 0, z));
+    for (const side of [-1, 1]) out.add(placed(tiledBox(PAVE_W, 0.18, len, 3), m.pavement, side * (ROAD_W / 2 + PAVE_W / 2), 0.09, z));
+    // the buildings: blocks along each side, shopfronts lit along the bottom
+    const blocks: THREE.BufferGeometry[] = [], shops: THREE.BufferGeometry[] = [], fronts: THREE.BufferGeometry[][] = m.signs.map(() => []);
+    for (const side of [-1, 1]) {
+      for (let s = g.s0; s < g.s1 - 1;) {
+        const l = Math.min(g.s1 - s, 9 + rnd() * 16), d = 10 + rnd() * 8, h = 10 + rnd() ** 1.4 * 32, x = side * (ROAD_W / 2 + PAVE_W + d / 2);
+        blocks.push(tiledBox(d, h, l - 0.6, 24, 67).translate(x, h / 2, -(s + l / 2)));
+        // a shop on the ground floor: its lit window, and its sign above
+        const face = side * (ROAD_W / 2 + PAVE_W + 0.08);
+        if (rnd() < 0.8) shops.push(new THREE.BoxGeometry(0.12, 2.1, l * 0.7).translate(face, 1.35, -(s + l / 2)));
+        if (rnd() < 0.7) fronts[Math.floor(rnd() * fronts.length)].push(new THREE.BoxGeometry(0.2, 0.55, l * (0.3 + rnd() * 0.35)).translate(face, 3.1, -(s + l / 2)));
+        s += l;
+      }
+    }
+    out.add(new THREE.Mesh(mergeGeometries(blocks), m.facade));
+    fronts.forEach((list, i) => { if (list.length) out.add(new THREE.Mesh(mergeGeometries(list), m.signs[i])); });
+    if (shops.length) out.add(new THREE.Mesh(mergeGeometries(shops), m.shop));
+    // street lamps, staggered either side, leaning out over the road
+    const poles: THREE.BufferGeometry[] = [];
+    for (let s = g.s0 + 8, i = 0; s < g.s1 - 4; s += 24, i++) {
+      const side = i % 2 ? 1 : -1, x = side * (ROAD_W / 2 + 0.5);
+      poles.push(new THREE.CylinderGeometry(0.09, 0.13, 7, 6).translate(x, 3.5, -s), new THREE.BoxGeometry(2.2, 0.1, 0.1).translate(x - side * 1.1, 7, -s),
+        new THREE.BoxGeometry(0.8, 0.18, 0.35).translate(x - side * 2, 6.92, -s));
+      const glow = new THREE.Sprite(m.lamp);
+      glow.position.set(x - side * 2, 6.7, -s);
+      glow.scale.setScalar(4);
+      out.add(glow);
+    }
+    out.add(new THREE.Mesh(mergeGeometries(poles), m.metal));
+    return out;
+  }
+
+  // A junction: the cross street running off both ways, a zebra crossing and a stop line before it, the
+  // lights' poles at the corners (the lights themselves are lit in Bits, as they change)
+  private junction(g: Ground) {
+    const out = new THREE.Group(), len = g.s1 - g.s0, m = this.mats, z = -(g.s0 + len / 2);
+    out.add(placed(new THREE.PlaneGeometry(CROSS_W, len).rotateX(-Math.PI / 2), m.cross, 0, -0.005, z));
+    const white: THREE.BufferGeometry[] = [new THREE.BoxGeometry(ROAD_W, 0.02, 0.35).translate(0, 0.01, -(g.s0 - 4.2))];
+    for (let x = -ROAD_W / 2 + 0.5; x < ROAD_W / 2; x += 1) white.push(new THREE.BoxGeometry(0.55, 0.02, 3).translate(x, 0.01, -(g.s0 - 1.9)));
+    // the cross street's centre line, and pavements running off along it
+    for (let x = ROAD_W / 2 + 2; x < CROSS_W / 2; x += 6) for (const side of [-1, 1]) white.push(new THREE.BoxGeometry(3, 0.02, 0.15).translate(side * x, 0.01, z));
+    out.add(new THREE.Mesh(mergeGeometries(white), m.paint));
+    const poles: THREE.BufferGeometry[] = [];
+    for (const side of [-1, 1]) {
+      poles.push(new THREE.CylinderGeometry(0.1, 0.12, 5.2, 6).translate(side * (ROAD_W / 2 + 0.4), 2.6, -(g.s0 - 0.5)));
+      poles.push(new THREE.BoxGeometry(0.42, 1.25, 0.35).translate(side * (ROAD_W / 2 + 0.4), 4.6, -(g.s0 - 0.5) + 0.2));
+    }
+    out.add(new THREE.Mesh(mergeGeometries(poles), m.dark));
+    return out;
   }
 
   // A building: its roof, the low wall round it, and some clutter at the sides
@@ -329,6 +408,10 @@ class Stage {
   }
 }
 
+const ROAD_W = 8.6; // the street, kerb to kerb (three lanes)
+const PAVE_W = 3.2;
+const CROSS_W = 140; // how far the cross streets are drawn either side
+
 function stageMaterials() {
   const rnd = seeded(11);
   const gravel = canvas(64, 64), g = gravel.getContext('2d')!;
@@ -347,17 +430,56 @@ function stageMaterials() {
     trim: new THREE.MeshLambertMaterial({ color: 0x6d7180 }),
     metal: new THREE.MeshLambertMaterial({ color: 0x8a90a0 }),
     neon: new THREE.MeshLambertMaterial({ color: 0x220a2a, emissive: 0xff3fd2, emissiveIntensity: 1 }),
+    facade: (() => {
+      // (the same windows, a tile of the texture to 24 by 67 m: windows a person's size, 3.2 m storeys)
+      const f = new THREE.MeshLambertMaterial({ map: map.clone(), emissiveMap: glow.clone(), emissive: 0xffffff, emissiveIntensity: 0.8 });
+      f.map!.repeat.set(1, 1);
+      f.emissiveMap!.repeat.set(1, 1);
+      return f;
+    })(),
+    shop: new THREE.MeshLambertMaterial({ color: 0x222018, emissive: 0xffd9a8, emissiveIntensity: 0.55 }),
+    signs: [0xff3fd2, 0x3fd0ff, 0xffb03d, 0xd7ff3b, 0xff5a3d].map((c) => new THREE.MeshLambertMaterial({ color: 0x111111, emissive: c, emissiveIntensity: 1 })),
+    road: new THREE.MeshLambertMaterial({ map: roadTexture() }),
+    cross: new THREE.MeshLambertMaterial({ color: 0x2c2e34 }),
+    pavement: new THREE.MeshLambertMaterial({ map: texture(paving()) }),
+    paint: new THREE.MeshLambertMaterial({ color: 0xe8e6df, emissive: 0x30302c }),
+    dark: new THREE.MeshLambertMaterial({ color: 0x1d2028 }),
+    lamp: new THREE.SpriteMaterial({ map: glowTexture(), color: 0xffd9a0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }),
   };
+  // across the road (u: one kerb to the other), along it (v: a tile every 12 m): asphalt, the white lines
+  // along both kerbs, and dashes between the three lanes
+  function roadTexture() {
+    const c = canvas(256, 256), g = c.getContext('2d')!, r = seeded(17);
+    g.fillStyle = '#2f3138';
+    g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 4000; i++) { const v = 34 + r() * 30; g.fillStyle = `rgb(${v},${v},${v + 4})`; g.fillRect(r() * 256, r() * 256, 2, 2); }
+    g.fillStyle = '#e8e6df';
+    g.fillRect(4, 0, 4, 256);
+    g.fillRect(248, 0, 4, 256);
+    for (const u of [-1.2, 1.2]) { const x = ((u + ROAD_W / 2) / ROAD_W) * 256; g.fillRect(x - 2, 0, 4, 85); }
+    return texture(c);
+  }
+  function paving() {
+    const c = canvas(64, 64), g = c.getContext('2d')!, r = seeded(19);
+    g.fillStyle = '#7d7c78';
+    g.fillRect(0, 0, 64, 64);
+    for (let i = 0; i < 400; i++) { const v = 105 + r() * 30; g.fillStyle = `rgb(${v},${v},${v - 4})`; g.fillRect(r() * 64, r() * 64, 2, 2); }
+    g.fillStyle = 'rgba(30,30,34,0.6)';
+    g.fillRect(0, 0, 64, 2);
+    g.fillRect(0, 0, 2, 64);
+    return c;
+  }
 }
 
-// A box whose uvs are in units of `tile` metres, so a texture repeats at the same size on any box
-function tiledBox(w: number, h: number, d: number, tile: number) {
+// A box whose uvs are in units of `tile` metres (`tileY` up its sides), so a texture repeats at the same
+// size on any box
+function tiledBox(w: number, h: number, d: number, tile: number, tileY = tile) {
   const g = new THREE.BoxGeometry(w, h, d), uv = g.attributes.uv as THREE.BufferAttribute;
   // faces in order: +x, -x, +y, -y, +z, -z; four corners each
   const size = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
   for (let f = 0; f < 6; f++) for (let i = 0; i < 4; i++) {
     const k = f * 4 + i;
-    uv.setXY(k, (uv.getX(k) * size[f][0]) / tile, (uv.getY(k) * size[f][1]) / tile);
+    uv.setXY(k, (uv.getX(k) * size[f][0]) / tile, (uv.getY(k) * size[f][1]) / tileY);
   }
   return g;
 }
@@ -370,13 +492,16 @@ function placed(geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: nu
 
 // --- the things on the course: one instanced mesh per kind, refilled from what's in view -----------------
 type Slot = 'low' | 'pipe' | 'sign' | 'block' | 'car' | 'carFront' | 'ramp' | 'beam' | 'cable' | 'post' | 'coin' | 'power'
-  | 'thin' | 'rope' | 'signZip' | 'signBalance' | 'signRopes';
+  | 'thin' | 'rope' | 'signZip' | 'signBalance' | 'signRopes' | 'deck' | 'stairs' | 'bulb';
+const SIGNAL_COLOR = { red: 0xff2a2a, amber: 0xffb020, green: 0x2aff7a };
 
 class Bits {
   group = new THREE.Group();
   private meshes: Record<Slot, THREE.InstancedMesh>;
   private counts = {} as Record<Slot, number>;
-  private lamps: THREE.Sprite[] = []; // headlights on oncoming trains
+  private lamps: THREE.Sprite[] = []; // headlights on oncoming trains and traffic
+  private signals: THREE.Sprite[] = []; // the glow of each junction's lit light
+  private signalGlow: Record<'red' | 'amber' | 'green', THREE.SpriteMaterial>;
 
   constructor() {
     const lambert = (o: THREE.MeshLambertMaterialParameters) => new THREE.MeshLambertMaterial(o);
@@ -417,9 +542,25 @@ class Bits {
       signZip: make(new THREE.BoxGeometry(1, 1, 0.08), lambert({ map: tex.zip, emissiveMap: tex.zip, emissive: 0xffffff, emissiveIntensity: 0.6 }), 4),
       signBalance: make(new THREE.BoxGeometry(1, 1, 0.08), lambert({ map: tex.balance, emissiveMap: tex.balance, emissive: 0xffffff, emissiveIntensity: 0.6 }), 4),
       signRopes: make(new THREE.BoxGeometry(1, 1, 0.08), lambert({ map: tex.ropes, emissiveMap: tex.ropes, emissive: 0xffffff, emissiveIntensity: 0.6 }), 4),
+      // the footbridge over a junction: its deck (with railings) on pillars, and the slope up to it
+      deck: make(mergeGeometries([ // (painted steel)
+        new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0),
+        ...[-1, 1].map((side) => new THREE.BoxGeometry(0.06, 2.6, 1).translate(side * 0.5, 1.8, 0)),
+      ]), lambert({ color: 0x4f6a96 }), 8),
+      stairs: make(wedge.clone(), lambert({ color: 0x4f6a96, side: THREE.DoubleSide }), 8),
+      bulb: make(new THREE.SphereGeometry(0.13, 10, 6), new THREE.MeshBasicMaterial(), 48),
     };
     const glow = new THREE.SpriteMaterial({ map: tex.glow, color: 0xfff2c0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
-    for (let i = 0; i < 16; i++) {
+    const glowOf = (c: number) => new THREE.SpriteMaterial({ map: tex.glow, color: c, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
+    this.signalGlow = { red: glowOf(SIGNAL_COLOR.red), amber: glowOf(SIGNAL_COLOR.amber), green: glowOf(SIGNAL_COLOR.green) };
+    for (let i = 0; i < 12; i++) {
+      const s = new THREE.Sprite(this.signalGlow.red);
+      s.scale.setScalar(1.6);
+      s.visible = false;
+      this.signals.push(s);
+      this.group.add(s);
+    }
+    for (let i = 0; i < 24; i++) {
       const s = new THREE.Sprite(glow);
       s.scale.setScalar(2.6);
       s.visible = false;
@@ -428,8 +569,10 @@ class Bits {
     }
   }
 
-  update(run: Run, camS: number, now: number) {
+  update(run: Run, camS: number, now: number, vehicles: Vehicles) {
     const c = run.course, t = run.t;
+    this.vehicles = vehicles;
+    this.streets = !!c.route.streets;
     for (const k of Object.keys(this.meshes) as Slot[]) this.counts[k] = 0;
     for (let i = c.firstNear(camS - BEHIND); i < c.pieces.length; i++) {
       const p = c.pieces[i];
@@ -437,12 +580,34 @@ class Bits {
       if (p.s1 < camS - BEHIND || p.taken) continue;
       this.piece(p, 0, now, run);
     }
+    // the junctions: their lights (the runners' signal, both sides of the road) and the cross traffic
+    let glow = 0;
+    for (const g of c.grounds) {
+      if (g.kind !== 'junction' || g.s1 < camS - BEHIND || g.s0 > camS + AHEAD) continue;
+      const state = signal(g, t), z = -(g.s0 - 0.5) + 0.38;
+      for (const side of [-1, 1]) {
+        const x = side * (ROAD_W / 2 + 0.4);
+        (['red', 'amber', 'green'] as const).forEach((k, i) => {
+          const n = this.counts.bulb;
+          this.put('bulb', x, 5 - i * 0.38, z, 1, 1, 1);
+          this.meshes.bulb.setColorAt(n, TMP_COLOR.setHex(SIGNAL_COLOR[k]).multiplyScalar(k === state ? 1.6 : 0.12));
+        });
+        if (glow < this.signals.length) {
+          const sp = this.signals[glow++];
+          sp.visible = true;
+          sp.material = this.signalGlow[state];
+          sp.position.set(x, 5 - ['red', 'amber', 'green'].indexOf(state) * 0.38, z + 0.05);
+        }
+      }
+      for (const x of crossers(g, t)) vehicles.place(x.model, x.key / 1000, x.x, 0, -x.s, x.dir > 0 ? -Math.PI / 2 : Math.PI / 2);
+    }
+    for (let i = glow; i < this.signals.length; i++) this.signals[i].visible = false;
     let lamp = 0;
     for (const p of c.movers) {
       const off = c.offset(p, t);
       if (p.s1 - off < camS - BEHIND || p.s0 - off > camS + AHEAD) continue;
       this.piece(p, off, now, run);
-      if (p.look === 1 && lamp < this.lamps.length - 1) {
+      if ((p.look === 1 || p.kind === 'auto' || p.kind === 'truck') && lamp < this.lamps.length - 1) {
         for (const side of [-1, 1]) {
           const l = this.lamps[lamp++];
           l.visible = true;
@@ -458,6 +623,9 @@ class Bits {
       if (m.instanceColor) m.instanceColor.needsUpdate = true;
     }
   }
+
+  private vehicles: Vehicles | null = null;
+  private streets = false;
 
   private put(slot: Slot, x: number, y: number, z: number, sx: number, sy: number, sz: number, rotY = 0, rotX = 0) {
     const m = this.meshes[slot], n = this.counts[slot];
@@ -489,7 +657,12 @@ class Bits {
         this.put('car', x, 0, z, 2.1, CAR_TOP, len);
         if (p.move && p.look === 1) this.put('carFront', x, 0, -(p.s0 - off) + 0.03, 2.1, CAR_TOP, 1);
         return;
-      case 'ramp': return this.put('ramp', x, 0, z, 2, CAR_TOP, len);
+      case 'ramp': return this.put(this.streets ? 'stairs' : 'ramp', x, 0, z, 2, CAR_TOP, len);
+      case 'auto': case 'truck': this.vehicles?.place(p.model!, p.look, x, 0, z, p.move ? Math.PI : 0); return;
+      case 'deck':
+        this.put('deck', x, p.y0, z, 2.2, p.y1 - p.y0, len);
+        for (const end of [p.s0 + 1, p.s1 - 1]) for (const side of [-1, 1]) this.put('post', x + side * 0.9, 0, -end, 2.2, p.y0, 2.2);
+        return;
       case 'beam': return this.put('beam', x, p.y0, z, 0.5, p.y1 - p.y0, len);
       case 'zip':
         this.put('cable', x, ZIP_Y, z, 1, 1, len);
@@ -518,6 +691,16 @@ class Bits {
       }
     }
   }
+}
+
+function glowTexture() {
+  const c = canvas(64, 64), g = c.getContext('2d')!, grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, 'rgba(255,255,255,1)');
+  grad.addColorStop(0.3, 'rgba(255,255,255,0.35)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 64, 64);
+  return texture(c, false);
 }
 
 function bitTextures() {
@@ -604,6 +787,7 @@ class Figure {
   private wasSlow = 0;
   private wasOut = false;
   private lift = 0; // the drone carrying them off
+  side = 0; // m stepped aside, so the runner just behind doesn't hide them
 
   constructor(r: Runner) {
     this.person = new Person(r.spec.look);
@@ -621,7 +805,7 @@ class Figure {
   update(r: Runner, run: Run, dt: number, facing: boolean) {
     const p = this.person, still = run.t === 0;
     this.lift = r.out === 'caught' ? this.lift + dt * 1.6 : 0;
-    this.group.position.set(r.x, r.y + this.lift, -r.s);
+    this.group.position.set(r.x + this.side, r.y + this.lift, -r.s);
     // what they're doing: the one-off moves (a jump's take-off, a landing, a stumble, a roll) play out
     if (still) p.play('idle');
     else if (r.out) { if (!this.wasOut) p.play(r.out === 'fell' ? 'air' : 'down', 0.1); }
@@ -646,11 +830,11 @@ class Figure {
     const floor = r.out ? -Infinity : run.floor(r);
     this.shadow.visible = Number.isFinite(floor) && r.y - floor < 4;
     if (this.shadow.visible) {
-      this.shadow.position.set(r.x, floor + 0.03, -r.s);
+      this.shadow.position.set(r.x + this.side, floor + 0.03, -r.s);
       if (!this.shadow.parent) this.group.parent?.add(this.shadow);
       (this.shadow.material as THREE.MeshBasicMaterial).opacity = 0.4 * (1 - (r.y - floor) / 4);
     }
-    this.trail.update(r.out || still ? null : TMP_V.set(r.x, r.y + 1.0, -r.s + 0.2), r.slide > 0);
+    this.trail.update(r.out || still ? null : TMP_V.set(r.x + this.side, r.y + 1.0, -r.s + 0.2), r.slide > 0);
   }
 
   dispose() {
@@ -765,5 +949,48 @@ class Drone {
     for (const r of this.rotors) r.rotation.y += dt * 40;
     (this.light.material as THREE.MeshBasicMaterial).color.setHex(Math.floor(now / 250) % 2 ? 0xff2d55 : 0x3fb7ff);
     this.beam.visible = !!(caught || target);
+  }
+}
+
+// --- the police car: comes up alongside whoever crossed on red (in the next lane, closing in as time runs out),
+// lights going; stops beside a runner it busts
+class Police {
+  group = new THREE.Group();
+  private x = 0;
+  private back = 40; // m behind the runner it's after (eased: it drives in from behind)
+  private on = false;
+  private bar: THREE.Sprite[];
+
+  constructor() {
+    const glow = bitTextures().glow;
+    this.bar = [0xff2a3a, 0x2a6dff].map((c) => {
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: c, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+      s.scale.setScalar(2.2);
+      this.group.add(s);
+      return s;
+    });
+    this.group.visible = false;
+  }
+
+  update(run: Run, dt: number, now: number, vehicles: Vehicles) {
+    // after whoever has the most time left on it, or the last one it busted
+    let target: Runner | null = null;
+    for (const r of run.runners) if (!r.out && r.police > 0 && (!target || r.police > target.police)) target = r;
+    const busted = run.runners.find((r) => r.out === 'busted' && run.t - r.outAt < 3);
+    const who = busted ?? target;
+    if (!who) { this.on = false; this.group.visible = false; return; }
+    const wantX = who.x + (who.lane > 0 ? -LANE_W : LANE_W), wantBack = busted ? -1 : 2.5 + who.police * 0.3;
+    if (!this.on) { this.x = wantX; this.back = 40; }
+    this.on = true;
+    this.x += (wantX - this.x) * Math.min(1, 3 * dt);
+    this.back += (wantBack - this.back) * Math.min(1, 1.6 * dt);
+    const z = -who.s + this.back;
+    vehicles.place('police', 0, this.x, 0, z);
+    this.group.visible = true;
+    const flash = Math.floor(now / 160) % 2;
+    this.bar.forEach((s, i) => {
+      s.position.set(this.x + (i ? 0.45 : -0.45), 1.75, z + 0.3);
+      s.visible = i === flash;
+    });
   }
 }
