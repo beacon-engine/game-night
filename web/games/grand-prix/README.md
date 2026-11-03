@@ -18,10 +18,13 @@ how quick they are. After Start, everyone picks a livery on their phone.
 | L1 | Box this lap (press again to stay out) |
 | R1 | Look back |
 
-Box with L1, then keep to the left of the main straight: a dashed line runs down the left for the last
+When the pit wall wants you in (fuel, worn tyres, damage, a change of weather, a fire) your screen says so,
+big: **Box this lap: Tyres · press L1**, and your phone buzzes. Box with L1, then keep to the left of the main
+straight: a dashed line runs down the left for the last
 250 m, the screen counts down the metres to the entry, and a ◀ PIT board stands over it. In the lane the
 speed limiter drives for you: down to 90 km/h, a stop at your box while the crew works, and back out when
-the track is clear.
+the track is clear. Your box is the one with your name over it in your colours; your crew is waiting at the
+front of the garage, and runs to the wheels as you stop.
 
 **The pit stop is yours to plan.** On the way down the pit lane your phone becomes a d-pad and a panel
 opens on your screen with what the crew will do (they suggest it; you change it):
@@ -54,7 +57,8 @@ fire, and never on the last lap unless they're burning. Your phone gives you the
 | File | What's in it |
 |---|---|
 | `circuits.json` | The circuits: a whole lap of straights and turns both ways, the same as Stock Cars' road courses. The first and last straights are the main straight, where the pit lane goes. |
-| `cars.json` | The car. The model is the kit's open-wheeler (`web/racing/models`); a `.glb` of your own goes in `models/` here (with wheel parts named `wheel-front-left` and so on). |
+| `cars.json` | The car: the single-seater from the [car library](../../cars/README.md) (`cars/open-wheeler`, credits there), painted in each team's colours. |
+| `crew.ts` | The pit crews: four people in each team's colours (overalls and helmets: the shared cast, `@people`) who run to the wheels when their car stops in the box, and the board over each box with the team's colour, the driver's number and name. A crew is out for each person's car, and for a computer driver's while it's coming in. |
 | `damage.ts` | Health, tyres, fuel and fire, and the pit crew's times. No race rules or graphics, so Superbikes can use it too. |
 | `pits.ts` | The pit lane: where it is, a box per car, and driving cars through it. Works on anything with a place on the track. |
 | `gp.ts` | The race: the shared racing (`web/racing/race.ts`) with each car's condition, the pit lane and the weather. Cars in the pits or out of the race are taken off the track. |

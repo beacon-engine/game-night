@@ -1,5 +1,6 @@
-// The course: an endless line of rooftops and an elevated rail line, made up as the runners go from
-// a seed, so everyone runs the same one (and "today's course" is the same all day). No graphics here:
+// The course: an endless line of rooftops and an elevated rail line (or, on the Streets route, a city
+// street with its traffic and junctions), made up as the runners go from a seed, so everyone runs the
+// same one (and "today's course" is the same all day). No graphics here:
 // the run (run.ts) and the 3D world (scene.ts) both work from these numbers.
 //
 // Everything is measured along the course (`s`, metres from the start) and across it in lanes
@@ -14,7 +15,7 @@ export const ROPE_SPAN = 6; // m a rope carries you
 export const ROPE_FLIGHT = 0.22; // seconds between letting go of one rope and catching the next
 export const ROPE_CATCH = 1.2; // how high you have to be to catch the next rope (the first: just off the ground)
 
-export type GroundKind = 'roof' | 'rail' | 'gap';
+export type GroundKind = 'roof' | 'rail' | 'gap' | 'street' | 'junction';
 export interface Ground {
   s0: number;
   s1: number;
@@ -22,6 +23,56 @@ export interface Ground {
   depth: number; // how far the building drops below the roof (for the scenery)
   wide?: boolean; // a gap too far to jump: cross on the beam or the zip line
   crossing?: boolean; // a crossing: a zip line, a thin rail and swinging ropes, one in each lane
+  phase?: number; // a junction: where its lights are in their cycle at the start of the run (seconds)
+}
+
+// --- the streets -------------------------------------------------------------------------------------
+// The vehicles, as the runners meet them: how long and how tall. A car's roof can be jumped onto (running
+// into one is a stumble); vans, lorries and buses are too tall: go round, or run into it and you're out.
+export type Model = 'sedan' | 'shc' | 'thunderbolt' | 'azura' | 'van' | 'lorry' | 'bus' | 'police';
+export const VEHICLES: Record<Model, { length: number; height: number; roof: boolean }> = {
+  sedan: { length: 4.9, height: 1.48, roof: true },
+  shc: { length: 4.8, height: 1.39, roof: true },
+  thunderbolt: { length: 4.4, height: 1.38, roof: true },
+  azura: { length: 4.4, height: 1.46, roof: true },
+  van: { length: 5, height: 1.97, roof: false },
+  lorry: { length: 7, height: 3.32, roof: false },
+  bus: { length: 11.5, height: 2.85, roof: false },
+  police: { length: 5.2, height: 1.61, roof: false },
+};
+const CARS: Model[] = ['sedan', 'shc', 'thunderbolt', 'azura'];
+
+// A junction's lights, for the runners: green, then amber, then red while the cross traffic goes
+export const LIGHT_CYCLE = 10; // s
+const GREEN = 5, AMBER = 1.5; // s of each; red for the rest
+export type Signal = 'green' | 'amber' | 'red';
+export const JUNCTION = 18; // m across the cross street (the junction's length along the course)
+export const CROSS_LANES = [5.5, 12.5]; // m into the junction: the cross traffic's two lanes, going right, then left
+const CROSS_SPEED = 13; // m/s
+const CROSS_FROM = 30; // m out to the side where the cross traffic comes from
+export const FOOTBRIDGE_TOP = CAR_TOP; // the footbridge's deck: always the way across, whatever the lights
+
+export function signal(g: Ground, t: number): Signal {
+  const c = (((t + g.phase!) % LIGHT_CYCLE) + LIGHT_CYCLE) % LIGHT_CYCLE;
+  return c < GREEN ? 'green' : c < GREEN + AMBER ? 'amber' : 'red';
+}
+
+// The cross traffic in a junction at time t: while it's red for the runners, a car every 1.7 s each way
+export interface Crosser { x: number; s: number; dir: number; model: Model; key: number }
+export function crossers(g: Ground, t: number): Crosser[] {
+  const out: Crosser[] = [], cycle = Math.floor((t + g.phase!) / LIGHT_CYCLE);
+  for (const k of [cycle - 1, cycle]) {
+    const red = k * LIGHT_CYCLE - g.phase! + GREEN + AMBER, length = LIGHT_CYCLE - GREEN - AMBER;
+    for (let i = 0; i * 1.7 < length - 0.4; i++) {
+      for (const [lane, dir] of [[0, 1], [1, -1]]) {
+        const go = red + 0.2 + i * 1.7 + lane * 0.6, x = dir * (-CROSS_FROM + CROSS_SPEED * (t - go));
+        if (t < go || Math.abs(x) > CROSS_FROM) continue;
+        const key = Math.abs((k * 7 + i * 3 + lane) * 2654435761) % 1000;
+        out.push({ x, s: g.s0 + CROSS_LANES[lane], dir, model: CARS[key % CARS.length], key });
+      }
+    }
+  }
+  return out;
 }
 
 // The ways across a crossing, each its own trade-off (see run.ts)
@@ -30,8 +81,9 @@ export type Tech = 'zip' | 'balance' | 'ropes';
 // low: a barrier to jump; bar: a pipe or sign to slide under; block: a vent stack to go round;
 // car: a rail car (a train is several), run along its roof; ramp: up onto one; beam and zip: across a
 // wide gap; balance: a thin rail to walk; rope: one of a line of ropes to swing on; sign: which lane
-// crosses how; coin and power: to pick up
-export type PieceKind = 'low' | 'bar' | 'block' | 'car' | 'ramp' | 'beam' | 'zip' | 'balance' | 'rope' | 'sign' | 'coin' | 'power';
+// crosses how; auto: a car on the street (onto its roof, or a stumble); truck: a van, lorry or bus (go
+// round); deck: a footbridge's deck, over a junction; coin and power: to pick up
+export type PieceKind = 'low' | 'bar' | 'block' | 'car' | 'ramp' | 'beam' | 'zip' | 'balance' | 'rope' | 'sign' | 'coin' | 'power' | 'auto' | 'truck' | 'deck';
 export type Power = 'magnet' | 'boots' | 'shield' | 'double';
 export const POWERS: Power[] = ['magnet', 'boots', 'shield', 'double'];
 
@@ -47,6 +99,7 @@ export interface Piece {
   go: number; // when it set off (seconds into the run), -1 until a runner comes near
   power?: Power;
   tech?: Tech; // a crossing's sign: which way across this lane is
+  model?: Model; // a vehicle: which
   taken: boolean; // a coin or power-up someone has picked up
   look: number; // 0..1, picks a variation when it's drawn
 }
@@ -55,8 +108,9 @@ export const ALL = 9;
 
 // The routes to choose from: the time of day, and how the course is mixed (how often a stretch is a
 // gap too wide to jump, or the rail line, and how often a train comes the other way on it)
-export interface Route { id: string; name: string; about: string; sky: 'dusk' | 'night' | 'dawn'; wide: number; rail: number; oncoming: number; crossing: number }
+export interface Route { id: string; name: string; about: string; sky: 'dusk' | 'night' | 'dawn'; wide: number; rail: number; oncoming: number; crossing: number; streets?: boolean }
 export const ROUTES: Route[] = [
+  { id: 'streets', name: 'Downtown Streets', about: 'Down in the traffic at night: parked cars to vault, lorries and buses to dodge, cars coming at you, and junctions. Cross on red and the police come after you.', sky: 'night', wide: 0, rail: 0, oncoming: 0.35, crossing: 0, streets: true },
   { id: 'rooftops', name: 'Rooftops', about: 'Over the roofs as the sun goes down. A bit of everything.', sky: 'dusk', wide: 0.2, rail: 0.25, oncoming: 0.55, crossing: 0.45 },
   { id: 'rail-line', name: 'The Rail Line', about: 'Along the elevated line at night: trains standing, trains coming at you.', sky: 'night', wide: 0.08, rail: 0.7, oncoming: 0.8, crossing: 0.3 },
   { id: 'sky-bridges', name: 'Sky Bridges', about: 'Tower to tower at sunrise. Gaps too wide to jump: zip lines, thin rails and swinging ropes.', sky: 'dawn', wide: 0.45, rail: 0.12, oncoming: 0.3, crossing: 0.6 },
@@ -73,7 +127,8 @@ export class Course {
 
   constructor(readonly seed: number, readonly base: number, readonly route: Route = ROUTES[0]) {
     this.rnd = mulberry(seed);
-    this.roof(82, true);
+    if (route.streets) this.street(140, true);
+    else this.roof(82, true);
   }
 
   // Make the course up to s
@@ -132,6 +187,11 @@ export class Course {
 
   // --- making it up ----------------------------------------------------------------------------------
   private next() {
+    if (this.route.streets) {
+      this.junction();
+      this.street(110 + this.rnd() * 120);
+      return;
+    }
     const r = this.rnd(), v = this.speedAt(this.end), reach = JUMP_AIR * v, { wide, rail } = this.route;
     if (r < wide && this.end > 200) {
       if (this.rnd() < this.route.crossing) this.crossing(v);
@@ -146,6 +206,81 @@ export class Course {
       this.gap(reach * (0.35 + this.rnd() * 0.25), false);
       this.roof(50 + this.rnd() * 70);
     }
+  }
+
+  // --- the streets -----------------------------------------------------------------------------------
+  // A stretch of street between junctions: one-way, three lanes, rows of traffic in the way
+  private street(len: number, start = false) {
+    const g = this.ground(len, 'street');
+    let s = g.s0 + (start ? 60 : 14);
+    while (true) {
+      const v = this.speedAt(s), space = Math.min(34, 12 + v * 0.95);
+      if (s + 12 > g.s1 - 26) break; // (the run-up to the junction stays clear for its footbridge)
+      s = this.traffic(s);
+      s += space * (0.8 + this.rnd() * 0.5);
+    }
+    if (start) this.coins(0, g.s0 + 24, g.s0 + 54, () => 0.9);
+    this.maybePower(g.s0 + 4, g.s1 - 30);
+  }
+
+  // One row of traffic; always a way through: a free lane, or a car's roof to vault. Returns where it ends.
+  private traffic(s: number) {
+    const r = this.rnd(), lanes = shuffle([-1, 0, 1], this.rnd);
+    const car = () => CARS[Math.floor(this.rnd() * CARS.length)];
+    const vehicle = (kind: 'auto' | 'truck', model: Model, lane: number, at: number, extra: Partial<Piece> = {}) => {
+      const { length, height } = VEHICLES[model];
+      return this.add(kind, lane, at, at + length, 0, height, { model, ...extra });
+    };
+    if (r < 0.3) {
+      // parked cars in two lanes: vault one, or take the third
+      const [a, b, free] = lanes;
+      vehicle('auto', car(), a, s);
+      vehicle('auto', car(), b, s + this.rnd() * 3);
+      if (this.rnd() < 0.5) this.coins(free, s - 4, s + 8, () => 0.9);
+      else for (let i = 0; i < 4; i++) this.add('coin', a, s + 0.8 + i * 1.1, s + 1.2 + i * 1.1, 2.2, 2.8); // (on the roof)
+      return s + 6;
+    }
+    if (r < 0.5) {
+      // a lorry or a bus pulled in, and a parked car: round the lorry, over the car
+      const big: Model = this.rnd() < 0.45 ? 'bus' : this.rnd() < 0.5 ? 'van' : 'lorry', [a, b, free] = lanes;
+      vehicle('truck', big, a, s);
+      vehicle('auto', car(), b, s + 2);
+      this.coins(free, s - 4, s + VEHICLES[big].length + 2, () => 0.9);
+      return s + VEHICLES[big].length;
+    }
+    if (r < 0.66 && this.end > 120) {
+      // something coming the other way, in one lane, and a parked car in another
+      const [a, b, free] = lanes, model: Model = this.rnd() < 0.3 ? 'van' : car();
+      const at = s + 40;
+      vehicle(VEHICLES[model].roof ? 'auto' : 'truck', model, a, at, { move: 7 + this.rnd() * 4 });
+      if (this.rnd() < this.route.oncoming) vehicle('auto', car(), b, s);
+      this.coins(free, s - 2, s + 14, () => 0.9);
+      return s + 6;
+    }
+    if (r < 0.82) {
+      // roadworks: barriers across two lanes (jump them), a lorry in the third
+      const [a, b, c] = lanes;
+      this.add('low', a, s, s + 0.5, 0, 0.9);
+      this.add('low', b, s, s + 0.5, 0, 0.9);
+      if (this.rnd() < 0.5) vehicle('truck', 'van', c, s - 2);
+      this.coinArc(a, s);
+      return s + 3;
+    }
+    // scaffolding right across: slide under; a car parked beyond it
+    this.add('bar', ALL, s, s + 0.6, 1.15, 3.2);
+    vehicle('auto', car(), lanes[0], s + 9);
+    this.coins(lanes[1], s - 5, s + 5, () => 0.5);
+    return s + 14;
+  }
+
+  // A junction: the cross street, its lights, and a footbridge over it in one lane (ramp up, deck across)
+  private junction() {
+    const g = this.ground(JUNCTION, 'junction');
+    g.phase = this.rnd() * LIGHT_CYCLE;
+    const lane = this.lane();
+    this.add('ramp', lane, g.s0 - 14, g.s0 - 4, 0, FOOTBRIDGE_TOP);
+    this.add('deck', lane, g.s0 - 4, g.s1 + 1, FOOTBRIDGE_TOP - 0.35, FOOTBRIDGE_TOP);
+    this.coins(lane, g.s0 - 2, g.s1 - 1, () => FOOTBRIDGE_TOP + 0.9);
   }
 
   private ground(len: number, kind: GroundKind, wide = false) {

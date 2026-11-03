@@ -1,0 +1,9 @@
+{
+  "name": "Shift Bots",
+  "icon": "🤖",
+  "tagline": "Build a car that turns into a robot, then fight the horde together",
+  "players": "1–4",
+  "category": "Action",
+  "needs": "standard",
+  "order": 59
+}

@@ -68,6 +68,7 @@ let endT = -1; // seconds since the last person went out (-1: not yet)
 const players = new Map<string, Player>(); // the people in this run, even if their phone has gone since
 
 const world = new World($<HTMLCanvasElement>('world'), device.tv);
+await world.vehicles.load(device.tier === 'heavy' && !device.tv); // (the Streets route's traffic)
 const sounds = new Sounds();
 const maxFps = device.tv ? 30 : 60;
 const guard = new PerformanceGuard({
@@ -167,7 +168,7 @@ function togglePause() {
 const human = (r: Runner) => !r.spec.ai;
 const playerOf = (r: Runner) => players.get(r.id);
 const buzz = (r: Runner, ms: number) => input.buzz(input.list.find((c) => c.id === r.id), ms);
-const OUT_TEXT: Record<Out, string> = { crashed: 'crashed', fell: 'fell', caught: 'was caught by the drone' };
+const OUT_TEXT: Record<Out, string> = { crashed: 'crashed', fell: 'fell', caught: 'was caught by the drone', busted: 'was busted by the police' };
 
 // --- saved records ----------------------------------------------------------------------------------
 async function loadRecord(c: Player) {
@@ -423,11 +424,11 @@ function updateHud() {
     el.querySelector('.coins')!.textContent = `${r.coins} coins`;
     el.querySelector('.pw')!.innerHTML = r.out ? '' : (Object.keys(r.powers) as Power[]).filter((p) => r.powers[p] > 0)
       .map((p) => `<i style="background:${POWER_COLOR[p]}">${POWER_NAME[p]}${p === 'shield' ? '' : ` ${Math.ceil(r.powers[p])}`}</i>`).join('');
-    el.querySelector('.warn')!.textContent = r.out ? outWord(r.out) : r.drone > 0 ? 'Drone!' : '';
+    el.querySelector('.warn')!.textContent = r.out ? outWord(r.out) : r.police > 0 ? 'Police!' : r.drone > 0 ? 'Drone!' : '';
   });
 }
 
-const outWord = (o: Out) => ({ crashed: 'Crashed', fell: 'Fell', caught: 'Caught' })[o];
+const outWord = (o: Out) => ({ crashed: 'Crashed', fell: 'Fell', caught: 'Caught', busted: 'Busted' })[o];
 
 // Each frame: the tags follow the runners
 function placeTags() {
@@ -490,6 +491,7 @@ function tick() {
   for (const { r, power } of ev.power) if (human(r)) { sounds.power(); buzz(r, 80); callout(POWER_NAME[power], `${r.spec.name}${POWER_TIME[power] ? ` · ${POWER_TIME[power]} s` : ' · saves you once'}`); }
   for (const r of ev.stumbled) if (human(r)) { sounds.stumble(); buzz(r, 250); }
   for (const r of ev.shielded) if (human(r)) { sounds.shield(); buzz(r, 150); }
+  for (const r of ev.police) if (human(r)) { buzz(r, 300); callout(`<span style="color:${r.spec.color}">${escapeHtml(r.spec.name)}</span> ran a red light`, 'Police! Stay clean or you\'re busted'); }
   for (const r of ev.out) {
     if (human(r)) { sounds.out(); buzz(r, 500); }
     callout(`<span style="color:${r.spec.color}">${escapeHtml(r.spec.name)}</span>`, `${OUT_TEXT[r.out!]} at ${Math.floor(r.s)} m`);
@@ -527,6 +529,9 @@ function frame(now: number) {
   let danger = 0;
   if (racing) for (const r of run.runners) if (human(r) && !r.out) danger = Math.max(danger, Math.min(1, r.drone / 7));
   sounds.whine(danger);
+  let chased = 0;
+  if (racing) for (const r of run.runners) if (human(r) && !r.out && r.police > 0) chased = 1;
+  sounds.siren(chased);
   hudT += dt;
   if (hudT > 0.1 && (racing || stage === 'countdown' || stage === 'paused')) { hudT = 0; updateHud(); }
   padT += dt;
@@ -552,5 +557,6 @@ $('toLobby').addEventListener('click', toLobby);
 document.body.classList.toggle('tv', device.tv);
 world.resize();
 sounds.unlock(); // (works straight away in the TV app; elsewhere, on the first click or key)
+(globalThis as { cityRunners?: unknown }).cityRunners = { world, get run() { return run; } }; // (for looking into it while testing)
 toLobby();
 requestAnimationFrame(frame);

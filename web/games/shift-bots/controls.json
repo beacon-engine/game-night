@@ -1,0 +1,17 @@
+{
+  "_help": "Which pad button does what in the fight. Moving is the stick. Actions: fire (hold; as a car: boost), punch, shift (car to robot and back), special, dodge.",
+  "fight": {
+    "bolt": "fire",
+    "drop": "punch",
+    "leaf": "shift",
+    "star": "special",
+    "l1": "dodge"
+  },
+  "labels": {
+    "fire": "Fire",
+    "punch": "Punch",
+    "shift": "Change",
+    "special": "Special",
+    "dodge": "Dodge"
+  }
+}

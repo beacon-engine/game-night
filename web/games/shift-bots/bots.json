@@ -1,0 +1,309 @@
+{
+  "_help": "The bots. Each body is one of the cars in web/cars (model: its id there; tools/cars/ makes them). 'robot' is what it becomes: its height in metres, how broad (bulk), its head, and how many seconds it takes to change (shift). 'stats' compare the bodies, 1 = middling: speed (as a car), armour, power (punches and guns), agility (as a robot). Weapons and specials are chosen separately.",
+  "bodies": [
+    {
+      "id": "goblin",
+      "name": "Goblin",
+      "about": "A low, angry hypercar. The fastest thing on wheels, and a lean, sharp robot.",
+      "model": "goblin",
+      "stats": {
+        "speed": 1.3,
+        "armour": 0.8,
+        "power": 0.95,
+        "agility": 1.2
+      },
+      "robot": {
+        "height": 3.5,
+        "bulk": 0.95,
+        "head": "crest",
+        "shift": 0.6
+      }
+    },
+    {
+      "id": "cheetah",
+      "name": "Cheetah",
+      "about": "A wedge-shaped supercar of the old school, wing and all.",
+      "model": "cheetah",
+      "stats": {
+        "speed": 1.25,
+        "armour": 0.85,
+        "power": 1.0,
+        "agility": 1.1
+      },
+      "robot": {
+        "height": 3.4,
+        "bulk": 1.0,
+        "head": "horns",
+        "shift": 0.7
+      }
+    },
+    {
+      "id": "abyss",
+      "name": "Abyss",
+      "about": "A track hypercar with its bodywork cut to the bone. Changes in a blink.",
+      "model": "abyss",
+      "stats": {
+        "speed": 1.3,
+        "armour": 0.8,
+        "power": 1.0,
+        "agility": 1.15
+      },
+      "robot": {
+        "height": 3.5,
+        "bulk": 0.95,
+        "head": "fin",
+        "shift": 0.55
+      }
+    },
+    {
+      "id": "sport-lp",
+      "name": "Stinger",
+      "about": "A mid-engined supercar, smooth and quick in every way.",
+      "model": "sport-lp",
+      "stats": {
+        "speed": 1.2,
+        "armour": 0.85,
+        "power": 0.95,
+        "agility": 1.2
+      },
+      "robot": {
+        "height": 3.3,
+        "bulk": 0.95,
+        "head": "visor",
+        "shift": 0.6
+      }
+    },
+    {
+      "id": "gt-coupe",
+      "name": "Sovereign",
+      "about": "A long-nosed grand tourer: fast, comfortable, and well built.",
+      "model": "gt-coupe",
+      "stats": {
+        "speed": 1.15,
+        "armour": 1.0,
+        "power": 1.05,
+        "agility": 1.0
+      },
+      "robot": {
+        "height": 3.6,
+        "bulk": 1.05,
+        "head": "visor",
+        "shift": 0.85
+      }
+    },
+    {
+      "id": "azura",
+      "name": "Azura",
+      "about": "A nimble nineties sports coupé.",
+      "model": "azura",
+      "stats": {
+        "speed": 1.1,
+        "armour": 0.9,
+        "power": 0.95,
+        "agility": 1.15
+      },
+      "robot": {
+        "height": 3.3,
+        "bulk": 0.95,
+        "head": "dome",
+        "shift": 0.7
+      }
+    },
+    {
+      "id": "nfr",
+      "name": "Nomad",
+      "about": "A classic mid-engined sports car with pop-up lamps.",
+      "model": "nfr",
+      "stats": {
+        "speed": 1.15,
+        "armour": 0.9,
+        "power": 1.0,
+        "agility": 1.1
+      },
+      "robot": {
+        "height": 3.3,
+        "bulk": 1.0,
+        "head": "crest",
+        "shift": 0.75
+      }
+    },
+    {
+      "id": "kiri",
+      "name": "Kiri",
+      "about": "A widebody tuner with a big wing. Hits harder than it looks.",
+      "model": "kiri",
+      "stats": {
+        "speed": 1.1,
+        "armour": 0.95,
+        "power": 1.05,
+        "agility": 1.1
+      },
+      "robot": {
+        "height": 3.4,
+        "bulk": 1.05,
+        "head": "horns",
+        "shift": 0.8
+      }
+    },
+    {
+      "id": "vanguard",
+      "name": "Vanguard",
+      "about": "A muscle car with stripes. Hits like a hammer, turns like one too.",
+      "model": "vanguard",
+      "stats": {
+        "speed": 1.05,
+        "armour": 1.1,
+        "power": 1.25,
+        "agility": 0.85
+      },
+      "robot": {
+        "height": 3.7,
+        "bulk": 1.12,
+        "head": "horns",
+        "shift": 1.0
+      }
+    },
+    {
+      "id": "thunderbolt",
+      "name": "Thunderbolt",
+      "about": "A rally sedan: grips anywhere, and quick on its feet as a robot.",
+      "model": "thunderbolt",
+      "stats": {
+        "speed": 1.05,
+        "armour": 1.0,
+        "power": 1.0,
+        "agility": 1.2
+      },
+      "robot": {
+        "height": 3.4,
+        "bulk": 1.0,
+        "head": "visor",
+        "shift": 0.75
+      }
+    },
+    {
+      "id": "sedan",
+      "name": "Meridian",
+      "about": "A sporty modern saloon. Good at everything, best at nothing.",
+      "model": "sedan",
+      "stats": {
+        "speed": 1.0,
+        "armour": 1.05,
+        "power": 1.0,
+        "agility": 1.0
+      },
+      "robot": {
+        "height": 3.6,
+        "bulk": 1.05,
+        "head": "block",
+        "shift": 0.9
+      }
+    },
+    {
+      "id": "shc",
+      "name": "Halcyon",
+      "about": "A sleek sportback. Balanced, with a long reach as a robot.",
+      "model": "shc",
+      "stats": {
+        "speed": 1.05,
+        "armour": 1.0,
+        "power": 1.0,
+        "agility": 1.0
+      },
+      "robot": {
+        "height": 3.6,
+        "bulk": 1.0,
+        "head": "fin",
+        "shift": 0.9
+      }
+    },
+    {
+      "id": "suv",
+      "name": "Summit",
+      "about": "A big luxury SUV. Heavy armour, a tall robot with a long reach.",
+      "model": "suv",
+      "stats": {
+        "speed": 1.0,
+        "armour": 1.3,
+        "power": 1.1,
+        "agility": 0.85
+      },
+      "robot": {
+        "height": 3.9,
+        "bulk": 1.1,
+        "head": "block",
+        "shift": 1.15
+      }
+    },
+    {
+      "id": "wyvern",
+      "name": "Wyvern",
+      "about": "An armoured off-road concept. Built to take a beating.",
+      "model": "wyvern",
+      "stats": {
+        "speed": 0.95,
+        "armour": 1.45,
+        "power": 1.2,
+        "agility": 0.8
+      },
+      "robot": {
+        "height": 4.0,
+        "bulk": 1.2,
+        "head": "block",
+        "shift": 1.25
+      }
+    },
+    {
+      "id": "lightbody",
+      "name": "Ridgeback",
+      "about": "A lifted pickup with a bull bar. Slow to change, the toughest thing on the field.",
+      "model": "lightbody",
+      "stats": {
+        "speed": 0.9,
+        "armour": 1.4,
+        "power": 1.25,
+        "agility": 0.75
+      },
+      "robot": {
+        "height": 4.1,
+        "bulk": 1.18,
+        "head": "fin",
+        "shift": 1.35
+      }
+    }
+  ],
+  "weapons": [
+    {
+      "id": "blaster",
+      "name": "Blaster",
+      "about": "Rapid bolts. Good at any range."
+    },
+    {
+      "id": "cannon",
+      "name": "Cannon",
+      "about": "Slow, heavy shells that blow up where they land."
+    },
+    {
+      "id": "scatter",
+      "name": "Scatter",
+      "about": "A wide spray up close. Devastating, short-ranged."
+    }
+  ],
+  "specials": [
+    {
+      "id": "shield",
+      "name": "Shield",
+      "about": "A dome that stops shots for a few seconds. Friends can shelter in it."
+    },
+    {
+      "id": "shockwave",
+      "name": "Shockwave",
+      "about": "Slam the ground: everything close is thrown back and stunned."
+    },
+    {
+      "id": "missiles",
+      "name": "Missiles",
+      "about": "A salvo of homing missiles at the nearest enemies."
+    }
+  ]
+}

@@ -40,8 +40,8 @@ level the car for the landing.
 
 It builds on the racing games' shared code in [`web/racing/`](../../racing/README.md): the car models,
 their paint, finishes, lights and tyres (`cars.ts`), the weather (`weather.ts`, `rain.ts`), the sky,
-the drawing helpers and the engine sound. The models are Kenney's Car Kit (CC0), kept in
-`web/racing/models` with their licence in `web/racing/source/`.
+the drawing helpers and the engine sound. The cars are from the [car library](../../cars/README.md)
+(credits there).
 
 **Weather**, chosen in the lobby: Dry, Showers, Rain or Snow. Rain soaks the stage over half a minute and
 dries over a couple once it stops: wet gravel hardly grips less (the stones drain), dirt turns to mud

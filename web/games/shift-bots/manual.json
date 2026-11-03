@@ -1,0 +1,23 @@
+{
+  "intro": "Each of you builds a car that turns into a robot, then you fight waves of enemy bots together. Fight as a robot; change back into a car to get away, to chase, or to ram.",
+  "inspiredBy": "Robots in disguise go back to the transforming toys and cartoons of the 1980s. Shift Bots is our own take, with our own bots, cars and world.",
+  "goal": "Survive as many waves as you can. If everyone on your team is down at once, it's over.",
+  "howToPlay": [
+    "Join with your phone. In the lobby, choose the battleground and how hard it is, then press {bolt} to build your bots.",
+    "In the garage, ▲▼ picks a row and ◀▶ changes it: the body (each car becomes a different robot), the paint and its shade, the trim colour, the finish, your weapon and your special. Press {leaf} to see it change.",
+    "Press {bolt} when you're happy. The fight starts when everyone's ready.",
+    "As a robot: move with the stick, hold {bolt} to shoot (it aims at the nearest enemy the way you're facing), {drop} to punch, {star} for your special and {l1} to dodge.",
+    "Press {leaf} to change into a car: much faster, and you can ram. Hold {bolt} to boost. Press {leaf} again to stand back up; change while you're moving and you land with a slam.",
+    "Knocked down? A friend who stands beside you for a few seconds gets you back up. Between waves, spend the scrap you picked up on your phone."
+  ],
+  "steering": "Move with the stick on your phone (or WASD / the arrow keys)",
+  "tips": [
+    "Changing takes a moment, and you can't fight while it happens. You take less damage while you change, though.",
+    "Hurt? Drive off as a car: your armour mends while you're out of the fight.",
+    "Heavy bodies take more punishment; light ones are quicker and harder to hit.",
+    "Between waves, spend scrap on armour, damage, speed or a quicker special. Each step costs more than the last.",
+    "Every fifth wave brings the Hauler. Keep moving: it stamps the ground when you're close.",
+    "Each battleground fights differently: cover everywhere in the quarry, open sand in the desert, tight streets in the city, and in the snow your car slides, so turn early.",
+    "Every fight earns stars, and more for beating your best wave. Spend them on new finishes in the shop on your phone."
+  ]
+}

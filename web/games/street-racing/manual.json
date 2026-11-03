@@ -1,0 +1,24 @@
+{
+  "intro": "A race across a city at night, from one corner to the far one, any way you like: avenues, side streets, alleys, a bridge over the river. Traffic everywhere, traffic lights, people on the crossings. Run a red and the police come after you.",
+  "inspiredBy": "Racing through city streets at night goes back to the arcade and console street racers of the 1990s and 2000s. Street Racing is our own take, with our own cars, routes and city.",
+  "goal": "Be first to the finish. There's no set route: the map and the arrow at the bottom show the quickest way from wherever you are.",
+  "howToPlay": [
+    "Join with your phone, or race the computer drivers on your own.",
+    "In the lobby, choose the race (where from and where to), the weather, how many computer drivers, how busy the streets are and how quick the drivers are, then press {bolt}.",
+    "Pick your car with ◀▶. Paint jobs you've bought in the shop are on ▲▼.",
+    "Your phone becomes a steering pad: slide your thumb left and right to steer. Hold {bolt} for gas and {drop} to brake (stopped, it backs up).",
+    "Go any way you like. The map (top right) shows the whole city and the quickest way from where you are in yellow; the arrow at the bottom says where to turn next. Alleys through the blocks can be shortcuts.",
+    "Stop at red lights, or don't. Run one and the police come after you, faster than you. If they catch you they pull across in front of your car and hold you there for a few seconds. Get far enough away, or keep clear long enough, and they give up.",
+    "Go past a car close (but don't touch it) for a Near miss: it fills your boost. So does sitting in someone's slipstream. Hold {star} to boost."
+  ],
+  "steering": "Slide left and right on your phone to steer (or use the arrow keys)",
+  "tips": [
+    "The green signs before the big junctions point the quickest way to the finish.",
+    "The kerbs are the walls: clip one at speed and you'll spin.",
+    "Traffic is heavy: hit it and you lose a lot of speed. Go round, or shave past it close for boost.",
+    "The names over the cars tell you who you're racing and where they are in the race.",
+    "The computer drivers don't give up: fall behind and they'll come past; get ahead and they'll chase you down.",
+    "In Showers, pick slicks or wets with {leaf} before the start.",
+    "Hold {r1} to see who's behind you (and whether the police are)."
+  ]
+}

@@ -17,6 +17,7 @@ import { buildScenery, Land } from '@racing/scenery.ts';
 import type { Track } from '@racing/track.ts';
 import type { Weather } from '@world/weather.ts';
 import type { PitLane } from './pits.ts';
+import { Crews } from './crew.ts';
 
 const TIMES = {
   day: { sky: ['#4f8fdc', '#cfe5fb'], fog: 0xc9e0f6, hemi: [0xe6f0ff, 0x56703f, 1.9], sun: [0xfff2dc, 2.8], sunAt: [250, 420, 300], dim: 1, lamps: false, env: 1, carLights: 0 },
@@ -37,13 +38,15 @@ export interface View {
 }
 
 // How each car is doing, for the flames and smoke
-export interface Look { burning: (c: Car) => boolean; out: (c: Car) => boolean; inPits: (c: Car) => boolean }
+export interface Look { burning: (c: Car) => boolean; out: (c: Car) => boolean; inPits: (c: Car) => boolean; atBox: (c: Car) => boolean; crewOut: (c: Car) => boolean }
 
 export class World {
   readonly renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
   private venue = new THREE.Group();
   private track: Track | null = null;
+  private pits: PitLane | null = null;
+  private crews = new Crews(); // the pit crews, and the boards over their boxes
   private cars = new Map<Car, THREE.Group>();
   private extras: THREE.Object3D[] = [];
   private sparks = new Particles(400, 0xffc46b, 0.22, THREE.AdditiveBlending);
@@ -58,7 +61,7 @@ export class World {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.scene.add(this.venue, this.sparks.points, this.flames.points, this.smoke.points);
+    this.scene.add(this.venue, this.sparks.points, this.flames.points, this.smoke.points, this.crews.group);
   }
 
   lowerDetail(level: number) {
@@ -76,6 +79,7 @@ export class World {
 
   // --- the venue ---------------------------------------------------------------------------------
   setTrack(track: Track, pits: PitLane) {
+    this.pits = pits;
     if (this.track === track) return;
     this.track = track;
     this.venue.traverse((o) => {
@@ -110,6 +114,7 @@ export class World {
       this.scene.add(g);
       this.cars.set(c, g);
     }
+    this.crews.set(this.track!, this.pits!, cars);
   }
 
   setViews(cars: Car[]) {
@@ -170,6 +175,7 @@ export class World {
     this.sparks.update(dt, -20);
     this.flames.update(dt, 2);
     this.smoke.update(dt, 1.5);
+    this.crews.update(dt, t, this.pits!, look.atBox, look.crewOut, this.views.map((v) => v.camera));
 
     const r = this.renderer, canvas = r.domElement;
     const W = canvas.clientWidth, H = canvas.clientHeight;

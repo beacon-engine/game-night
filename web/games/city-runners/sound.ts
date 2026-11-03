@@ -1,10 +1,11 @@
 // Little synthesised sounds: a hop for a jump, a ping for a coin, a chime for a power-up, a thud
-// for a stumble, and the drone's whine. Browsers only allow sound after a click or key on the page
-// (the TV app allows it straight away), so unlock() is called on the first one.
+// for a stumble, the drone's whine and the police siren. Browsers only allow sound after a click or
+// key on the page (the TV app allows it straight away), so unlock() is called on the first one.
 export class Sounds {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private drone: { osc: OscillatorNode; gain: GainNode } | null = null;
+  private wail: { osc: OscillatorNode; gain: GainNode } | null = null;
   private last = new Map<string, number>(); // so a crowd picking up coins together isn't deafening
 
   unlock() {
@@ -42,7 +43,24 @@ export class Sounds {
     this.drone.gain.gain.setTargetAtTime(level * 0.05, now, 0.1);
   }
 
-  silence() { this.whine(0); }
+  // The police siren: a two-tone wail while they're after one of you (0: gone)
+  siren(level: number) {
+    const ctx = this.ctx;
+    if (!ctx || ctx.state !== 'running' || !this.master) return;
+    if (!this.wail) {
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.type = 'triangle';
+      gain.gain.value = 0;
+      osc.connect(gain).connect(this.master);
+      osc.start();
+      this.wail = { osc, gain };
+    }
+    const now = ctx.currentTime;
+    this.wail.osc.frequency.setTargetAtTime(Math.floor(now / 0.45) % 2 ? 960 : 720, now, 0.03);
+    this.wail.gain.gain.setTargetAtTime(level * 0.06, now, 0.15);
+  }
+
+  silence() { this.whine(0); this.siren(0); }
 
   private tone(key: string, type: OscillatorType, from: number, to: number, length: number, volume: number, delay = 0) {
     const ctx = this.ctx;

@@ -6,7 +6,7 @@ Heavy cars, banked ovals, a pack that never spreads out. The draft is everything
 and you go faster (and give them a shove). Pull out late to pass, and stay off the wall.
 
 Pick a track in the lobby (`tracks.json`) and, after Start, everyone picks a car on their phone
-(`cars.json`): the Stocker, Hot Hatch, Prototype, Open Wheeler, Pickup or Big SUV, each with its own
+(`cars.json`): the Stocker, Sports Coupé, Prototype, Open Wheeler, Pickup or Big SUV, each with its own
 speed, pick-up, grip and weight.
 
 ## Controls
@@ -50,8 +50,9 @@ Showers everyone picks tyres before the start with Leaf: slicks are quicker unti
 about once it does; wets, with grooves cut in them to clear the water, are slower in the dry and safe in the
 wet. For Rain everyone's on wets. Half the computer drivers gamble on slicks.
 
-The cars are from [Kenney's Car Kit](https://kenney.nl/assets/car-kit) (CC0), kept with their licence in
-[`web/racing/source/`](../../racing/source/README.md). Everything else (track, scenery, textures) is drawn in code.
+The cars are from the [car library](../../cars/README.md) (credits there), except the Open Wheeler, from
+[Kenney's Car Kit](https://kenney.nl/assets/car-kit) (CC0, kept with its licence in
+[`web/racing/source/`](../../racing/source/README.md)). Everything else (track, scenery, textures) is drawn in code.
 
 ## Competition
 
