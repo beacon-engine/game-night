@@ -66,6 +66,7 @@ export class GrandPrix {
       c.tyre = this.cond.get(c)!.tyre;
     }
     this.pits = new PitLane(track, straight.before, straight.after, Math.max(12, this.all.length)); // (a box for a full grid, always)
+    this.race.openLeft = (dist) => this.pits.opening(dist); // (the slip road into the pit lane)
   }
 
   get t() { return this.race.t; }
@@ -122,16 +123,22 @@ export class GrandPrix {
     // wear for the distance run; hits
     for (const c of race.cars) {
       if (c.finish !== null) continue; // (the cool-down lap doesn't count)
-      const out = this.cond.get(c)!.run(TICK, green ? (c.dist - was.get(c)!) / L : 0, Math.abs(c.slide) + Math.abs(c.knock) * 0.5, this.weather?.wet ?? 0);
+      // (backing up doesn't put fuel back)
+      const out = this.cond.get(c)!.run(TICK, green ? Math.max(0, c.dist - was.get(c)!) / L : 0, Math.abs(c.slide) + Math.abs(c.knock) * 0.5, this.weather?.wet ?? 0);
       if (out) this.retire(c, ev);
     }
     // (a barrier taken at speed is the worst: the hit is scaled up by how fast the car was going)
     for (const h of ev.wall) this.hit(h, h.strength * (0.7 + 0.5 * Math.min(1, h.car.v / 70)), true, ev);
     for (const h of ev.contact) this.hit(h, h.strength, false, ev);
 
-    // into the pit lane: asked to box, at the entry, and over on the left
+    // into the pit lane: asked to box, at the entry, and over on the left; or steered off the
+    // track onto the slip road, called in or not
     for (const c of [...race.cars]) {
-      if (!green || !this.boxCall.has(c) || c.finish !== null || c.d > 0 || !this.pits.atEntry(c.dist, c.v * TICK)) continue;
+      if (!green || c.finish !== null) continue;
+      const called = this.boxCall.has(c) && c.d <= 0 && (this.pits.atEntry(c.dist, c.v * TICK) ||
+        (!c.spec.ai && this.pits.onSlipRoad(c.dist) && this.pits.at(c.dist) < this.pits.from + 30)); // (a person: a moment's grace)
+      const turnedIn = this.pits.onSlipRoad(c.dist) && c.d < -W / 2;
+      if (!called && !turnedIn) continue;
       const k = this.cond.get(c)!;
       this.plans.set(c, k.suggest(this.race.laps - c.laps, bestTyre(this.weather, this.t, k.tyre)));
       this.locked.delete(c);
@@ -236,7 +243,7 @@ export class GrandPrix {
   // A car crossing the line in the pit lane: the same lap counting as on the track (race.ts)
   private lapCheck(c: Car, before: number, green: boolean, ev: GPEvents) {
     const L = this.track.length, lapsBefore = Math.floor(before / L);
-    if (!green || c.finish !== null || lapsBefore < 0 || Math.floor(c.dist / L) <= lapsBefore || ev.lap.includes(c)) return;
+    if (!green || c.finish !== null || lapsBefore < 0 || Math.floor(c.dist / L) <= lapsBefore || Math.floor(c.dist / L) <= c.laps || ev.lap.includes(c)) return;
     const t = this.race.t;
     c.laps++;
     c.lastLap = t - c.lapStart;

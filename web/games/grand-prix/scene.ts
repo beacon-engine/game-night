@@ -16,7 +16,7 @@ import { TOP, type Car } from '@racing/race.ts';
 import { buildScenery, Land } from '@racing/scenery.ts';
 import type { Track } from '@racing/track.ts';
 import type { Weather } from '@world/weather.ts';
-import type { PitLane } from './pits.ts';
+import { PIT_WALL, type PitLane } from './pits.ts';
 import { Crews } from './crew.ts';
 
 const TIMES = {
@@ -299,7 +299,7 @@ function pitLane(add: Add, t: Track, pits: PitLane, time: Time) {
   const back = -(W / 2 + 11);
   add(new THREE.Mesh(strip(t, at(back), at(-W / 2), 12, pits.from, pits.to), new THREE.MeshStandardMaterial({ map: pitTexture(), roughness: 0.85 })));
   const a = pits.from + pits.ramp, b = pits.to - pits.ramp;
-  add(new THREE.Mesh(strip(t, at(-W / 2 - 1.4), at(-W / 2 - 1.4, 1), 6, a - 20, b + 20), new THREE.MeshLambertMaterial({ map: wallTexture(), side: THREE.DoubleSide })));
+  add(new THREE.Mesh(strip(t, at(-W / 2 - PIT_WALL), at(-W / 2 - PIT_WALL, 1), 6, a - 20, b + 20), new THREE.MeshLambertMaterial({ map: wallTexture(), side: THREE.DoubleSide })));
   const white = new THREE.MeshBasicMaterial({ color: 0xe8e6df, polygonOffset: true, polygonOffsetFactor: -2 });
   for (const s of [a, b]) add(new THREE.Mesh(strip(t, at(back, 0.03), at(-W / 2 - 1.6, 0.03), 1, s, s + 0.6), white));
   // the boxes, on the garage side of the lane, and the garages

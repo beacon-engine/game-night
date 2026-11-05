@@ -5,6 +5,29 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 
 ## [Unreleased]
 
+### Added
+- **Grand Prix**: a map of the circuit in each driver's view, showing every car on it and the pit lane, with the
+  gap to the car just ahead and just behind.
+- **Grand Prix, Stock Cars, Street Racing**: back up by holding the brake once stopped.
+
+### Changed
+- **Shift Bots**: as a car, the stick drives like the racing games: left and right steer, up is the gas, and
+  pulled back it brakes, then reverses (it used to drive towards where the stick pointed, relative to a camera
+  that kept turning, so cars and robots went round in circles). A robot's camera only swings round behind it
+  as it walks forwards.
+- **Football**: at corners, penalties and free kicks near goal, everyone has a job. The side taking it keeps a
+  rest defence back, a player on the edge of the box and sometimes one short, with the rest on the posts, the
+  six-yard line and the spot. The side defending leaves a striker up, puts players on the near post and the
+  six-yard line, and marks the rest. A computer taker waits for them to get into place.
+- **Football**: players taken off stay on the substitutions list, greyed out, and can't come back on.
+
+### Fixed
+- **Football**: a free kick, corner or penalty taker no longer circles round the ball for ever without taking it
+  (his run-up kept moving the spot he was running to).
+- **Grand Prix**: no invisible wall where the pit lane leaves the track. Steer in and you're in the pit lane,
+  called in or not; the low wall beside the lane is now where it's drawn.
+- **Street Racing**: holding the brake once stopped backs up, as it was meant to.
+
 ## [0.3.0] - 2026-11-03
 
 ### Added (games)

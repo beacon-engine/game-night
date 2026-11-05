@@ -26,8 +26,8 @@ colour under a clear coat, with metal flakes in the metallic and pearl finishes.
 
 | Button | Robot | Car |
 |---|---|---|
-| Stick | Walk (up on the stick is away from the camera); all the way out to run | Drive where it points |
-| Bolt | Fire (hold): aims at the nearest enemy roughly ahead, in sight | Boost (hold; the meter refills) |
+| Stick | Walk (up on the stick is away from the camera, which only comes round behind you as you walk forwards); all the way out to run | Left and right steer, up is the gas, pulled back brakes and then reverses |
+| Bolt | Fire (hold): aims at the nearest enemy roughly ahead, in sight | Boost (hold, flat out ahead; the meter refills) |
 | Drop | Punch: three in a row, the third knocks them flying | |
 | Leaf | Change into a car | Change into a robot; at speed you leap and land with a slam |
 | L1 | Dodge: a quick dash, untouchable for a moment | |

@@ -15,6 +15,8 @@ export const TICK = 1 / 60;
 export const TOP = 64; // m/s flat out in a car with "top" 1: about 143 mph
 const ACCEL = 15;
 const BRAKE = 24;
+const REVERSE = 9; // m/s: as fast as it backs up
+const REVERSE_ACCEL = 7; // m/s² getting going backwards
 const GRIP = 21; // m/s² of cornering a car with "grip" 1 holds
 const R_MIN = 5.5; // m: the tightest it turns, at walking pace
 const STEER_RATE = 1.7; // rad/s: the quickest it turns
@@ -140,7 +142,10 @@ export class Drive {
       let a = ACCEL * s.accel * (1 + Math.max(0, c.boost)) * (c.throttle - Math.max(0, vf) / top);
       if (a < 0) a *= 0.3; // (lifting off slows it gently)
       vf += a * TICK;
-      if (c.brake > 0) vf = vf > 0 ? Math.max(0, vf - c.brake * BRAKE * (1 - 0.25 * this.wet) * TICK) : Math.min(0, vf + c.brake * 8 * TICK); // (and backs up, slowly)
+      // the brake; held once stopped, a person backs up (not too fast). Going backwards, the gas stops it first
+      if (c.brake > 0 && vf > 0) vf = Math.max(0, vf - c.brake * BRAKE * (1 - 0.25 * this.wet) * TICK);
+      else if (c.brake > 0 && !c.spec.ai && c.throttle === 0) vf = Math.max(-REVERSE, vf - c.brake * REVERSE_ACCEL * TICK);
+      else if (vf < 0) vf = Math.min(0, vf + (c.throttle * BRAKE + 3) * TICK);
     }
     vf -= vf * 0.02 * TICK;
     // the tyres pull the sideways part of its speed away, up to their grip
