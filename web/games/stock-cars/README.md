@@ -18,7 +18,7 @@ left and right to steer, with gas and brake pedals (`controls.json`). Menus use 
 |---|---|
 | Steering slider, stick, or arrows / A D | Steer (right = up the track, toward the wall) |
 | Bolt (or up / W) | Gas (hold) |
-| Drop (or down / S) | Brake (hold) |
+| Drop (or down / S) | Brake (hold); stopped, it backs up |
 | R1 | Look back (hold) |
 
 ## How it works

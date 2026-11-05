@@ -13,8 +13,9 @@ const LIMIT = 25; // m/s in the lane (90 km/h)
 const BRAKE = 22; // m/s² slowing in the lane (the limiter does it for you)
 const PICKUP = 8; // m/s² getting going again
 const OUT_SPEED = 45; // m/s by the end of the exit road
+export const PIT_WALL = 1.4; // m from the track's edge to the low wall between it and the lane
 
-interface Stop { box: number; phase: 'in' | 'box' | 'out'; wait: number; d0: number; released: boolean }
+interface Stop { box: number; phase: 'in' | 'box' | 'out'; wait: number; d0: number; s0: number; released: boolean }
 
 export class PitLane {
   readonly from: number; // m from the line where the lane leaves the track (negative: before it)
@@ -43,6 +44,19 @@ export class PitLane {
     return s >= this.from && s < this.from + step + 0.5;
   }
 
+  // On the slip road in: the stretch where the lane leaves the track, open on the left
+  onSlipRoad(dist: number) {
+    const s = this.at(dist);
+    return s >= this.from - 5 && s < this.from + RAMP;
+  }
+  // how far past the track's edge the slip road goes here (null: the wall's there)
+  // (along the rest of the lane, the low pit wall stands a little back from the track's edge)
+  opening(dist: number) {
+    if (this.onSlipRoad(dist)) return -this.lane - this.track.width / 2 + 3;
+    const s = this.at(dist);
+    return s >= this.from && s <= this.to ? PIT_WALL : null;
+  }
+
   has(car: InPit) { return this.stops.has(car); }
   get cars() { return [...this.stops.keys()]; }
   waiting(car: InPit) { const s = this.stops.get(car); return s?.phase === 'box' ? s.wait : null; }
@@ -53,7 +67,8 @@ export class PitLane {
 
   // Into the lane, heading for box `box` (an index)
   enter(car: InPit, box: number) {
-    this.stops.set(car, { box: this.boxes[box % this.boxes.length], phase: 'in', wait: 0, d0: car.d, released: false });
+    // (from where it is: a driver can turn in partway down the slip road)
+    this.stops.set(car, { box: this.boxes[box % this.boxes.length], phase: 'in', wait: 0, d0: car.d, s0: Math.max(this.from, this.at(car.dist)), released: false });
   }
 
   // The crew's work on a car that has just stopped in its box: this many seconds
@@ -98,7 +113,7 @@ export class PitLane {
   // Where across the track a car is along the lane: easing over from the track at the entry, back at the exit
   private side(s: number, stop: Stop) {
     const edge = -this.track.width / 2 + 2;
-    if (s < this.from + RAMP) return lerp(stop.d0, this.lane, ease((s - this.from) / RAMP));
+    if (s < this.from + RAMP) return lerp(stop.d0, this.lane, ease((s - stop.s0) / Math.max(10, this.from + RAMP - stop.s0)));
     if (s > this.to - RAMP) return lerp(this.lane, edge, ease((s - (this.to - RAMP)) / RAMP));
     return this.lane;
   }

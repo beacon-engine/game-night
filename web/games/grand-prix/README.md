@@ -14,17 +14,22 @@ how quick they are. After Start, everyone picks a livery on their phone.
 |---|---|
 | Steering slider, stick, or arrows / A D | Steer |
 | Bolt | Gas (hold) |
-| Drop | Brake (hold) |
+| Drop | Brake (hold); stopped, it backs up |
 | L1 | Box this lap (press again to stay out) |
 | R1 | Look back |
 
 When the pit wall wants you in (fuel, worn tyres, damage, a change of weather, a fire) your screen says so,
 big: **Box this lap: Tyres · press L1**, and your phone buzzes. Box with L1, then keep to the left of the main
 straight: a dashed line runs down the left for the last
-250 m, the screen counts down the metres to the entry, and a ◀ PIT board stands over it. In the lane the
+250 m, the screen counts down the metres to the entry, and a ◀ PIT board stands over it. (You can also just
+steer off onto the slip road where the lane leaves the track, called in or not: there's no wall there.) In the lane the
 speed limiter drives for you: down to 90 km/h, a stop at your box while the crew works, and back out when
 the track is clear. Your box is the one with your name over it in your colours; your crew is waiting at the
 front of the garage, and runs to the wheels as you stop.
+
+**The map** (top right of your view) is the whole circuit from above, with the pit lane in yellow: every
+car is a dot, the other people in their colours, you bigger with a white ring. Under it: who's just ahead of
+you and just behind, and by how many seconds.
 
 **The pit stop is yours to plan.** On the way down the pit lane your phone becomes a d-pad and a panel
 opens on your screen with what the crew will do (they suggest it; you change it):
@@ -61,6 +66,7 @@ fire, and never on the last lap unless they're burning. Your phone gives you the
 | `crew.ts` | The pit crews: four people in each team's colours (overalls and helmets: the shared cast, `@people`) who run to the wheels when their car stops in the box, and the board over each box with the team's colour, the driver's number and name. A crew is out for each person's car, and for a computer driver's while it's coming in. |
 | `damage.ts` | Health, tyres, fuel and fire, and the pit crew's times. No race rules or graphics, so Superbikes can use it too. |
 | `pits.ts` | The pit lane: where it is, a box per car, and driving cars through it. Works on anything with a place on the track. |
+| `map.ts` | The circuit map in each view: the track and pit lane from above, and every car on it. |
 | `gp.ts` | The race: the shared racing (`web/racing/race.ts`) with each car's condition, the pit lane and the weather. Cars in the pits or out of the race are taken off the track. |
 | `scene.ts` | The circuit in three.js, with the pit lane, garages and grandstand; sparks, flames and smoke; the cameras. |
 | `main.ts` | Lobby, picking liveries, countdown, race, results (with DNFs), saved records, what the phones show. |

@@ -278,6 +278,11 @@ function fightInput(c: Player) {
   const x = Math.abs(c.x) < 0.12 ? 0 : c.x, y = Math.abs(c.y) < 0.12 ? 0 : c.y;
   b.ctl.x = fx * y - fz * x;
   b.ctl.z = fz * y + fx * x;
+  // as a car (or changing into one), it's driven like the racing games: across steers, up is the gas, back brakes and reverses
+  const asCar = b.target === 0 || b.shift <= 0;
+  // (Fire on its own is the boost, flat out ahead)
+  const boost = controls.held(c, 'fight', 'fire') && Math.abs(y) < 0.2;
+  b.ctl.drive = asCar ? { steer: Math.sign(x) * Math.abs(x) ** 1.3, gas: boost ? 1 : y } : undefined;
   b.ctl.fire = controls.held(c, 'fight', 'fire');
   b.ctl.run = c.held(BIT.sprint); // (the stick pushed past its ring, or Shift)
   for (const ev of c.drain()) {

@@ -27,6 +27,8 @@ const KNOCK_FADE = 2.5; // how quickly a knock sideways dies away (the driver ca
 const SCRAPE = 9; // m/s² lost grinding along a wall
 const APRON = 7; // m/s² lost with your wheels down on the apron
 const SPIN_WALL = 11; // m/s into the wall that spins you round
+const REVERSE = 7; // m/s: as fast as a car backs up
+const REVERSE_ACCEL = 5; // m/s² getting going backwards
 const SPIN_HIT = 12; // m/s of closing speed in a hit that spins the lighter car
 
 // What a car is like (cars.json), compared with the Stocker; length and width in metres
@@ -91,6 +93,9 @@ export class Race {
   readonly cars: Car[];
   t = 0; // seconds since the green flag
   weather: Weather | null = null; // none: dry all race
+  // where the left-hand wall isn't there (a pit lane's slip road leaving the track): how far out past
+  // the edge a car can go here (null: the wall)
+  openLeft: ((dist: number) => number | null) | null = null;
   private lanes: number[]; // where the computer drivers like to run: bottom, middle, top
 
   // specs in grid order: two by two, the pole on the inside
@@ -141,11 +146,18 @@ export class Race {
       else if (gap < -s.length * 0.8 && gap > -10) shove = SHOVE;
     }
     const top = TOP * s.top * c.spec.skill * (1 + c.tow + shove);
-    let a = ACCEL * s.accel * (throttle - c.v / top); // settles at throttle × top speed
-    if (a < 0) a *= 0.25; // lifting off slows you gently
-    a -= c.brake * BRAKE * this.traction(c);
-    if (spinning) a = -(4 + c.v * 0.6); // a spin scrubs off speed fast
-    c.v = Math.max(0, c.v + a * TICK);
+    if (c.v < 0 || (!spinning && !c.spec.ai && c.brake > 0 && throttle === 0 && c.v < 0.5)) {
+      // backing up: a person holding the brake once stopped (out of a wall, or back to a missed turn);
+      // let go, or press the gas, and it stops first
+      if (c.brake > 0 && throttle === 0 && !spinning) c.v = Math.max(-REVERSE, Math.min(0, c.v) - c.brake * REVERSE_ACCEL * TICK);
+      else c.v = Math.min(0, c.v + (4 + throttle * BRAKE) * TICK);
+    } else {
+      let a = ACCEL * s.accel * (throttle - c.v / top); // settles at throttle × top speed
+      if (a < 0) a *= 0.25; // lifting off slows you gently
+      a -= c.brake * BRAKE * this.traction(c);
+      if (spinning) a = -(4 + c.v * 0.6); // a spin scrubs off speed fast
+      c.v = Math.max(0, c.v + a * TICK);
+    }
 
     // the turns: more speed than the tyres and banking hold pushes you to the outside and scrubs
     // speed. A lane further out is a wider turn, and on an oval it's banked steeper.
@@ -155,12 +167,12 @@ export class Race {
     // across the track in one tick)
     const slide = Math.min(SLIDE_MAX, extra * SLIDE) * dir;
     c.slide += (slide - c.slide) * Math.min(1, SLIDE_BUILD * TICK);
-    c.v = Math.max(0, c.v - extra * SCRUB * TICK);
+    if (c.v > 0) c.v = Math.max(0, c.v - extra * SCRUB * TICK);
 
     // steering moves you across the track, quicker the faster you go
-    const reach = 3 + 0.12 * c.v;
+    const reach = 3 + 0.12 * Math.abs(c.v);
     c.vd += (steer * reach - c.vd) * Math.min(1, (spinning ? 1 : 8) * TICK);
-    c.v = Math.max(0, c.v - Math.abs(c.vd) * 0.03 * TICK);
+    if (c.v > 0) c.v = Math.max(0, c.v - Math.abs(c.vd) * 0.03 * TICK);
     c.knock = clamp(c.knock, -KNOCK_MAX, KNOCK_MAX) * Math.max(0, 1 - KNOCK_FADE * TICK);
     c.d += c.drift * TICK;
 
@@ -180,7 +192,8 @@ export class Race {
     const lapsBefore = Math.floor(c.dist / L);
     c.dist += (c.v / (1 + k * c.d)) * TICK; // (a lane further out is a longer way round)
     c.bumped += TICK;
-    if (green && c.finish === null && lapsBefore >= 0 && Math.floor(c.dist / L) > lapsBefore) {
+    // (a lap counts once: backing over the line and crossing it again isn't another)
+    if (green && c.finish === null && lapsBefore >= 0 && Math.floor(c.dist / L) > lapsBefore && Math.floor(c.dist / L) > c.laps) {
       c.laps++;
       c.lastLap = this.t - c.lapStart;
       c.bestLap = c.bestLap ? Math.min(c.bestLap, c.lastLap) : c.lastLap;
@@ -209,7 +222,9 @@ export class Race {
     c.scraping = 0;
     if (c.d > edge) this.wall(c, ev, 1, edge);
     else if (c.d < -edge) {
-      if (this.track.road) this.wall(c, ev, -1, edge);
+      const open = this.openLeft?.(c.dist) ?? null;
+      if (open !== null) { if (c.d < -edge - open) this.wall(c, ev, -1, edge + open); }
+      else if (this.track.road) this.wall(c, ev, -1, edge);
       else {
         c.d = -edge;
         c.vd = Math.max(c.vd, 0) + 0.5;
@@ -227,7 +242,7 @@ export class Race {
     if (hit > 1.5) {
       c.knock = -side * Math.min(KNOCK_MAX, hit * BOUNCE + 0.5);
       c.vd = 0;
-      c.v = Math.max(0, c.v - Math.min(c.v * 0.45, hit * 2.2));
+      c.v = c.v < 0 ? c.v * 0.5 : Math.max(0, c.v - Math.min(c.v * 0.45, hit * 2.2));
       c.spinRate -= side * hit * 0.09; // the nose kicks away from the wall
       if (hit > SPIN_WALL) this.spinOut(c, -side, ev);
       if (c.bumped > 0.3) ev.wall.push({ car: c, strength: hit, d: side });
@@ -236,7 +251,7 @@ export class Race {
       if (c.vd * side > 0) c.vd = 0;
       if (c.knock * side > 0) c.knock = 0;
       c.scraping = c.v > 15 ? side : 0;
-      c.v = Math.max(0, c.v - SCRAPE * TICK); // grinding along it
+      c.v = c.v < 0 ? Math.min(0, c.v + SCRAPE * TICK) : Math.max(0, c.v - SCRAPE * TICK); // grinding along it
       c.spinRate -= side * 0.4 * TICK * Math.min(1, c.v / 30); // and it drags the nose round
     }
   }

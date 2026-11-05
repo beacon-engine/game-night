@@ -61,12 +61,15 @@ export const upgradeCost = (level: number) => 25 + level * 15;
 const WALK = 7.5, RUN = 1.9; // m/s as a robot (times agility), and how much faster running is
 const TOP = 30; // m/s as a car, times speed
 const ACCEL = 16, BRAKE = 12, TURN = 2.3; // m/s², m/s², rad/s
+const REVERSE = 0.3; // backing up: this much of its top speed
 const REGEN_AFTER = 3, REGEN = 0.06; // a car out of the fight mends this much of its armour a second
 const MAX_ENEMIES = 14; // on the field at once (the rest wait their turn)
 const REVIVE_R = 4, REVIVE_TIME = 3; // stand this close to a friend who's down, this long, to get them up
 
 // What a bot wants this step: which way to go (world x/z, up to 1 long), and the buttons
-export interface Control { x: number; z: number; fire: boolean; punch: boolean; shift: boolean; dodge: boolean; special: boolean; run: boolean }
+// x/z: where to go, on the ground. `drive`: a person's car, driven like the racing games instead (steer
+// left/right, gas forward, brake and back up pulling back); the computer drivers just head for x/z
+export interface Control { x: number; z: number; fire: boolean; punch: boolean; shift: boolean; dodge: boolean; special: boolean; run: boolean; drive?: { steer: number; gas: number } }
 export const idle = (): Control => ({ x: 0, z: 0, fire: false, punch: false, shift: false, dodge: false, special: false, run: false });
 
 export class Bot {
@@ -194,13 +197,22 @@ export class Sim {
     if (b.stun > 0) { b.speed *= 1 - dt * 3; b.vx *= 1 - dt * 4; b.vz *= 1 - dt * 4; return; }
     if (b.shift <= 0 || (b.target === 0 && b.shift < 0.4)) {
       // a car: turns towards where the stick points, gas as far as it's pushed; Fire held is the boost
-      b.boosting = c.fire && b.boost > 0.05 && mag > 0.2;
+      b.boosting = c.fire && b.boost > 0.05 && (c.drive ? c.drive.gas > 0.2 : mag > 0.2);
       b.boost = Math.max(0, Math.min(1, b.boost + (b.boosting ? -0.35 : 0.15) * dt));
       const kind = b.spec.kind, top = (kind === 'player' ? TOP * b.spec.speed : ENEMY[kind].top) * b.pace * (b.boosting ? 1.45 : 1);
-      if (mag > 0.2) {
-        const want = Math.atan2(c.x, c.z), turn = TURN * (0.55 + 0.45 * b.spec.agility) * Math.min(1, 0.3 + b.speed / 12);
+      const grip = 0.5 + 0.5 * this.arena.grip, agile = TURN * (0.55 + 0.45 * b.spec.agility);
+      if (c.drive) {
+        // steering turns it (tighter the slower, the other way backing up); gas; pulled back, it brakes,
+        // then backs up
+        const { steer, gas } = c.drive;
+        b.yaw += steer * agile * Math.min(1, 0.15 + Math.abs(b.speed) / 10) * Math.sign(b.speed || 1) * dt;
+        if (gas > 0.1) b.speed = approach(b.speed, top * gas, (b.speed < 0 ? BRAKE * 1.5 : b.speed < top * gas ? ACCEL * (b.boosting ? 1.6 : 1) * grip : BRAKE) * dt);
+        else if (gas < -0.1) b.speed = b.speed > 0.5 ? approach(b.speed, 0, BRAKE * 1.6 * grip * dt) : approach(b.speed, -top * REVERSE * -gas, ACCEL * 0.6 * grip * dt);
+        else b.speed = approach(b.speed, 0, BRAKE * 0.5 * this.arena.grip * dt);
+      } else if (mag > 0.2) {
+        const want = Math.atan2(c.x, c.z), turn = agile * Math.min(1, 0.3 + b.speed / 12);
         b.yaw += clamp(angle(want - b.yaw), -turn * dt, turn * dt);
-        b.speed = approach(b.speed, top * mag, (b.speed < top * mag ? ACCEL * (b.boosting ? 1.6 : 1) * (0.5 + 0.5 * this.arena.grip) : BRAKE) * dt);
+        b.speed = approach(b.speed, top * mag, (b.speed < top * mag ? ACCEL * (b.boosting ? 1.6 : 1) * grip : BRAKE) * dt);
       } else b.speed = approach(b.speed, 0, BRAKE * this.arena.grip * dt);
       // (the car goes where it's pointing as fast as its tyres grip: on snow it slides round the turns)
       const g = this.arena.grip, k = Math.min(1, dt * (1 + 20 * g * g));

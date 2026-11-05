@@ -45,6 +45,13 @@
     font: 800 30px/1 var(--font-display); text-transform: uppercase; white-space: nowrap; opacity: 0; transition: opacity var(--t) var(--ease); }
   .view .flash.show { opacity: 1; }
   .view.tv .pos b { font-size: 34px; color: var(--chalk-2); }
+  /* the circuit map, top right under the lap count, and who's just ahead and behind */
+  .view .mapbox { position: absolute; right: 16px; top: 76px; width: min(230px, 30%); padding: 6px; background: rgb(14 16 22 / 0.7); display: flex; flex-direction: column; gap: 4px; }
+  .view .map { display: block; width: 100%; aspect-ratio: 4 / 3; }
+  .view .gaps { display: flex; flex-direction: column; gap: 3px; font: 600 12px/1.2 var(--font-ui); color: var(--chalk-2); padding: 0 4px 2px; }
+  .view .gaps span { display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 14px; }
+  .view .gaps i { flex: none; width: 4px; height: 12px; }
+  .view .gaps b { margin-left: auto; color: var(--chalk); font-variant-numeric: tabular-nums; }
 
   /* the car's condition: health, tyres, fuel, and the pit call */
   .view .state { position: absolute; left: 20px; bottom: 16px; width: min(240px, 40%); display: flex; flex-direction: column; gap: 7px; padding: 12px 14px;
@@ -115,6 +122,7 @@
     .view .pos b { font-size: 48px; }
     .view .speed { font-size: 40px; }
     .view .who { top: 66px; }
+    .view .mapbox { top: 60px; width: min(170px, 30%); }
     .view .state { padding: 8px 10px; gap: 5px; }
     .view.pick .card { left: 12px; bottom: 12px; padding: 12px 14px; gap: 6px; }
     .carname h2 { font-size: 28px; }

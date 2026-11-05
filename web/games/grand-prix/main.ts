@@ -19,6 +19,7 @@ import { OUT_LABEL, type PitPlan } from './damage.ts';
 import { GrandPrix, type Call } from './gp.ts';
 import { World } from './scene.ts';
 import { loadCrew } from './crew.ts';
+import { CircuitMap } from './map.ts';
 
 const device = await requireDevice(); // (3D: not on the lightest screens)
 const getJson = <T>(url: string) => fetch(url, { cache: 'no-store' }).then((r) => r.json() as Promise<T>);
@@ -71,6 +72,7 @@ let stage: Stage = 'lobby';
 let resumeTo: Stage = 'racing';
 let stageT = 0;
 let gp: GrandPrix;
+let map: CircuitMap | null = null; // the circuit map in each view (made for each race)
 let flagT = -1;
 let countShown = 0;
 const drivers = new Map<string, Player>();
@@ -125,6 +127,7 @@ function newRace(withPeople: boolean, laps: number) {
   const w = settings.weather === Forecast.Dry ? null : new Weather(settings.weather, (Math.min(laps, 20) * track().length) / (TOP * 0.7));
   gp = new GrandPrix(track(), field(withPeople), laps, straight(), withPeople, w);
   world.setTrack(track(), gp.pits);
+  if (map?.track !== gp.track) map = new CircuitMap(gp.track, gp.pits);
   world.setCars(gp.all, models);
   const slot = (c: Car) => input.list.find((p) => p.id === c.id)?.slot ?? 99;
   world.setViews(gp.all.filter((c) => !c.spec.ai).sort((a, b) => slot(a) - slot(b)));
@@ -504,6 +507,7 @@ function buildHud() {
     return `<div class="view ${v.car ? '' : 'tv'}" id="view${i}" style="${at}">
       <div class="pos"><b></b><span></span></div>${who ? `<div class="who">${chip(who)}</div>` : ''}
       <div class="lap"></div><div class="sky"></div><div class="speed"></div>
+      <div class="mapbox panel"><canvas class="map"></canvas>${v.car ? '<div class="gaps"><span class="ahead"></span><span class="behind"></span></div>' : ''}</div>
       ${v.car ? `<div class="state panel"><div class="meter health"><span>Car</span><i><b></b></i></div>
         <div class="meter tyres"><span>Tyres</span><i><b></b></i></div><div class="meter fuel"><span>Fuel</span><i><b></b></i><em></em></div>
         <div class="box"></div></div><div class="pitplan panel"></div>` : ''}
@@ -543,7 +547,7 @@ function updateHud() {
     q('.pos b').textContent = k.out ? 'Out' : ordinal(pos);
     q('.pos span').textContent = k.out ? OUT_LABEL[k.out] : `of ${order.length}`;
     q('.lap').textContent = car.finish !== null ? 'Finished' : `Lap ${Math.min(car.laps + 1, gp.laps)} / ${gp.laps}`;
-    q('.speed').innerHTML = `${Math.round(car.v * 3.6)}<span>km/h</span>`;
+    q('.speed').innerHTML = `${car.v < -0.3 ? 'R ' : ''}${Math.round(Math.abs(car.v) * 3.6)}<span>km/h</span>`;
     const meter = (cls: string, v: number) => { const b = q(`.${cls} b`); b.style.width = `${Math.round(v * 100)}%`; b.style.background = tone(v); };
     meter('health', k.health / 100);
     meter('tyres', 1 - k.tyres);
@@ -556,6 +560,16 @@ function updateHud() {
     q('.box').textContent = k.out ? '' : k.burning ? 'On fire: box now' : wait !== null ? `Box · ${wait.toFixed(1)} s` : gp.inPits(car) ? 'Pit lane'
       : gp.boxCall.has(car) ? (entry > 0 && entry < 600 ? `Pit entry ${Math.round(entry)} m: keep left` : 'Boxing this lap') : call ? `Box this lap? ${call}` : '';
     renderPitPlan(q('.pitplan'), car);
+    // who's just ahead and just behind, and by how much
+    const near = (j: number, sign: string) => {
+      const o = order[j];
+      if (!o || k.out || gp.isOut(o)) return '';
+      const gap = Math.abs(o.dist - car.dist), laps = Math.floor(gap / gp.track.length);
+      const t = laps ? `${sign}${plural(laps, 'lap', 'laps')}` : `${sign}${(gap / Math.max(car.v, o.v, 20)).toFixed(1)} s`;
+      return `<i style="background:${o.spec.ai ? 'var(--chalk-3)' : o.spec.color}"></i>${ordinal(j + 1)} ${escapeHtml(o.spec.name)} <b>${t}</b>`;
+    };
+    q('.ahead').innerHTML = near(pos - 2, '+');
+    q('.behind').innerHTML = near(pos, '−');
     q('.box').classList.toggle('alert', k.burning || (!!call && !gp.boxCall.has(car)));
     // the pit wall's call, once, when it changes
     const who = playerOf(car);
@@ -573,6 +587,16 @@ function updateHud() {
       <span class="num">${i + 1}</span><i></i><span>${escapeHtml(c.spec.name)}${k.burning ? ' 🔥' : ''}</span>
       <span class="hp"><b style="width:${Math.round(h * 100)}%;background:${tone(h)}"></b></span><span class="gap">${gap}</span></div>`;
   }).join('');
+}
+
+// The circuit map in each view, every frame (the dots move smoothly)
+function drawMaps() {
+  if (!map) return;
+  const people = new Set(gp.all.filter((c) => !c.spec.ai));
+  world.views.forEach((v, i) => {
+    const cv = document.querySelector<HTMLCanvasElement>(`#view${i} .map`);
+    if (cv) map!.draw(cv, gp.all, v.car, people, (c) => (gp.isOut(c) ? null : c));
+  });
 }
 
 function gapText(c: Car, leader: Car, i: number) {
@@ -686,6 +710,7 @@ function frame(now: number) {
   }
   world.render(dt, tvFocus(dt), look, gp.weather);
   const racing = stage === 'racing' || stage === 'grid';
+  if (racing || stage === 'paused') drawMaps();
   if (racing) {
     engines.update(people().filter((c) => c.finish === null && !gp.isOut(c)).map(driving), pack());
     engines.weather(gp.weather?.rain ?? 0, gp.weather?.wet ?? 0);
@@ -699,7 +724,7 @@ function frame(now: number) {
 
 function driving(c: Car): Driving {
   const r = world.views.find((v) => v.car === c)?.rect;
-  return { id: c.id, v: c.v, throttle: gp.inPits(c) ? 0.3 : c.throttle, slip: Math.abs(c.slide) + Math.abs(c.knock), scrape: c.scraping !== 0, pan: r ? (r.x + r.w / 2) * 2 - 1 : 0 };
+  return { id: c.id, v: Math.abs(c.v), throttle: gp.inPits(c) ? 0.3 : c.throttle, slip: Math.abs(c.slide) + Math.abs(c.knock), scrape: c.scraping !== 0, pan: r ? (r.x + r.w / 2) * 2 - 1 : 0 };
 }
 
 function pack(): Others | undefined {

@@ -693,8 +693,10 @@ function renderSubs() {
       <b>${p.number}</b> ${escapeHtml(p.name)} <em>${p.role}</em> ${bar(p.energy)}</div>`).join('');
   // a keeper only swaps for a keeper: grey out who can't come on for the man going off
   const fits = (d: PlayerData) => !S.off || (S.off.role === 'GK') === (d.pos === 'GK');
-  const bench = S.team.bench.map((d, i) => `<div class="srow ${S.stage === 'on' && i === S.cursor ? 'sel' : ''} ${S.stage === 'on' && !fits(d) ? 'no' : ''}">
-      <b>${d.number}</b> ${escapeHtml(d.name)} <em>${d.pos}</em> <small>PAC ${d.pace} DRI ${d.dribbling} STA ${d.stamina ?? '-'}</small></div>`).join('') || '<div class="srow"><em>No one left</em></div>';
+  const bench = (S.team.bench.map((d, i) => `<div class="srow ${S.stage === 'on' && i === S.cursor ? 'sel' : ''} ${S.stage === 'on' && !fits(d) ? 'no' : ''}">
+      <b>${d.number}</b> ${escapeHtml(d.name)} <em>${d.pos}</em> <small>PAC ${d.pace} DRI ${d.dribbling} STA ${d.stamina ?? '-'}</small></div>`).join('') || '<div class="srow"><em>No one left</em></div>') +
+    // who's been taken off stays on the list, greyed out: he can't come back on
+    S.team.subbedOff.map((d) => `<div class="srow used"><b>${d.number}</b> ${escapeHtml(d.name)} <em>${d.pos}</em> <small>Subbed off</small></div>`).join('');
   el.innerHTML = `<div class="shead"><span class="h3">${escapeHtml(S.team.club.name)}</span><span class="caption">${S.team.subsLeft} changes left</span></div>
     <div class="scols"><div><h4 class="caption">On the pitch ${S.stage === 'off' ? '· <span class="hl-volt">who comes off?</span>' : ''}</h4>${on}</div>
     <div><h4 class="caption">Bench ${S.stage === 'on' ? '· <span class="hl-volt">who comes on?</span>' : ''}</h4>${bench}</div></div>`;
