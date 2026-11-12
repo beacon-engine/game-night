@@ -1,0 +1,25 @@
+{
+  "intro": "A paddle, a ball and a wall of bricks. Knock the ball into the wall to break it. Play together, up to four paddles on one wall, or race each other on a wall each.",
+  "inspiredBy": "Paddle-and-bricks games go back to the arcades of the mid 1970s. Bricks is our own take: our own walls, power-ups, colours and sounds.",
+  "goal": "Co-op: clear wall after wall as a team, for the best score you can, before your balls run out. Versus: be the first to clear your wall (or the last one with a ball) to take the round; win the set number of rounds to take the match.",
+  "howToPlay": [
+    "Join with your phone. In the lobby choose Co-op or Versus, add computer partners or rivals if you like, then press {bolt} to start.",
+    "Move your paddle with the stick. Push it past its ring to go faster.",
+    "The ball starts on your paddle: press {bolt} to launch it. The dotted line shows which way it will go.",
+    "Where the ball lands on your paddle decides where it goes: the middle sends it straight up, the ends send it out wide. Moving as it lands drags it the way you're moving.",
+    "The ball gets faster the longer it stays in play.",
+    "Tough bricks take two or three hits (one pip per hit left). Grey steel never breaks. Red charges blow up the bricks around them, and set off other charges.",
+    "Broken bricks sometimes drop a power-up: catch it with your paddle. W makes it wider, 3 splits every ball into three, L gives you a laser (hold {bolt} to fire), S slows the ball, C catches the ball (press {bolt} to let go), and + is a spare ball.",
+    "In co-op the paddles share the bottom edge and can't pass each other, and the team shares the balls. Lose the last ball in play and a spare comes in; out of spares, and the game is over.",
+    "In versus everyone has the same wall. Catch J and press {drop} to drop a row of junk bricks on your rivals' walls; catch − and press {drop} to shrink their paddles.",
+    "Press ❚❚ on your phone to pause."
+  ],
+  "steering": "Move the paddle with the stick",
+  "tips": [
+    "Break a channel up the side and get the ball above the wall: it does the work for you up there.",
+    "Every five bricks one ball breaks without touching a paddle adds one to the multiplier.",
+    "Save the ends of the paddle for when you need an angle: a ball off the middle is the safest return.",
+    "With the catch, hold the ball, slide to where you want it and let go.",
+    "Charges next to each other go off in a chain: aim for them."
+  ]
+}

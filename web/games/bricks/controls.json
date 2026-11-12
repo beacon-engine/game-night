@@ -1,0 +1,14 @@
+{
+  "_help": "Which pad button does what while playing. The paddle moves with the stick (or the keyboard's arrows/WASD; push past the ring to go faster). Actions: launch (also fires the laser: hold it), send (versus: send the power-up you hold to your rivals).",
+  "coop": {
+    "bolt": "launch"
+  },
+  "versus": {
+    "bolt": "launch",
+    "drop": "send"
+  },
+  "labels": {
+    "launch": "Launch",
+    "send": "Send"
+  }
+}
