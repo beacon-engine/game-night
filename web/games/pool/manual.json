@@ -1,0 +1,23 @@
+{
+  "intro": "8-ball pool on a proper table, with real ball physics: spin, throw, and pockets that can rattle a ball out. Play a friend (a phone each, or pass one round) or the computer at three strengths.",
+  "inspiredBy": "8-ball grew out of pool games played in American halls in the early 1900s. This is the standard game, with a few house rules to keep it moving on a sofa.",
+  "goal": "One player has the solids (1 to 7), the other the stripes (9 to 15). Pot all of yours, then the black 8. Pot the 8 before your balls are gone, or foul while potting it, and you lose the frame.",
+  "howToPlay": [
+    "Join with your phone. On your own, you play the computer; with two phones, you play each other. One phone? Choose Pass the phone.",
+    "The break: move the cue ball anywhere behind the line with the stick, press {bolt} to put it down, then smash into the rack.",
+    "Aim with the stick: gently for small turns, all the way for big ones. {l1} and {r1} nudge the aim a tiny bit. The line shows the ball you'll hit and where it goes.",
+    "Hold {bolt}: the power swings up and back down. Let go to shoot. {drop} cancels.",
+    "Tap {leaf} for the next spin: follow, draw, stun, left or right. Hold {leaf} and use the stick to put the tip anywhere on the ball.",
+    "{star} switches between the view behind the cue and the view from above.",
+    "After the break the table is open: the first ball you pot makes that your group. Pot one of yours and you go again.",
+    "Fouls: the cue ball going in, missing every ball, hitting one of theirs (or the 8) first, or nothing touching a cushion after the hit. The other player then gets the cue ball in hand: put it anywhere."
+  ],
+  "steering": "The stick aims the cue (and moves the cue ball when it's in hand)",
+  "tips": [
+    "Follow (hit high) and the cue ball rolls on after the hit. Draw (hit low) and it comes back. Hit it in the middle, firmly, at close range, and it stops dead: stun.",
+    "Side spin changes how the cue ball comes off a cushion, and it slightly drags the object ball off line.",
+    "A cut is easier the closer the cue ball is to the object ball.",
+    "Softer shots drop more easily: a fast ball can rattle out of the jaws.",
+    "No calling: any of your balls in any pocket counts. An illegal break, or the 8 on the break, means a fresh rack."
+  ]
+}
