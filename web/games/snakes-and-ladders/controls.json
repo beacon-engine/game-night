@@ -1,0 +1,9 @@
+{
+  "_help": "Which pad button does what. There's one thing to do on your turn: roll the die. Actions: roll.",
+  "play": {
+    "bolt": "roll"
+  },
+  "labels": {
+    "roll": "Roll"
+  }
+}
