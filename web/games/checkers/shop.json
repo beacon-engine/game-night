@@ -1,0 +1,9 @@
+{
+  "_comment": "Board themes bought with stars. light/dark: the squares (the pieces stand on the dark ones). Looks only.",
+  "items": [
+    { "id": "parlour", "name": "Parlour", "price": 60, "light": "#e6d3b0", "dark": "#7a4a2e", "colors": ["#e6d3b0", "#7a4a2e"], "about": "Cream and walnut, like a board from the shelf" },
+    { "id": "diner", "name": "Diner", "price": 60, "light": "#e9e4da", "dark": "#a8433f", "colors": ["#e9e4da", "#a8433f"], "about": "Red and cream, bright and loud" },
+    { "id": "slate", "name": "Slate", "price": 100, "light": "#c9ced4", "dark": "#4d5866", "colors": ["#c9ced4", "#4d5866"], "about": "Cool grey stone" },
+    { "id": "meadow", "name": "Meadow", "price": 100, "light": "#e4e8c8", "dark": "#58744a", "colors": ["#e4e8c8", "#58744a"], "about": "Pale grass and deep green" }
+  ]
+}

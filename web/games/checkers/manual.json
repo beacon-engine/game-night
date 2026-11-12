@@ -1,0 +1,24 @@
+{
+  "intro": "Twelve pieces each on the dark squares of an 8x8 board. Move diagonally, jump over the other side's pieces to take them, and reach the far side to be crowned. Play a friend on the same screen, or take on the computer at three strengths.",
+  "inspiredBy": "Draughts, or checkers, has been played for hundreds of years. This is English draughts (American checkers), with the standard rules.",
+  "goal": "Take all the other side's pieces, or leave them with no move they can make.",
+  "howToPlay": [
+    "Join with your phone. On your own, you play the computer; with two phones, you play each other.",
+    "In the lobby, choose your opponent, the computer's strength, your colour and a clock, then press {bolt} to start. Black moves first.",
+    "On your turn, move your square with the arrows, then press {bolt} to pick up a piece. Dots show where it can go.",
+    "Men move one square diagonally forwards. Move to a dot and press {bolt} to put the piece down.",
+    "Jump over an enemy piece next to you onto the empty square behind it to take it. If you can take, you must: the pieces that can are ringed.",
+    "If the jumping piece can jump again, it must. Press {bolt} on each landing square in turn; the path is drawn as you go. {drop} goes back a hop, or puts the piece back.",
+    "A man that reaches the far row is crowned a king, and can move and jump backwards too. A man crowned during a jump stops there.",
+    "Press pause (❚❚) to offer a draw, resign, or leave. Your opponent accepts a draw with {bolt}."
+  ],
+  "steering": "Move your square over the dark squares",
+  "tips": [
+    "Keep the men on your back row at home for as long as you can: they stop the other side getting kings.",
+    "Pieces in the middle of the board have more moves; pieces on the edge are safer but less useful.",
+    "Because taking is compulsory, you can offer a piece to pull an enemy piece where you want it, then jump two of theirs back.",
+    "When you're ahead, swap pieces: one against one leaves you further ahead.",
+    "The game is a draw after forty moves each with no capture and no man moved, or the same position three times.",
+    "Easy makes mistakes on purpose. Hard looks a long way ahead: watch out."
+  ]
+}

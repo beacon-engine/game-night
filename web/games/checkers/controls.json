@@ -1,0 +1,17 @@
+{
+  "_help": "Which pad button does what. The cursor moves over the dark squares with the d-pad (or the arrow keys / WASD). Actions: move (pick up a piece, put it down, hop on in a jump), cancel (back one hop, or put the piece back), accept and decline (a draw offer).",
+  "play": {
+    "bolt": "move",
+    "drop": "cancel"
+  },
+  "drawOffer": {
+    "bolt": "accept",
+    "drop": "decline"
+  },
+  "labels": {
+    "move": "Pick up, put down",
+    "cancel": "Put back",
+    "accept": "Accept the draw",
+    "decline": "Play on"
+  }
+}
