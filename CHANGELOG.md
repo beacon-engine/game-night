@@ -6,6 +6,15 @@ and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (
 ## [Unreleased]
 
 ### Added
+- **Pool**: 8-ball on a 3D table with real ball physics (spin, draw, follow and stun, throw, cushions that soak
+  up pace, pocket jaws that rattle), against the computer at three strengths or a friend, one frame or best of
+  3 or 5.
+- **Bricks**: paddle and bricks for 1–4. Co-op clears ten walls together; versus races on the same wall and
+  sends junk rows or shrinks rivals' paddles. Tough, steel and explosive bricks, six power-ups.
+- **Checkers**: English draughts against a friend or the computer at three strengths, with a clock, compulsory
+  captures and multi-jumps entered hop by hop.
+- **Snakes and Ladders**: 1–4 players with computer players to fill seats, three boards and a random fair one,
+  exact roll to finish and the three-sixes rule as options.
 - **Grand Prix**: a map of the circuit in each driver's view, showing every car on it and the pit lane, with the
   gap to the car just ahead and just behind.
 - **Grand Prix, Stock Cars, Street Racing**: back up by holding the brake once stopped.

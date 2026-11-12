@@ -3,8 +3,8 @@
 Couch games for the TV after a long day: the laptop is the console, everyone's phone is a pad.
 No accounts, no app to install on the phones, nothing leaves your Wi-Fi.
 
-Nine games are playable today: Football, Stock Cars, Grand Prix, Rally, City Runners, Neon Trails, Space
-Shooter, Fireteam and Chess. [Many more](web/games) are planned across sports, racing, action and arcade, each with its own
+Thirteen games are playable today: Football, Stock Cars, Grand Prix, Rally, City Runners, Neon Trails, Space
+Shooter, Fireteam, Chess, Checkers, Pool, Bricks and Snakes and Ladders. [Many more](web/games) are planned across sports, racing, action and arcade, each with its own
 README, plus [competitions](web/games/COMPETITIONS.md) (leagues, cups, race weekends, championships).
 Pick one and help build it.
 
