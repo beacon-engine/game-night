@@ -7,7 +7,7 @@
     "In the garage, ▲▼ picks a row and ◀▶ changes it: the body (each car becomes a different robot), the paint and its shade, the trim colour, the finish, your weapon and your special. Press {leaf} to see it change.",
     "Press {bolt} when you're happy. The fight starts when everyone's ready.",
     "As a robot: move with the stick, hold {bolt} to shoot (it aims at the nearest enemy the way you're facing), {drop} to punch, {star} for your special and {l1} to dodge.",
-    "Press {leaf} to change into a car: much faster, and you can ram. Hold {bolt} to boost. Press {leaf} again to stand back up; change while you're moving and you land with a slam.",
+    "Press {leaf} to change into a car: much faster, and you can ram. It drives like the racing games: the stick left and right steers, up is the gas, and pulled back it brakes, then reverses. Hold {bolt} to boost. Press {leaf} again to stand back up; change while you're moving and you land with a slam.",
     "Knocked down? A friend who stands beside you for a few seconds gets you back up. Between waves, spend the scrap you picked up on your phone."
   ],
   "steering": "Move with the stick on your phone (or WASD / the arrow keys)",

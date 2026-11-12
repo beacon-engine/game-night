@@ -490,7 +490,7 @@ function updateHud() {
     q('.pos b').textContent = ordinal(pos);
     q('.pos span').textContent = `of ${order.length}`;
     q('.lap').textContent = car.finish !== null ? 'Finished' : `Lap ${Math.min(car.laps + 1, race.laps)} / ${race.laps}`;
-    q('.speed').innerHTML = `${Math.round(car.v * 2.237)}<span>mph</span>`;
+    q('.speed').innerHTML = `${car.v < -0.3 ? 'R ' : ''}${Math.round(Math.abs(car.v) * 2.237)}<span>mph</span>`;
     q('.sky').textContent = race.weather ? `${race.weather.conditions} · ${TYRE_NAME[car.tyre]}` : '';
     q('.tow').classList.toggle('on', car.tow > 0.015 && car.v > 20 && car.finish === null);
     const shown = lapShown.get(car), flash = q('.flash');
@@ -604,7 +604,7 @@ function frame(now: number) {
 // What a person's car sounds like: how it's going, and which side of a split screen it's on
 function driving(c: Car): Driving {
   const r = world.views.find((v) => v.car === c)?.rect;
-  return { id: c.id, v: c.v, throttle: c.throttle, slip: Math.abs(c.slide) + Math.abs(c.knock), scrape: c.scraping !== 0, pan: r ? (r.x + r.w / 2) * 2 - 1 : 0 };
+  return { id: c.id, v: Math.abs(c.v), throttle: c.throttle, slip: Math.abs(c.slide) + Math.abs(c.knock), scrape: c.scraping !== 0, pan: r ? (r.x + r.w / 2) * 2 - 1 : 0 };
 }
 
 // The computer car nearest to any person, for the sound of the pack going by

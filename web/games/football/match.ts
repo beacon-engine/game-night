@@ -246,6 +246,7 @@ export class Team {
   score = 0;
   players: Player[] = []; // on the pitch
   bench: PlayerData[] = [];
+  subbedOff: PlayerData[] = []; // taken off: still in the squad list, but can't come back on
   humans: Human[] = [];
   subsLeft = 5;
   autoSubs = 0; // made by the AI manager
@@ -292,7 +293,7 @@ export class Player {
   aiT = Math.random() * 0.4; // AI thinks again when this runs out
   holdT = 0; gatherT = 0; // keeper: holding the ball / gathering it into the gloves
   frozen = false; // taking a set piece
-  runup: { fn: () => void } | null = null;
+  runup: { fn: () => void; dx: number; dz: number; t: number } | null = null; // the line he runs in on, fixed as he sets off
   // A strike on its way: `started` once he's on the ball and facing near enough where it's going (`to`),
   // and then the ball goes `t` s later, as the boot meets it
   windup: { t: number; fn: () => void; reachable?: boolean; again?: boolean; started: boolean; to: Point | null; waitT: number } | null = null;
@@ -415,6 +416,9 @@ export class Match {
   private pending: { kind: SetPieceKind; team: Team; x: number; z: number } | null = null; // restart to come
   private spot: Point | null = null; // where the dead ball sits
   private spotBack = 0; // how far behind it the taker stands
+  // where each player goes for a corner, a penalty or a free kick near goal (see arrange);
+  // `hold`: a job of his own (rest defence, a post, the outlet), so he doesn't go marking
+  private jobs = new Map<Player, { x: number; z: number; hold: boolean }>();
   private sendOffNext: Player | null = null;
   private lastConceded: Team;
   private gkFeet = false; // the keeper has a back-pass at his feet (no hands)
@@ -748,7 +752,7 @@ export class Match {
     if (this.ball.owner !== p || p.windup || p.runup) return;
     // dead-ball kicks are taken with a run-up: he jogs in from a few paces back and strikes it on the move
     if (anim !== 'throw' && p.frozen && this.setPieceKind && RUN_UP.includes(this.setPieceKind)) {
-      p.runup = { fn };
+      p.runup = { fn, dx: p.dirX, dz: p.dirZ, t: 0 };
       p.strikeKind = 'kick';
       p.striking = p.footed === Footed.Left ? Footed.Left : Footed.Right; // (a dead ball: his better foot)
       return;
@@ -972,15 +976,20 @@ export class Match {
     } else if (p.runup && this.spot) {
       // run up to the dead ball, to where his standing foot goes beside it; the strike starts as he
       // arrives (he slows to a stop through it, so it starts a little before)
+      // (worked out from the line he set off on, not the way he's facing now: turning as he runs
+      // would move the spot, and he'd chase it round and round the ball)
+      const ru = p.runup;
+      ru.t += dt;
       const at = p.model.strikeSpot(p.strikeKind, p.striking);
-      const fx = p.dirX, fz = p.dirZ;
+      const fx = ru.dx, fz = ru.dz;
       const tx = this.spot.x - (fx * at.z + fz * at.x), tz = this.spot.z - (fz * at.z - fx * at.x);
       const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz);
       const sp = Math.min(5.2, Math.hypot(p.vx, p.vz) + 9 * dt, d * 4 + 0.6);
       p.vx = (dx / (d || 1)) * sp;
       p.vz = (dz / (d || 1)) * sp;
-      p.facing += clamp(angDiff(Math.atan2(this.spot.x - p.x, this.spot.z - p.z), p.facing), -6 * dt, 6 * dt);
-      if (d < Math.max(0.15, sp * KICK_CONTACT * 0.35)) {
+      p.facing += clamp(angDiff(Math.atan2(fx, fz), p.facing), -6 * dt, 6 * dt);
+      if (d < Math.max(0.15, sp * KICK_CONTACT * 0.35) || ru.t > 2) {
+        if (ru.t > 2) { p.x = tx; p.z = tz; p.facing = Math.atan2(fx, fz); } // (never left circling it)
         p.windup = { t: KICK_CONTACT, fn: p.runup.fn, started: true, to: null, waitT: 0 };
         p.runup = null;
         p.model.kick(p.striking, p.strikeKind);
@@ -2098,6 +2107,7 @@ export class Match {
     if (bi < 0) return null;
     team.bench.splice(bi, 1);
     team.subsLeft--;
+    team.subbedOff.push(out.data);
     const kit = out.slot.role === 'GK' ? team.club.gk : team.club.kit;
     const p = new Player(team, out.idx, inData, out.slot, kit);
     // comes on from the halfway line on the near touchline
@@ -2282,6 +2292,77 @@ export class Match {
       if (gk) { gk.x = gx - s * 0.3; gk.z = 0; gk.facing = s > 0 ? -Math.PI / 2 : Math.PI / 2; }
     }
     if (kind === 'freekick' && Math.hypot(gx - x, z) < 35) this.buildWall(team.opp, x, z, gx);
+    this.arrange(kind, team, taker, x, z);
+    // a computer taker gives everyone time to take up their places for one into the box
+    if (!taker.human && this.jobs.size) taker.aiT = Math.max(taker.aiT, rand(1.6, 2.2));
+  }
+
+  // Set pieces near goal: not everyone in the box. The side taking it leaves a rest defence back
+  // (the two deepest, and a third if there are enough), a man on the edge of the box for the
+  // clearance and, now and then, one short; the rest attack the near post, far post, six-yard line
+  // and the spot. The side defending it leaves a striker up for the break, puts men on the near post
+  // and the six-yard line, one on the edge of the box, and marks the rest man for man.
+  arrange(kind: SetPieceKind, team: Team, taker: Player, x: number, z: number) {
+    this.jobs.clear();
+    const gx = team.side * this.L / 2, dir = team.side, k = this.k;
+    const near = kind === 'corner' || kind === 'penalty' || (kind === 'freekick' && Math.hypot(gx - x, z) < 35);
+    if (!near) return;
+    const side = Math.sign(z || 1); // the corner's side (for a free kick, the side it's on)
+    const job = (p: Player, jx: number, jz: number, hold = true) =>
+      this.jobs.set(p, { x: clamp(jx, -this.L / 2 + 0.5, this.L / 2 - 0.5), z: clamp(jz, -this.W / 2 + 0.5, this.W / 2 - 0.5), hold });
+
+    // the side taking it: deepest first
+    const att = team.players.filter((p) => p !== taker && p.role !== 'GK' && !p.wall).sort((a, c) => a.slot.x - c.slot.x);
+    const rest = att.splice(0, att.length >= 8 ? 3 : 2);
+    rest.forEach((p, i) => {
+      if (i < 2) job(p, dir * this.L * (kind === 'penalty' ? 0.02 : 0.08), (i ? 1 : -1) * 9 * k);
+      else job(p, dir * this.L * 0.24, -side * this.W * 0.28); // a full-back, wide on the far side
+    });
+    // in the box: the biggest go in first (the six-yard line, the far post, the spot)
+    att.sort((a, c) => c.mass - a.mass);
+    if (kind === 'penalty') {
+      // round the edge of the box for the rebound, either side of the D
+      att.forEach((p, i) => job(p, gx - dir * (this.boxD + 1.3), (i % 2 ? 1 : -1) * (5 + Math.floor(i / 2) * 4) * k));
+    } else if (kind === 'corner') {
+      const spots: [number, number][] = [
+        [6, -side * 2], // six-yard line, centre
+        [5, -side * 5], // far post
+        [11, 0], // penalty spot
+        [4, side * 3.5], // near post
+        [2, side * 0.8], // on the keeper
+        [9, -side * 7], // back post, deep
+      ];
+      const edge = att.pop();
+      if (edge) job(edge, gx - dir * (this.boxD + 2.5), -side * 3 * k);
+      const short = att.length > 5 && Math.random() < 0.4 ? att.pop() : null; // one goes short
+      if (short) job(short, x - dir * 6 * k, z - side * 5 * k);
+      att.forEach((p, i) => { const [d, w] = spots[i % spots.length]; job(p, gx - dir * (d + (i >= spots.length ? 2 : 0)) * k, w * k); });
+    } else {
+      // a free kick: a line across the top of the box, ready to attack it
+      const line = this.boxD - 2 * k;
+      att.forEach((p, i) => job(p, gx - dir * (line + (i % 2) * 1.5 * k), ((i - (att.length - 1) / 2) * 4.5) * k));
+    }
+
+    // the side defending it
+    const def = team.opp.players.filter((p) => p.role !== 'GK' && !p.wall);
+    const outlet = def.filter((p) => p.role === 'FWD').sort((a, c) => c.slot.x - a.slot.x)[0] ?? def.sort((a, c) => c.slot.x - a.slot.x)[0];
+    if (outlet) job(outlet, dir * this.L * (kind === 'penalty' ? -0.02 : 0.03), outlet.slot.z * 8 * k);
+    const others = def.filter((p) => p !== outlet).sort((a, c) => c.mass - a.mass);
+    if (kind === 'penalty') {
+      others.forEach((p, i) => job(p, gx - dir * (this.boxD + 1.3), (i % 2 ? -1 : 1) * (4 + Math.floor(i / 2) * 4) * k));
+      return;
+    }
+    const zonal: [number, number][] = kind === 'corner'
+      ? [[1.2, side * 3.4], [5.5, 0], [5.5, -side * 3]] // near post, the six-yard line
+      : [[6, 0]]; // (a free kick: the wall and the keeper do most of it)
+    const edgeMan = others.find((p) => p.role === 'MID') ?? others[others.length - 1];
+    if (edgeMan) job(edgeMan, gx - dir * (this.boxD + 1), side * 2 * k);
+    let zi = 0;
+    for (const p of others) {
+      if (p === edgeMan) continue;
+      if (zi < zonal.length) { const [d, w] = zonal[zi++]; job(p, gx - dir * d * k, w * k); continue; }
+      job(p, gx - dir * 8 * k, p.slot.z * this.boxW * 0.7, false); // marking: picks up a man from here
+    }
   }
 
   buildWall(def: Team, x: number, z: number, gx: number) {
@@ -2421,7 +2502,7 @@ export class Match {
 
   assignMarkers(t: Team, range: number) {
     const b = this.ball;
-    const markers = t.players.filter((p) => p.role !== 'GK' && p.role !== 'FWD' && !p.human && !this.chasers.has(p) && !this.covers.has(p) && !p.wall);
+    const markers = t.players.filter((p) => p.role !== 'GK' && p.role !== 'FWD' && !p.human && !this.chasers.has(p) && !this.covers.has(p) && !p.wall && !this.jobs.get(p)?.hold);
     const targets = t.opp.players.filter((o) => o.role !== 'GK' && o !== b.owner);
     const taken = new Set();
     markers.sort((a, c) => (a.role === 'DEF' ? 0 : 1) - (c.role === 'DEF' ? 0 : 1));
@@ -2600,7 +2681,8 @@ export class Match {
       const tx = mx * w + sx * (1 - w), tz = mz * w + sz * (1 - w);
       return this.go(p, tx, tz, Math.hypot(tx - p.x, tz - p.z) > 4);
     }
-    this.go(p, sx, sz, Math.hypot(sx - p.x, sz - p.z) > (teamHas && this.breaking(t) && p.role !== 'DEF' ? 2 : 7));
+    const hurry = b.owner?.frozen && this.jobs.has(p) ? 3 : 7; // getting into place for a set piece
+    this.go(p, sx, sz, Math.hypot(sx - p.x, sz - p.z) > (teamHas && this.breaking(t) && p.role !== 'DEF' ? 2 : hurry));
   }
 
   // Just won the ball, and told to hit on the break: the team runs forward together
@@ -2615,24 +2697,9 @@ export class Match {
     const b = this.ball;
     const gx = s * L / 2;
 
-    // set pieces near goal: attackers flood the box, defenders drop onto the six-yard line area
-    if (this.setPieceKind === 'corner' || this.setPieceKind === 'penalty') {
-      const taker = b.owner;
-      if (taker && taker.frozen) {
-        const attacking = taker.team === p.team;
-        const goalX = attacking ? gx : -gx;
-        const dir = attacking ? s : -s;
-        if (this.setPieceKind === 'penalty') {
-          return [goalX - dir * (this.boxD + 1.5 + (p.idx % 3)), clamp(p.slot.z * this.boxW, -this.boxW, this.boxW)];
-        }
-        if (attacking) {
-          if (p.role === 'DEF' && p.idx % 2 === 0) return [-s * L * 0.05, p.slot.z * W * 0.3]; // stay back
-          const lane = (p.idx * 37) % 9;
-          return [goalX - dir * (5 + (lane % 4) * 2.2) * this.k, ((lane - 4) * 1.8) * this.k];
-        }
-        return [goalX - dir * (3 + (p.role === 'DEF' ? 0 : 3)) * this.k, p.slot.z * this.boxW * 0.6];
-      }
-    }
+    // set pieces near goal: everyone has a job (see arrange)
+    const job = b.owner?.frozen && this.setPieceKind !== 'goalkick' && this.setPieceKind !== 'throw' ? this.jobs.get(p) : undefined;
+    if (job) return [job.x, job.z];
 
     if (this.setPieceKind === 'goalkick' && b.owner?.frozen && b.owner.team === p.team && p.role === 'DEF') {
       // centre-backs split to the corners of the box, full-backs push wide
@@ -2689,6 +2756,12 @@ export class Match {
     const s = p.team.side, gx = s * this.L / 2;
     const kind = this.setPieceKind;
     const dGoal = Math.hypot(gx - p.x, p.z);
+    // one into the box: wait (a few seconds at most) for most of them to be in their places
+    if (this.jobs.size && this.stateT < 5.5) {
+      let off = 0;
+      for (const [m, j] of this.jobs) if (j.hold && !m.human && Math.hypot(j.x - m.x, j.z - m.z) > 3) off++;
+      if (off > 3) return;
+    }
     if (kind === 'corner') return this.act(p, () => this.cross(p), 'kick', { x: this.goalOf(p).x - p.team.side * 8, z: 0 });
     if (kind === 'goalkick') {
       // wait for the defenders to get into position (a few seconds at most)

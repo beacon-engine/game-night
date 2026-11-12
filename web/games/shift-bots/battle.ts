@@ -454,8 +454,12 @@ export class Battle {
   // ahead of it; further back and higher as a robot
   private chase(v: View, dt: number) {
     const b = v.bot, sp = Math.hypot(b.vx, b.vz), robot = b.shift > 0.5;
-    const want = robot ? (b.aim > 0.3 ? b.yaw : sp > 1 ? Math.atan2(b.vx, b.vz) : v.yaw) : b.yaw;
-    const rate = robot ? CHASE.swing * Math.min(1, sp / 4 + (b.aim > 0.3 ? 0.6 : 0)) : CHASE.swing * 1.4 * Math.min(1, sp / 8);
+    // (a robot's stick goes the way the camera looks, so the camera only comes round behind it when it's
+    // walking forwards, or aiming: walking sideways or backing off, it holds still, or the way the stick
+    // points would keep turning and the robot would walk round in circles)
+    const going = Math.atan2(b.vx, b.vz), ahead = Math.max(0, Math.cos(angleTo(v.yaw, going)));
+    const want = robot ? (b.aim > 0.3 ? b.yaw : sp > 1 ? going : v.yaw) : b.yaw;
+    const rate = robot ? CHASE.swing * (b.aim > 0.3 ? 0.8 : Math.min(1, sp / 4) * ahead * ahead) : CHASE.swing * 1.4 * Math.min(1, Math.abs(b.speed) / 8 + 0.15);
     v.yaw += THREE.MathUtils.clamp(angleTo(v.yaw, want), -rate * dt, rate * dt);
     const fwd = new THREE.Vector3(Math.sin(v.yaw), 0, Math.cos(v.yaw));
     const back = THREE.MathUtils.lerp(CHASE.carBack, CHASE.robotBack, b.shift), up = THREE.MathUtils.lerp(CHASE.carUp, CHASE.robotUp, b.shift);
