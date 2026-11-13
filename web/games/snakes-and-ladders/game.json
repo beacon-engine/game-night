@@ -2,9 +2,8 @@
   "name": "Snakes and Ladders",
   "icon": "🐍",
   "tagline": "Climb the ladders, dodge the snakes",
-  "players": "1–6",
+  "players": "1–4",
   "category": "Board",
   "needs": "light",
-  "order": 96,
-  "status": "soon"
+  "order": 96
 }

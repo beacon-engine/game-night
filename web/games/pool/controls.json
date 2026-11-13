@@ -1,0 +1,24 @@
+{
+  "_help": "Which pad button does what. The stick aims (or, with the cue ball in hand, moves it). Actions: shoot (hold for power, let go to shoot), cancel (drop the shot; with the ball in hand, pick the cue ball up again), spin (tap: the next spin; hold with the stick: move the tip), camera (behind the cue or overhead), fineLeft and fineRight (tiny turns of the aim), place (put the cue ball down).",
+  "aim": {
+    "bolt": "shoot",
+    "drop": "cancel",
+    "leaf": "spin",
+    "star": "camera",
+    "l1": "fineLeft",
+    "r1": "fineRight"
+  },
+  "place": {
+    "bolt": "place",
+    "star": "camera"
+  },
+  "labels": {
+    "shoot": "Shoot (hold)",
+    "cancel": "Cancel",
+    "spin": "Spin",
+    "camera": "Camera",
+    "fineLeft": "Fine left",
+    "fineRight": "Fine right",
+    "place": "Put it here"
+  }
+}

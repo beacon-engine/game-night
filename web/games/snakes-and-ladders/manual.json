@@ -1,0 +1,20 @@
+{
+  "intro": "A race up a board of 100 squares, all on the TV. Land at the foot of a ladder and you climb it; land on a snake's head and you slide down to its tail. Two to four players: computer players fill the empty seats.",
+  "inspiredBy": "Snakes and Ladders comes from Moksha Patam, a game played in India for centuries. Our boards, snakes and ladders are our own.",
+  "goal": "Be the first to reach square 100, home. Play on for second, third and fourth place, or stop when the first one gets home: you choose in the lobby.",
+  "howToPlay": [
+    "Join with your phone. In the lobby, choose how many computer players to add, the board and the rules, then press {bolt} to start.",
+    "Everyone starts off the board, beside square 1. The turn order is on the right of the screen.",
+    "On your turn, press {bolt} to roll. Your token hops forward that many squares: along the bottom row, up, back along the next, and so on.",
+    "Land at the foot of a ladder and you climb to its top. Land on a snake's head and you slide down to its tail.",
+    "Exact roll to finish (on unless you turn it off): you need the exact number to land on 100. Roll too many and you bounce back off it.",
+    "Six rolls again (on unless you turn it off): roll a 6 and you roll again. Three 6s in a row and you go back to where your turn began.",
+    "Computer players roll by themselves. Press pause (❚❚) to stop or leave."
+  ],
+  "steering": "Nothing to steer: your phone just rolls",
+  "tips": [
+    "It's all luck, so anyone can win: good for small children and big groups.",
+    "Meadow is the gentlest board and Temple the wildest. Random makes a new fair board every game.",
+    "Near the top, the exact roll matters: from 97, only a 3 gets you home."
+  ]
+}

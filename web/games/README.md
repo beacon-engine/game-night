@@ -20,7 +20,7 @@ Pick one and go.
 | 🏏 | [Cricket](cricket) | 1–4 | Exhibition, League, Groups + knockout | coming soon |
 | 🎾 | [Long Tennis](long-tennis) | 1–4 | Exhibition, Cup, Tour | coming soon |
 | 🏓 | [Table Tennis](table-tennis) | 1–4 | Exhibition, Cup, Groups + knockout | coming soon |
-| 🎱 | [Pool](pool) | 1–2 | Exhibition, Cup, Ladder | coming soon |
+| 🎱 | [Pool](pool) | 1–2 | Single frame or best of 3/5, saved records (Cup, Ladder next) | **playable** |
 | 🏐 | [Beach Volleyball](volleyball) | 1–4 | Exhibition, Cup, Tour | coming soon |
 | 🥊 | [Boxing](boxing) | 1–2 | Exhibition, Title fight, Tournament, Career | coming soon |
 | ⛳ | [Crazy Golf](golf) | 1–8 | Exhibition, Tournament | coming soon |
@@ -48,19 +48,19 @@ Pick one and go.
 | 🕵️ | [Heist](heist) | 2–4 | Campaign, Score attack | coming soon |
 | | **Arcade** | | | |
 | 🚀 | [Space Shooter](space-shooter) | 1–4 | Arcade, Score attack | **playable** (in progress) |
-| 🧱 | [Bricks](bricks) | 1–4 | Arcade, Versus | coming soon |
+| 🧱 | [Bricks](bricks) | 1–4 | Co-op arcade, Versus (first to 1/2/3), saved best scores | **playable** |
 | 🐍 | [Snake Battle](snake-battle) | 2–8 | Party, Cup | coming soon |
 | 👻 | [Cat and Mouse](cat-and-mouse) | 1–5 | Party, Score attack | coming soon |
 | ☄️ | [Space Rocks](space-rocks) | 1–4 | Arcade, Versus | coming soon |
 | 🎰 | [Pinball](pinball) | 1–4 | Arcade, Tournament | coming soon |
 | 🐸 | [Road Hopper](road-hopper) | 1–8 | Party, Score attack | coming soon |
 | | **Board** | | | |
-| ⛀ | [Checkers](checkers) | 1–2 | Ladder | coming soon |
+| ⛀ | [Checkers](checkers) | 1–2 | Saved records (Ladder next) | **playable** |
 | 🔴 | [Four in a Row](four-in-a-row) | 1–2 | Ladder | coming soon |
 | ⚫ | [Reversi](reversi) | 1–2 | Ladder | coming soon |
 | 🎲 | [Backgammon](backgammon) | 1–2 | Match to N points | coming soon |
 | 🟡 | [Ludo](ludo) | 2–4 | Party | coming soon |
-| 🐍 | [Snakes and Ladders](snakes-and-ladders) | 2–4 | Party | coming soon |
+| 🐍 | [Snakes and Ladders](snakes-and-ladders) | 1–4 | Party (every place or first home), saved records | **playable** |
 | 🁫 | [Dominoes](dominoes) | 2–4 | Match to N points | coming soon |
 | 🫘 | [Mancala](mancala) | 1–2 | Ladder | coming soon |
 

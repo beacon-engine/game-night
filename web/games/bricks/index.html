@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bricks · Beacon Arcade</title>
+<link rel="icon" href="/brand/mark.svg">
+<link rel="stylesheet" href="/brand/brand.css">
+<style>
+  html, body { height: 100%; overflow: hidden; background: var(--ink-0); }
+  #board { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+
+  /* ---- lobby: over the computer's game ---- */
+  #lobby { position: fixed; inset: 0; display: grid; grid-template-columns: minmax(400px, 36%) 1fr; pointer-events: none; }
+  #lobby .side { display: flex; flex-direction: column; gap: 16px; padding: 32px 40px; background: rgb(7 8 11 / 0.94); border-right: 1px solid var(--line); overflow-y: auto; pointer-events: auto; }
+  #lobby .back { align-self: flex-start; }
+  #players { display: flex; flex-direction: column; gap: 8px; }
+  .player { display: flex; align-items: center; gap: 12px; }
+  .player .chip { flex-shrink: 0; }
+  #settings { display: flex; flex-direction: column; }
+  .setting { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-left: 3px solid transparent;
+    font: 700 22px/1 var(--font-display); text-transform: uppercase; color: var(--chalk-2); }
+  .setting.sel { background: var(--ink-2); border-left-color: var(--volt); color: var(--chalk); }
+  .setting .value { display: flex; align-items: center; gap: 10px; }
+  .setting .value b { min-width: 5.5em; text-align: center; color: var(--chalk); }
+  .setting:not(.sel) .glyph { visibility: hidden; }
+  .hi { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; padding: 4px 0; font: 600 14px/1.2 var(--font-ui); color: var(--chalk-2); }
+  .hi b { font: 800 16px/1.2 var(--font-display); color: var(--chalk); }
+  .hi.me { color: var(--volt); }
+  #lobby .join { display: flex; gap: 14px; align-items: center; padding: 12px; margin-top: auto; }
+  #lobby .join .qr { width: 88px; height: 88px; padding: 5px; }
+  #lobby .join .url { font: 600 13px/1.3 var(--font-ui); word-break: break-all; margin-top: 4px; }
+  #lobby .help { position: absolute; right: 28px; bottom: 24px; padding: 12px 16px; }
+
+  /* ---- co-op: the score on the left, the balls and the team on the right ---- */
+  #hud { position: fixed; inset: 0; pointer-events: none; }
+  #hudL, #hudR { position: absolute; top: 0; bottom: 0; display: flex; flex-direction: column; gap: 18px; padding: 26px 22px; }
+  #hudL { left: 0; }
+  #hudR { right: 0; align-items: flex-end; text-align: right; }
+  .caption-s { font: 700 12px/1 var(--font-ui); text-transform: uppercase; letter-spacing: 0.12em; color: var(--chalk-3); margin-bottom: 6px; }
+  .score-big { font: 900 46px/1 var(--font-display); letter-spacing: 0.01em; }
+  .score-mid { font: 800 26px/1 var(--font-display); color: var(--chalk-2); }
+  #wall { font: 800 24px/1.1 var(--font-display); text-transform: uppercase; }
+  #left { font: 600 14px/1.2 var(--font-ui); color: var(--chalk-2); margin-top: 6px; }
+  #combo { font: 900 64px/1 var(--font-display); color: var(--volt); opacity: 0; transition: opacity 0.2s; }
+  #combo.on { opacity: 1; }
+  #combo small { display: block; font: 700 13px/1 var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--chalk-2); margin-top: 4px; }
+  #lives { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  #lives i { width: 18px; height: 18px; border-radius: 50%; background: var(--chalk); box-shadow: 0 0 0 3px rgb(243 240 232 / 0.15); }
+  #crew { display: flex; flex-direction: column; gap: 8px; align-items: stretch; width: 100%; }
+  .crew { display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto auto; align-items: center; column-gap: 10px; row-gap: 4px;
+    padding: 8px 12px 8px 0; border-radius: var(--r-2); background: rgb(14 16 22 / 0.9); border: 1px solid var(--line); overflow: hidden; text-align: left; }
+  .crew > b { grid-row: span 2; align-self: stretch; display: flex; align-items: center; padding: 0 10px; background: var(--pc); color: var(--ink-0); font: 800 13px/1 var(--font-ui); }
+  .crew .n { font: 700 14px/1 var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .crew .s { font: 800 20px/1 var(--font-display); text-align: right; }
+  .crew .pws { grid-column: 2 / span 2; display: flex; gap: 6px; min-height: 0; }
+  .pw { position: relative; font: 900 13px/1 var(--font-display); color: var(--ink-0); background: var(--pw); border-radius: 9px; padding: 3px 10px 4px; overflow: hidden; }
+  .pw i { position: absolute; left: 0; bottom: 0; height: 3px; background: rgb(7 8 11 / 0.6); }
+  .slow { font: 800 14px/1 var(--font-ui); color: var(--leaf); }
+
+  /* ---- versus: the round along the top ---- */
+  #vshud { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: center; align-items: baseline; gap: 22px; padding: 14px 24px; }
+  #vsround { font: 900 30px/1 var(--font-display); text-transform: uppercase; }
+  #vstarget { font: 700 14px/1 var(--font-ui); text-transform: uppercase; letter-spacing: 0.12em; color: var(--chalk-2); }
+  #vstime { font: 800 26px/1 var(--font-display); color: var(--chalk-2); min-width: 3em; }
+  #vstime.low { color: var(--bad); }
+
+  #callout { position: fixed; left: 0; right: 0; top: 40%; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    pointer-events: none; opacity: 0; transition: opacity 0.25s; text-align: center; }
+  #callout.show { opacity: 1; }
+  #callout .big { font: 900 clamp(54px, 8vw, 120px)/0.92 var(--font-display); text-transform: uppercase; text-shadow: 0 4px 30px rgb(7 8 11 / 0.9), 0 0 2px rgb(7 8 11); }
+  #callout.small .big { font-size: clamp(40px, 5vw, 64px); }
+  #callout .sub { font: 600 20px/1.3 var(--font-ui); color: var(--chalk-2); text-shadow: 0 2px 10px rgb(7 8 11); }
+
+  /* ---- results, pause ---- */
+  .overlay { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 20px; padding: 6vh 8vw;
+    background: rgb(7 8 11 / 0.88); backdrop-filter: blur(8px); }
+  #standings { display: flex; flex-direction: column; gap: 6px; max-width: 760px; }
+  .standing { display: grid; grid-template-columns: 34px auto 1fr auto; align-items: center; gap: 14px; padding: 10px 14px; background: var(--ink-1); border: 1px solid var(--line); border-radius: var(--r-2); }
+  .standing.first { border-left: 3px solid var(--volt); }
+  .standing > .num:first-child { font: 800 22px/1 var(--font-display); color: var(--chalk-3); }
+  .standing > b { font: 800 26px/1 var(--font-display); text-align: right; }
+  #table { display: flex; flex-direction: column; gap: 4px; max-width: 760px; }
+  #table .hi { grid-template-columns: 34px 1fr auto; padding: 8px 12px; background: var(--ink-1); border: 1px solid var(--line); border-radius: var(--r-2); font-size: 15px; }
+  #table .hi.me { border-left: 3px solid var(--volt); }
+  .actions { display: flex; gap: 10px; }
+
+  /* TVs (960x540 pages) */
+  @media (max-height: 640px) {
+    #lobby { grid-template-columns: 40% 1fr; }
+    #lobby .side { padding: 20px 26px; gap: 12px; }
+    .setting { font-size: 18px; padding: 9px 12px; }
+    #lobby .join .qr { width: 72px; height: 72px; }
+    .h1 { font-size: 44px; }
+    #hudL, #hudR { padding: 16px 14px; gap: 12px; }
+    .score-big { font-size: 34px; }
+    #combo { font-size: 46px; }
+  }
+  .tv .keys { display: none !important; }
+</style>
+</head>
+<body>
+  <canvas id="board"></canvas>
+
+  <div id="lobby" class="hidden">
+    <aside class="side">
+      <button class="btn back" id="back"><span class="glyph glyph-drop" title="Drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg></span> Games</button>
+      <div>
+        <span class="eyebrow">Arcade</span>
+        <h1 class="h1" style="margin-top:10px"><span class="hl-volt">Bricks</span></h1>
+      </div>
+      <div><div class="caption" style="margin-bottom:10px">Players</div><div id="players"></div></div>
+      <div id="settings"></div>
+      <div style="display:flex;gap:10px">
+        <button id="start" class="btn btn-primary btn-lg"><span class="glyph glyph-bolt" title="Bolt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span> Start</button>
+        <button id="howto" class="btn btn-lg"><span class="glyph glyph-star" title="Star"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 16.9l-5.4 2.9 1-6.1-4.4-4.3 6.1-.8z"/></svg></span> How to play</button>
+      </div>
+      <div><div class="caption" style="margin-bottom:8px">Best co-op scores</div><div id="hiscores"></div></div>
+      <div class="panel join">
+        <div class="qr" id="qr"></div>
+        <div><div class="caption">Scan to join · same Wi-Fi</div><div class="url" id="url">…</div></div>
+      </div>
+    </aside>
+    <div style="position:relative">
+      <div class="panel panel-glass help legend" id="legend"></div>
+    </div>
+  </div>
+
+  <div id="hud" class="hidden">
+    <div id="coophud">
+      <div id="hudL">
+        <div><div class="caption-s">Score</div><div class="score-big" id="score">0</div></div>
+        <div><div class="caption-s">Best</div><div class="score-mid" id="best">0</div></div>
+        <div><div id="wall"></div><div id="left"></div></div>
+        <div id="combo"></div>
+      </div>
+      <div id="hudR">
+        <div><div class="caption-s">Balls</div><div id="lives"></div></div>
+        <div id="crew"></div>
+      </div>
+    </div>
+    <div id="vshud"><span id="vsround"></span><span id="vstarget"></span><span id="vstime"></span></div>
+  </div>
+  <div id="callout"></div>
+
+  <div id="results" class="overlay hidden">
+    <span class="eyebrow" id="resultsWhy">Game over</span>
+    <h1 class="h1" id="final"></h1>
+    <div id="standings"></div>
+    <div id="table"></div>
+    <div class="actions">
+      <button class="btn btn-primary btn-lg" id="again"><span class="glyph glyph-bolt" title="Bolt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span> Play again</button>
+      <button class="btn btn-lg" id="toLobby"><span class="glyph glyph-drop" title="Drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg></span> Lobby</button>
+    </div>
+  </div>
+
+  <div id="pause" class="overlay hidden">
+    <span class="eyebrow">Bricks</span>
+    <h1 class="h1">Paused</h1>
+    <div class="legend"><span><span class="glyph glyph-bolt" title="Bolt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z"/></svg></span> Resume</span><span><span class="glyph glyph-drop" title="Drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c3.6 4.4 6.2 7.6 6.2 10.9a6.2 6.2 0 0 1-12.4 0c0-3.3 2.6-6.5 6.2-10.9z"/></svg></span> Quit to the lobby</span></div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
