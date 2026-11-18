@@ -1,0 +1,13 @@
+{
+  "_help": "Which pad button does what while playing. The stick nudges the table: flick it (nudge too often and the table tilts). Actions: left, right (the flippers), launch (hold to pull the plunger back, let go to launch).",
+  "play": {
+    "l1": "left",
+    "r1": "right",
+    "bolt": "launch"
+  },
+  "labels": {
+    "left": "Flipper",
+    "right": "Flipper",
+    "launch": "Launch"
+  }
+}

@@ -91,6 +91,23 @@
   body[data-layout=racing] #stick-base { width: 220px; height: 64px; border-radius: 32px; }
   body[data-layout=racing] #stick-base::after { inset: 8px 60px; border-radius: 24px; }
 
+  /* --- tilt to steer (racing): the phone is the wheel, the pedals stay ---------------------- */
+  #tilt { position: fixed; top: 60px; left: max(14px, env(safe-area-inset-left)); z-index: 1; height: 36px; display: none; }
+  body[data-layout=racing] #tilt { display: inline-flex; }
+  #tilt.on { background: var(--volt); border-color: var(--volt); color: var(--volt-ink); }
+  #wheel { position: absolute; left: 50%; top: 50%; width: 150px; height: 150px; margin: -75px 0 0 -75px; border-radius: 50%;
+    border: 10px solid var(--line-strong); pointer-events: none; display: none; }
+  #wheel::before { content: ''; position: absolute; left: 50%; top: -10px; width: 6px; height: 22px; margin-left: -3px; background: var(--volt); border-radius: 3px; }
+  #wheel::after { content: ''; position: absolute; left: 6px; right: 6px; top: 50%; height: 8px; margin-top: -4px; background: var(--line-strong); border-radius: 4px; }
+  body.tilting[data-layout=racing] #wheel { display: block; }
+  body.tilting[data-layout=racing] #stick-help { top: 88%; }
+  #tilt-sheet { position: fixed; inset: 0; z-index: 5; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    padding: 16px max(24px, env(safe-area-inset-right)) 16px max(24px, env(safe-area-inset-left)); background: var(--ink-0); text-align: center; }
+  #tilt-sheet.open { display: flex; }
+  #tilt-sheet h2 { margin: 0; font: 800 28px/1 var(--font-display); text-transform: uppercase; }
+  #tilt-sheet p { margin: 0; max-width: 560px; }
+  #tilt-sheet .row { display: flex; gap: 10px; margin-top: 6px; }
+
   /* which controls each layout shows */
   #dpad, #pedals { display: none; }
   body[data-layout=dpad] #dpad, body[data-layout=racing] #pedals { display: grid; }
@@ -148,7 +165,9 @@
   </div>
   <div id="hint" class="caption"></div>
 
+  <button class="btn" id="tilt">Tilt</button>
   <div id="stick-zone">
+    <div id="wheel"></div>
     <div id="stick-help" class="caption faint">Touch &amp; drag to move<br>past the ring to sprint</div>
     <div id="stick-base" hidden></div>
     <div id="stick-knob" hidden></div>
@@ -178,6 +197,13 @@
     <div class="pb" id="bS" data-button="leaf"><span class="sym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19.5C5 11 10 5 20 4c-.6 9.8-6.6 15.5-15 15.5z"/><path d="M5 19.5 13 11.5"/></svg></span><span class="lbl"></span></div>
   </div>
 
+  <div id="tilt-sheet">
+    <h2>Tilt to steer</h2>
+    <p>Hold the phone like a wheel and turn it. Phones only allow that on a secure page, so the pad moves to the game's secure address.</p>
+    <p class="muted">Your phone will say the connection isn't private. That's expected: it's the game on your Wi-Fi.
+      On iPhone tap <b>Show Details</b>, then <b>visit this website</b>. On Android tap <b>Advanced</b>, then <b>Proceed</b>. Once is enough.</p>
+    <div class="row"><button class="btn" id="tilt-cancel">Not now</button><button class="btn btn-primary" id="tilt-go">Continue</button></div>
+  </div>
   <div id="earned"></div>
   <div id="shop">
     <header>

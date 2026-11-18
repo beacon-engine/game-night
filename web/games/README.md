@@ -52,7 +52,7 @@ Pick one and go.
 | 🐍 | [Snake Battle](snake-battle) | 2–8 | Party, Cup | coming soon |
 | 👻 | [Cat and Mouse](cat-and-mouse) | 1–5 | Party, Score attack | coming soon |
 | ☄️ | [Space Rocks](space-rocks) | 1–4 | Arcade, Versus | coming soon |
-| 🎰 | [Pinball](pinball) | 1–4 | Arcade, Tournament | coming soon |
+| 🎰 | [Pinball](pinball) | 1–4 | Arcade (turns, saved best scores; Tournament next) | **playable** (in progress) |
 | 🐸 | [Road Hopper](road-hopper) | 1–8 | Party, Score attack | coming soon |
 | | **Board** | | | |
 | ⛀ | [Checkers](checkers) | 1–2 | Saved records (Ladder next) | **playable** |
@@ -175,6 +175,24 @@ guard.watchCanvas(renderer.domElement); // out of graphics memory: end the game 
 If the game can't hold its target, `onStruggle(1)`, `onStruggle(2)`… ask it to lower its detail; after
 that, Beacon Arcade stops the game and goes back to the games. Football is the example. To see your game as a
 weak screen would, open it with `?device=light` (in a browser; the TV app ignores it).
+
+### Writing a game's rules in Odin
+
+A game can keep its simulation (the rules and physics) in [Odin](https://odin-lang.org), compiled to
+WebAssembly, and do the rest (lobby, drawing, sound, phones) in TypeScript like any other game:
+
+```
+web/games/my-game/
+  odin/           the simulation in Odin (never shipped); `make wasm` builds it into...
+  sim.wasm        ...this, which is kept in git so building Beacon Arcade doesn't need Odin
+  sim.ts          loads sim.wasm, passes the controls in, reads the state out
+```
+
+Install Odin (`brew install odin`) and run `make dev`: saving a `.odin` file rebuilds that game's `sim.wasm`; reload
+to play it.
+[Pinball](pinball) is the worked example: [pinball/odin/README.md](pinball/odin/README.md) explains how the page
+and the simulation share their state, with a short Odin primer. Tanks, Bomb Maze, Space Rocks and Puck Duel have
+a starter `odin/` folder.
 
 ## Originality
 

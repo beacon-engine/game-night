@@ -49,4 +49,8 @@ What it needs before `index.html` goes in and it shows up as playable on the gam
 
 2D canvas is enough, or a simple 3D table.
 
+To be written in Odin: the rules and physics go in `odin/` (a starter that builds is there), compiled to
+`sim.wasm` with `make wasm`; the page (`main.ts`) does the lobby, drawing and sound. [Pinball](../pinball) is the
+worked example.
+
 See [Building a game](../README.md) for how a game folder works and how to run it while you work on it.
