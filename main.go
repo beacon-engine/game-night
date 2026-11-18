@@ -5,6 +5,7 @@
 //	beacon-arcade -no-open         don't open a browser
 //	beacon-arcade -dev             serve web/dist from disk (with `make dev`); -web DIR for another folder
 //	beacon-arcade -host 192.0.2.7  the address phones should use (detected if left out)
+//	beacon-arcade -tls-port 0      no HTTPS side for the phones (it's -port + 1; tilt to steer needs it)
 //	beacon-arcade -version         print the version
 package main
 
@@ -35,6 +36,7 @@ func main() {
 	noOpen := flag.Bool("no-open", false, "don't open the game select page in a browser")
 	dev := flag.Bool("dev", false, "serve web/dist from disk instead of the built-in copy (same as -web web/dist)")
 	webDir := flag.String("web", "", "serve the web files from this folder instead of the built-in copy")
+	tlsPort := flag.Int("tls-port", -1, "HTTPS port for the phones, which tilt to steer needs (default -port + 1; 0 turns it off)")
 	host := flag.String("host", "", "this machine's address on the Wi-Fi, for the phones (detected if left out)")
 	exitWithStdin := flag.Bool("exit-with-stdin", false, "stop when stdin closes (an app running this as a child process keeps it open)")
 	userDir := flag.String("dir", defaultUserDir(), "folder with extra games, or files that replace built-in ones")
@@ -67,6 +69,18 @@ func main() {
 		log.Fatalf("Port %d is already in use (is Beacon Arcade already running?). Try another: -port %d", *port, *port+1)
 	} else if err != nil {
 		log.Fatal(err)
+	}
+
+	// The HTTPS side is a nice-to-have (tilt to steer): if it can't start, the pads still work
+	if *tlsPort < 0 {
+		*tlsPort = *port + 1
+	}
+	if *tlsPort > 0 {
+		if tln, err := srv.ListenTLS(*tlsPort, *userDir); err != nil {
+			log.Printf("Tilt to steer is off: %v", err)
+		} else {
+			go func() { log.Printf("Tilt to steer stopped: %v", srv.Serve(tln)) }()
+		}
 	}
 
 	url := fmt.Sprintf("http://localhost:%d", *port)

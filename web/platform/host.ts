@@ -18,6 +18,7 @@ export interface GameInfo {
 
 export interface HostInfo {
   padUrl: string; // what phones open to join
+  tiltUrl: string; // the pad over HTTPS, where phones allow tilt to steer ('' when it's off)
   qr: string; // that url as an svg QR code
   version: string; // of beacon-arcade, e.g. 'v1.2.0' ('dev' when built without a tag)
 }

@@ -54,7 +54,13 @@ No phones? Two keyboard players work too: `WASD` + `F G H T` + Left Shift, or th
 beacon-arcade                 start (and open the browser)
 beacon-arcade -port 8080      another port (PORT=8080 works too)
 beacon-arcade -no-open        don't open a browser
+beacon-arcade -tls-port 0     no HTTPS side for the phones (it's on -port + 1)
 ```
+
+**Tilt to steer.** In the racing games, the **Tilt** button on the phone turns it into the wheel (the pedals
+stay on screen). Phones only let a page read the tilt over HTTPS, so the pad moves to `https://<laptop>:10001`,
+which uses a certificate Beacon Arcade makes itself (kept in your folder as `pad-cert.pem`). Each phone
+warns once that the connection isn't private; tap through it (it's the game on your own Wi-Fi).
 
 ### Build it yourself
 Needs [Go](https://go.dev) 1.23+ and [Node.js](https://nodejs.org) 22+ (Node is only for building the web pages).

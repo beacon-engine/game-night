@@ -1,7 +1,7 @@
 // The phone controller. The same pad for every game: a floating stick on the left, the four
 // face buttons and two shoulder buttons on the right. The game decides what they say.
 import {
-  $, BIT, buyItem, CLOSE_REPLACED, escapeHtml, FACE_BITS, keepAwake, shopItems, socketUrl, starsLabel, starsOf,
+  $, BIT, buyItem, hostInfo, CLOSE_REPLACED, escapeHtml, FACE_BITS, keepAwake, shopItems, socketUrl, starsLabel, starsOf,
   type Button, type PadLayout, type PadScreen, type PadToServer, type ServerToPad, type ShopItem,
 } from '@platform';
 
@@ -13,6 +13,15 @@ const store = {
   get: (k: string) => { try { return localStorage.getItem(`gamenight.${k}`) ?? ''; } catch { return ''; } },
   set: (k: string, v: string) => { try { localStorage.setItem(`gamenight.${k}`, v); } catch { /* private mode */ } },
 };
+
+// Arriving from the plain pad to tilt to steer (see the Tilt button): HTTPS is another origin with
+// its own storage, so the player and their name come along in the address.
+const handoff = new URLSearchParams(location.hash.slice(1));
+if (handoff.has('tilt')) {
+  for (const k of ['id', 'name']) if (handoff.get(k)) store.set(k, handoff.get(k)!);
+  store.set('tilt', '1');
+  history.replaceState(null, '', location.pathname + location.search);
+}
 
 let id: string | null = store.get('id') || null;
 let name = store.get('name');
@@ -87,7 +96,13 @@ function setLayout(next: PadLayout) {
   buttons = 0;
   for (const el of document.querySelectorAll('.down')) el.classList.remove('down');
   releaseStick();
-  $('stick-help').innerHTML = next === 'racing' ? 'Slide sideways to steer' : 'Touch &amp; drag to move<br>past the ring to sprint';
+  stickHelp();
+}
+
+function stickHelp() {
+  $('stick-help').innerHTML = layout !== 'racing' ? 'Touch &amp; drag to move<br>past the ring to sprint'
+    : !tiltOn ? 'Slide sideways to steer'
+    : tiltLive ? 'Turn the phone to steer' : 'Tap here to start tilt';
   $('stick-help').hidden = false;
 }
 
@@ -121,7 +136,7 @@ const zone = $('stick-zone'), base = $('stick-base'), knob = $('stick-knob');
 let stickId: number | null = null, ox = 0, oy = 0;
 
 zone.addEventListener('pointerdown', (e) => {
-  if (stickId !== null) return;
+  if (stickId !== null || (tiltOn && layout === 'racing')) return;
   stickId = e.pointerId;
   zone.setPointerCapture(e.pointerId);
   const r = zone.getBoundingClientRect();
@@ -193,6 +208,100 @@ for (const [el, bit] of pressables) {
   };
   el.addEventListener('pointerup', up);
   el.addEventListener('pointercancel', up);
+}
+
+// --- Tilt to steer (racing) -------------------------------------------------------------------
+// Hold the phone like a wheel: the steering is how far "up" leans off the top of the screen, which
+// doesn't care how far back the phone is tipped. Phones only hand out the motion sensors on HTTPS,
+// so on the plain pad the Tilt button first moves over to the server's HTTPS side.
+const TILT_LOCK = 35; // degrees of turn for full lock
+const TILT_DEAD = 3; // degrees either side of straight that still count as straight
+const secure = location.protocol === 'https:';
+let tiltOn = secure && store.get('tilt') === '1';
+let tiltLive = false; // the sensor is talking to us
+let gx = 0, gy = 0; // gravity across the screen (x right, y up), smoothed
+
+function onMotion(e: DeviceMotionEvent) {
+  const g = e.accelerationIncludingGravity;
+  if (g?.x == null || g.y == null) return;
+  if (!tiltLive) { tiltLive = true; stickHelp(); }
+  // the sensor's axes are the phone's (portrait); turn them to the screen's as it's held
+  const a = ((screen.orientation?.angle ?? (window as { orientation?: number }).orientation ?? 0) * Math.PI) / 180;
+  gx += (g.x * Math.cos(a) - g.y * Math.sin(a) - gx) * 0.3;
+  gy += (g.x * Math.sin(a) + g.y * Math.cos(a) - gy) * 0.3;
+  if (!tiltOn || layout !== 'racing' || $('shop').classList.contains('open')) return;
+  if (Math.hypot(gx, gy) < 2) return; // lying flat: there's no wheel to read
+  // (some phones report the vector the other way round: past a quarter turn, that's what it is)
+  let deg = (Math.atan2(gx, gy) * 180) / Math.PI;
+  if (deg > 90) deg -= 180;
+  else if (deg < -90) deg += 180;
+  // turning right leans "up" to the left of the screen
+  const steer = -Math.sign(deg) * Math.min(1, Math.max(0, Math.abs(deg) - TILT_DEAD) / (TILT_LOCK - TILT_DEAD));
+  stick.x = Math.round(steer * 50) / 50; // (in steps, so a shaky hand doesn't send a stream of messages)
+  stick.y = 0;
+  $('wheel').style.transform = `rotate(${stick.x * TILT_LOCK}deg)`;
+  flush();
+}
+
+// Needs a tap on iPhone (it asks the player); false if motion access isn't given.
+async function startTilt() {
+  const ask = (DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> }).requestPermission;
+  try {
+    if (ask && (await ask.call(DeviceMotionEvent)) !== 'granted') return false;
+  } catch {
+    return false; // not from a tap, or turned down
+  }
+  addEventListener('devicemotion', onMotion);
+  return true;
+}
+
+function setTilt(on: boolean) {
+  tiltOn = on;
+  store.set('tilt', on ? '1' : '');
+  document.body.classList.toggle('tilting', on);
+  $('tilt').classList.toggle('on', on);
+  stick.x = 0;
+  $('wheel').style.transform = '';
+  flush();
+  stickHelp();
+}
+
+async function tryTilt(tapped = true) {
+  if (await startTilt()) {
+    // no reading soon after: there's no sensor to read
+    setTimeout(() => {
+      if (tiltOn && !tiltLive) { setTilt(false); $('stick-help').textContent = "This phone can't tilt to steer"; }
+    }, 1500);
+  } else if (tiltOn && tapped) {
+    $('stick-help').textContent = 'Motion access was refused. Close the browser and try again.';
+  }
+}
+
+$('tilt').addEventListener('click', () => {
+  navigator.vibrate?.(12);
+  if (secure) {
+    setTilt(!tiltOn);
+    if (tiltOn && !tiltLive) tryTilt();
+    return;
+  }
+  releaseStick();
+  $('tilt-sheet').classList.add('open');
+});
+$('tilt-cancel').addEventListener('click', () => $('tilt-sheet').classList.remove('open'));
+$('tilt-go').addEventListener('click', async () => {
+  const { tiltUrl } = await hostInfo().catch(() => ({ tiltUrl: '' }));
+  if (!tiltUrl) {
+    $('tilt-sheet').classList.remove('open');
+    $('stick-help').textContent = "Tilt to steer is off on this game's computer";
+    return;
+  }
+  location.href = `${tiltUrl}#${new URLSearchParams({ tilt: '1', id: id ?? '', name })}`;
+});
+// on iPhone the sensor has to be asked for from a tap
+zone.addEventListener('click', () => { if (tiltOn && !tiltLive && layout === 'racing') tryTilt(); });
+if (tiltOn) {
+  setTilt(true);
+  tryTilt(false); // (fine without a tap on Android; on iPhone the first tap does it)
 }
 
 // --- Stars and the shop ---------------------------------------------------------------------
@@ -295,6 +404,7 @@ $('pause').addEventListener('click', () => {
 $('overlay').addEventListener('click', () => {
   document.documentElement.requestFullscreen?.().catch(() => {});
   (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }).lock?.('landscape').catch(() => {});
+  if (tiltOn && !tiltLive) tryTilt();
   if (!ws) connect();
   else if (displayOn) hideOverlay();
 });
