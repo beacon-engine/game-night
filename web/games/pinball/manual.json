@@ -1,0 +1,23 @@
+{
+  "intro": "One table, a steel ball and two flippers. Keep the ball in play, hit everything you can, and take turns: each player plays a ball, then passes the table on, until everyone's balls are gone.",
+  "inspiredBy": "Pinball tables go back to the 1930s, and flippers arrived in 1947. This table is our own: our own layout, lights, colours and sounds.",
+  "goal": "The highest score when everyone's balls are gone. Playing on your own? Beat the best scores.",
+  "howToPlay": [
+    "Join with your phone. In the lobby choose how many balls each player gets, then press {bolt} to start. Players take turns in the order they joined.",
+    "On your turn, hold {bolt} to pull the plunger back and let go to launch. The further you pull, the faster the ball goes: pull at least a third of the way or it rolls back.",
+    "{l1} and {r1} are the left and right flippers. Hold a flipper up to catch the ball on it, then let go and flip again to aim.",
+    "Flick the stick to nudge the table and push the ball. Nudge too often and the table tilts: the flippers go dead and you lose the ball and its bonus.",
+    "Roll through the three lanes at the top to light them. Light all three and the bonus multiplier goes up, to 5×. Each flip moves the lit lanes along, so you can line up the dark one.",
+    "Hit all three yellow targets on the left wall for the jackpot: 5,000.",
+    "Lose the ball in the first few seconds after a launch (while SAVE is lit) and it comes straight back, once a ball.",
+    "When the ball drains, its bonus is paid times the multiplier, and the next player's ball starts.",
+    "Press ❚❚ on your phone to pause."
+  ],
+  "steering": "Flick the stick to nudge the table",
+  "tips": [
+    "Don't flip at everything: hold a flipper up, catch the ball, and aim your shot.",
+    "A ball off the tip of the flipper goes across the table; off the middle, it goes up the far side.",
+    "The bumpers do the scoring for you: send the ball up between them.",
+    "A small nudge as the ball heads for an outlane can save it. Then leave the table alone for a bit."
+  ]
+}

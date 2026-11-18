@@ -1,6 +1,7 @@
 # make                 build the web files and the beacon-arcade binary
 # make dev             rebuild on change and serve from disk (http://localhost:10000)
 # make check           type-check the TypeScript, vet and test the Go
+# make wasm            build the games written in Odin (web/games/*/odin -> sim.wasm; needs Odin)
 # make release         archives for every platform in dist/ (what a GitHub release ships)
 # make android         the Android TV app in dist/ (needs a JDK and the Android SDK)
 # make tag V=1.2.0     tag a release (see RELEASING.md)
@@ -9,7 +10,7 @@
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -s -w -X main.version=$(VERSION)
 
-.PHONY: all web dev check release android tag clean
+.PHONY: all web wasm dev check release android tag clean
 
 all: web
 	go build -ldflags "$(LDFLAGS)" -o beacon-arcade .
@@ -20,6 +21,10 @@ web: web/node_modules
 web/node_modules: web/package.json
 	cd web && npm install --no-audit --no-fund
 	touch web/node_modules
+
+# (sim.wasm is kept in git, so `make` doesn't need Odin; `make dev` runs this for a game when its Odin changes)
+wasm:
+	scripts/wasm.sh
 
 # (the watcher is stopped when the server is)
 dev: web
